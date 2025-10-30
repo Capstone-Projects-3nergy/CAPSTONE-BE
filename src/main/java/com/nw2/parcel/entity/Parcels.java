@@ -17,8 +17,7 @@ public class Parcels {
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "parcel_id")
+    @Column(name = "parcel_id", nullable = false)
     private Long parcelId;
 
     @Column(name = "tracking_number", nullable = false, length = 45)
@@ -28,7 +27,7 @@ public class Parcels {
     private String recipientName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status")
     private Status status;
 
     @Column(name = "parcel_type", length = 45)
@@ -43,7 +42,7 @@ public class Parcels {
     @Column(name = "received_at")
     private LocalDateTime receivedAt;
 
-    @Column(name = "picked_up_at")
+    @Column(name = "picked_up_at", nullable = false)
     private LocalDateTime pickedUpAt;
 
     @Column(name = "updated_at")

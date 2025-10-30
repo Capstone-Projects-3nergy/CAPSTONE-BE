@@ -16,12 +16,12 @@ public class StaffDorm {
 
     @ManyToOne
     @MapsId("dormId")
-    @JoinColumn(name = "dorm_id")
+    @JoinColumn(name = "dorm_id", nullable = false)
     private Dorm dorm;
 
     @ManyToOne
     @MapsId("userId")
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
     @Column(name = "created_at")

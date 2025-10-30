@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class Notification {
 
     public enum Status {
-        PENDING, SENT, READ
+        PENDING, SENT, FAILED
     }
 
     public enum Type {
@@ -20,8 +20,7 @@ public class Notification {
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notification_id")
+    @Column(name = "notification_id", nullable = false)
     private Long notificationId;
 
     @Column(name = "noti_title", nullable = false, length = 45)
@@ -32,19 +31,19 @@ public class Notification {
     private Status status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "notification_type", nullable = false)
+    @Column(name = "notification_type")
     private Type notificationType;
 
-    @Column(name = "noti_message", length = 45)
+    @Column(name = "noti_message", length = 300)
     private String notiMessage;
 
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     // Relationships

@@ -16,8 +16,7 @@ import java.util.List;
 public class Dorm {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "dorm_id")
+    @Column(name = "dorm_id" , nullable = false)
     private Long dormId;
 
     @Column(name = "dorm_name", nullable = false, length = 100)
