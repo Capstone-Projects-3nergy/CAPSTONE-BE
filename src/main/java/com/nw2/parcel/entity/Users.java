@@ -21,14 +21,15 @@ public class Users {
     }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
     private long userId;
 
-    @Column(name = "email", nullable = false, unique = true, length = 45)
-    private String email;
+    @Column(name="firebase_uid", unique = true, length = 45)
+    private String firebaseUid;
 
-    @Column(name = "password", nullable = false, length = 100)
-    private String password;
+    @Column(name = "email", nullable = false, unique = true, length = 128)
+    private String email;
 
     @Column(name = "first_name", length = 45)
     private String firstName;
@@ -67,7 +68,7 @@ public class Users {
 
     // Relationships
     @ManyToOne
-    @JoinColumn(name = "dorms_dorm_id", nullable = false)
+    @JoinColumn(name = "dorms_dorm_id")
     private Dorm dorm;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
