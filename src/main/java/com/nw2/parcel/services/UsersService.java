@@ -55,13 +55,10 @@ public class UsersService {
         user.setEmail(email);
         user.setFirstName(safeTrim(req.firstName()));
         user.setLastName(safeTrim(req.lastName()));
-        user.setPhoneNumber(safeTrim(req.phoneNumber()));
-        user.setProfileImageUrl(safeTrim(req.profileImageUrl()));
         user.setRole(role);
         user.setStatus(Users.Status.ACTIVE);
         user.setDorm(dorm);
         user.setRoomNumber(safeTrim(req.roomNumber()));
-        user.setLineId(safeTrim(req.lineId()));
         user.setPosition(safeTrim(req.position()));
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
