@@ -48,10 +48,10 @@ public class Notification {
 
     // Relationships
     @ManyToOne
-    @JoinColumn(name = "parcels_parcel_id", nullable = false)
+    @JoinColumn(name = "parcel_id", nullable = false)
     private Parcels parcel;
 
     @ManyToOne
-    @JoinColumn(name = "users_user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 }

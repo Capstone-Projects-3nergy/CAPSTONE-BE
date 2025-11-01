@@ -50,11 +50,11 @@ public class Parcels {
 
     // Relationships
     @ManyToOne
-    @JoinColumn(name = "companies_company_id", nullable = false)
+    @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
     @ManyToOne
-    @JoinColumn(name = "users_user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)

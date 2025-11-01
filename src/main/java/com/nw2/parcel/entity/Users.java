@@ -68,7 +68,7 @@ public class Users {
 
     // Relationships
     @ManyToOne
-    @JoinColumn(name = "dorms_dorm_id")
+    @JoinColumn(name = "dorm_id", referencedColumnName = "dorm_id")
     private Dorm dorm;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
