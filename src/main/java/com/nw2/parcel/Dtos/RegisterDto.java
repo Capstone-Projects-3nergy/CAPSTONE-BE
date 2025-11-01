@@ -1,10 +1,12 @@
 package com.nw2.parcel.Dtos;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public record RegisterDto(
 
+        // ข้อมูลพื้นฐาน
         @NotBlank(message = "Email is required")
         @Email(message = "Email format is invalid")
         String email,
@@ -15,19 +17,37 @@ public record RegisterDto(
         @NotBlank(message = "Last name is required")
         String lastName,
 
-        @NotBlank(message = "Phone number is required")
-        @Size(max = 15, message = "Phone number too long")
-        String phoneNumber,
-
-        String profileImageUrl,
-
-        @NotBlank(message = "Role is required")
-        String role,  // RESIDENT หรือ STAFF
+        // การกำหนดสิทธิ์/สังกัด
+        @NotBlank(message = "Role is required")   // "RESIDENT" หรือ "STAFF"
+        String role,
 
         @NotNull(message = "Dorm ID is required")
-        Long dormId,  // id ของหอพัก (foreign key)
+        @Positive(message = "Dorm ID must be positive")
+        Long dormId,
 
-        String roomNumber, // สำหรับ resident เท่านั้น
-        String lineId,     // Optional
-        String position    // สำหรับ staff เท่านั้น
-) {}
+        // ช่องเพิ่มตาม role
+        String roomNumber,   // จำเป็นเมื่อ role=RESIDENT
+        String position      // จำเป็นเมื่อ role=STAFF
+) {
+    // ----- Cross-field validations (ตาม role) -----
+
+    @AssertTrue(message = "roomNumber is required for RESIDENT")
+    @JsonIgnore
+    public boolean isRoomNumberValidForResident() {
+        return !isRole("RESIDENT") || hasText(roomNumber);
+    }
+
+    @AssertTrue(message = "position is required for STAFF")
+    @JsonIgnore
+    public boolean isPositionValidForStaff() {
+        return !isRole("STAFF") || hasText(position);
+    }
+
+    // ----- helpers -----
+    private boolean isRole(String target) {
+        return role != null && role.trim().equalsIgnoreCase(target);
+    }
+    private boolean hasText(String s) {
+        return s != null && !s.trim().isEmpty();
+    }
+}
