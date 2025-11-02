@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = {"*","http://localhost:5173","http://192.168.103.151:5173"})
+@CrossOrigin(origins = { "*", "http://localhost:5173", "http://127.0.0.1:5173" })
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,21 +28,20 @@ public class AuthController {
     @GetMapping("/verify")
     public ResponseEntity<AuthVerifyDto> verify(Authentication auth) {
         FirebaseToken tok = (FirebaseToken) auth.getDetails(); // ใส่มาโดย FirebaseAuthFilter
-        Users user = usersService.linkFirebaseOnLogin(tok);     // ครั้งแรกจะผูก uid ให้, ครั้งต่อ ๆ ไปจะผ่านเฉย ๆ
+        Users user = usersService.linkFirebaseOnLogin(tok);     // ครั้งแรกจะผูก uid ให้, ครั้งต่อๆ ไปจะผ่านเฉยๆ
 
         AuthVerifyDto body = new AuthVerifyDto(
                 true,                           // authenticated
                 user.getUserId(),
-                user.getFirebaseUid(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getRole()   != null ? user.getRole().name()   : null,
-                user.getStatus() != null ? user.getStatus().name() : null,
-                user.getDorm()   != null ? user.getDorm().getDormName() : null,
-                user.getRoomNumber(),
-                user.getProfileImageUrl()
+                user.getRole() != null ? user.getRole().name() : null,
+                user.getDorm() != null ? user.getDorm().getDormName() : null,
+                user.getRoomNumber()
         );
+
         return ResponseEntity.ok(body);
     }
+
 }

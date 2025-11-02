@@ -99,7 +99,7 @@ public class UsersService {
         }
 
         // อัปเดตโปรไฟล์เบาๆ จาก Firebase (ตามเหมาะสม)
-        if (hasText(tok.getPicture())) user.setProfileImageUrl(tok.getPicture());
+//        if (hasText(tok.getPicture())) user.setProfileImageUrl(tok.getPicture());
         // ถ้าต้องการแยกชื่อจาก tok.getName() ค่อยเพิ่ม split ที่นี่
 
         user.setUpdatedAt(LocalDateTime.now());
