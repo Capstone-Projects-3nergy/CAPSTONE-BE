@@ -40,20 +40,28 @@ public class UsersService {
         final Users.Role role = parseRole(req.role());
 
         Dorm dorm = null;
-        if (role == Users.Role.RESIDENT) {
-            // ต้องมี dormId > 0
-            if (req.dormId() == null || req.dormId() <= 0) {
-                throw new ResponseStatusException(BAD_REQUEST, "Dorm ID is required for RESIDENT");
-            }
-            dorm = dormRepository.findById(req.dormId())
-                    .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm not found"));
 
-            // ต้องมี roomNumber
+        if (role == Users.Role.RESIDENT) {
+            // ✅ ลองหา dorm จาก id ก่อน
+            if (req.dormId() != null && req.dormId() > 0) {
+                dorm = dormRepository.findById(req.dormId())
+                        .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm not found"));
+            }
+            // ✅ ถ้าไม่มี dormId แต่มีชื่อหอ → หาใน DB
+            else if (req.dormName() != null && !req.dormName().trim().isEmpty()) {
+                dorm = dormRepository.findByDormNameIgnoreCase(req.dormName().trim())
+                        .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm name not found"));
+            }
+            else {
+                throw new ResponseStatusException(BAD_REQUEST, "Dorm ID or Name is required for RESIDENT");
+            }
+
+            // ตรวจห้อง
             if (!hasText(req.roomNumber())) {
                 throw new ResponseStatusException(BAD_REQUEST, "roomNumber is required for RESIDENT");
             }
-
-        } else if (role == Users.Role.STAFF) {
+        }
+        else if (role == Users.Role.STAFF) {
             // ต้องมี position (ไม่ต้องมี dorm/roomNumber)
             if (!hasText(req.position())) {
                 throw new ResponseStatusException(BAD_REQUEST, "position is required for STAFF");

@@ -20,19 +20,24 @@ public record RegisterDto(
         @NotBlank(message = "Role is required")   // "RESIDENT" หรือ "STAFF"
         String role,
 
-
-        // ถ้าเป็น Resident จะต้องกรอก dormId, แต่ถ้าเป็น Staff ไม่จำเป็น
+        // ✅ ใหม่ — frontend สามารถส่งได้ทั้ง dormId หรือ dormName
         Long dormId,
+        String dormName,
 
         // ช่องเพิ่มตาม role
         String roomNumber,   // จำเป็นเมื่อ role=RESIDENT
         String position      // จำเป็นเมื่อ role=STAFF
 ) {
-    @AssertTrue(message = "Dorm ID is required for RESIDENT")
+    // ===== Validation เฉพาะ role =====
+
+    // Resident ต้องมี dormId หรือ dormName อย่างใดอย่างหนึ่ง
+    @AssertTrue(message = "Dorm ID or Name is required for RESIDENT")
     @JsonIgnore
-    public boolean isDormIdValidForResident() {
-        return !isRole("RESIDENT") || (dormId != null && dormId > 0);
+    public boolean isDormValidForResident() {
+        return !isRole("RESIDENT") ||
+                ((dormId != null && dormId > 0) || hasText(dormName));
     }
+
     @AssertTrue(message = "roomNumber is required for RESIDENT")
     @JsonIgnore
     public boolean isRoomNumberValidForResident() {
@@ -45,6 +50,7 @@ public record RegisterDto(
         return !isRole("STAFF") || hasText(position);
     }
 
+    // ===== Helper methods =====
     private boolean isRole(String target) {
         return role != null && role.trim().equalsIgnoreCase(target);
     }
