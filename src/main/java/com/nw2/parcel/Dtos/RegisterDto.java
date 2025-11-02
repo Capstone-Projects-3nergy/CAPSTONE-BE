@@ -1,7 +1,6 @@
 package com.nw2.parcel.Dtos;
 
 import jakarta.validation.constraints.*;
-import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public record RegisterDto(
@@ -21,16 +20,19 @@ public record RegisterDto(
         @NotBlank(message = "Role is required")   // "RESIDENT" หรือ "STAFF"
         String role,
 
-        @NotNull(message = "Dorm ID is required")
-        @Positive(message = "Dorm ID must be positive")
+
+        // ถ้าเป็น Resident จะต้องกรอก dormId, แต่ถ้าเป็น Staff ไม่จำเป็น
         Long dormId,
 
         // ช่องเพิ่มตาม role
         String roomNumber,   // จำเป็นเมื่อ role=RESIDENT
         String position      // จำเป็นเมื่อ role=STAFF
 ) {
-    // ----- Cross-field validations (ตาม role) -----
-
+    @AssertTrue(message = "Dorm ID is required for RESIDENT")
+    @JsonIgnore
+    public boolean isDormIdValidForResident() {
+        return !isRole("RESIDENT") || (dormId != null && dormId > 0);
+    }
     @AssertTrue(message = "roomNumber is required for RESIDENT")
     @JsonIgnore
     public boolean isRoomNumberValidForResident() {
@@ -43,7 +45,6 @@ public record RegisterDto(
         return !isRole("STAFF") || hasText(position);
     }
 
-    // ----- helpers -----
     private boolean isRole(String target) {
         return role != null && role.trim().equalsIgnoreCase(target);
     }

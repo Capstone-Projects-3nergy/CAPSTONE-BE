@@ -67,9 +67,10 @@ public class Users {
     private LocalDateTime updatedAt;
 
     // Relationships
-    @ManyToOne
-    @JoinColumn(name = "dorm_id", referencedColumnName = "dorm_id")
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
+
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Parcels> parcels;

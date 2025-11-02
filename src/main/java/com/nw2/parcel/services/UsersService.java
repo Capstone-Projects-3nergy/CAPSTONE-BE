@@ -39,16 +39,25 @@ public class UsersService {
         // role
         final Users.Role role = parseRole(req.role());
 
-        // dorm
-        Dorm dorm = dormRepository.findById(req.dormId())
-                .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm not found"));
+        Dorm dorm = null;
+        if (role == Users.Role.RESIDENT) {
+            // ต้องมี dormId > 0
+            if (req.dormId() == null || req.dormId() <= 0) {
+                throw new ResponseStatusException(BAD_REQUEST, "Dorm ID is required for RESIDENT");
+            }
+            dorm = dormRepository.findById(req.dormId())
+                    .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm not found"));
 
-        // business rules by role
-        if (role == Users.Role.RESIDENT && !hasText(req.roomNumber())) {
-            throw new ResponseStatusException(BAD_REQUEST, "roomNumber is required for RESIDENT");
-        }
-        if (role == Users.Role.STAFF && !hasText(req.position())) {
-            throw new ResponseStatusException(BAD_REQUEST, "position is required for STAFF");
+            // ต้องมี roomNumber
+            if (!hasText(req.roomNumber())) {
+                throw new ResponseStatusException(BAD_REQUEST, "roomNumber is required for RESIDENT");
+            }
+
+        } else if (role == Users.Role.STAFF) {
+            // ต้องมี position (ไม่ต้องมี dorm/roomNumber)
+            if (!hasText(req.position())) {
+                throw new ResponseStatusException(BAD_REQUEST, "position is required for STAFF");
+            }
         }
 
         Users user = new Users();
@@ -57,7 +66,7 @@ public class UsersService {
         user.setLastName(safeTrim(req.lastName()));
         user.setRole(role);
         user.setStatus(Users.Status.ACTIVE);
-        user.setDorm(dorm);
+        if (dorm != null) user.setDorm(dorm);
         user.setRoomNumber(safeTrim(req.roomNumber()));
         user.setPosition(safeTrim(req.position()));
         user.setCreatedAt(LocalDateTime.now());
@@ -66,7 +75,6 @@ public class UsersService {
         return usersRepository.save(user);
     }
 
-    /** เรียกตอน login ด้วย Firebase สำเร็จ (ครั้งแรกจะผูก uid ให้) */
     @Transactional
     public Users linkFirebaseOnLogin(FirebaseToken tok) {
         final String email = normalize(tok.getEmail());

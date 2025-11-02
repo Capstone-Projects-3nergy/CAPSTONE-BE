@@ -5,8 +5,8 @@ import com.nw2.parcel.Dtos.RegisterDto;
 import com.nw2.parcel.Dtos.UserDto;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.services.UsersService;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = {"*","http://localhost:5173","http://192.168.103.151:5173","http://localhost:5174","http://192.168.103.151:5174"})
@@ -22,8 +22,11 @@ public class AuthRegisterController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDto> register(@Valid @RequestBody RegisterDto req) {
+    public ResponseEntity<UserDto> register(@Validated @RequestBody RegisterDto req) {
         Users user = usersService.register(req);
+
+        // กัน null เวลาผู้ใช้เป็น STAFF (ไม่มี dorm)
+        String dormName = (user.getDorm() != null) ? user.getDorm().getDormName() : null;
 
         return ResponseEntity.ok(new UserDto(
                 user.getUserId(),
@@ -35,10 +38,12 @@ public class AuthRegisterController {
                 user.getProfileImageUrl(),
                 user.getRole().name(),
                 user.getStatus().name(),
-                user.getDorm() != null ? user.getDorm().getDormName() : null,
+                dormName,                 // ใช้ค่าที่กัน null แล้ว
                 user.getRoomNumber(),
                 user.getLineId(),
                 user.getPosition()
         ));
     }
+
 }
+
