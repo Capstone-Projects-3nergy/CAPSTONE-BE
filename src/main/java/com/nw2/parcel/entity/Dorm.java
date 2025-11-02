@@ -14,6 +14,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Dorm {
+    public enum DormType {
+        Female_Dormitory,
+        Male_Dormitory
+    }
 
     @Id
     @Column(name = "dorm_id" , nullable = false)
@@ -28,8 +32,9 @@ public class Dorm {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Column(name = "dorm_type", nullable = false, length = 15)
-    private String dormType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dorm_type", nullable = false)
+    private DormType dormType;
 
     @Column(name = "email", length = 45)
     private String email;
