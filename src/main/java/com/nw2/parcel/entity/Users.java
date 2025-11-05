@@ -22,14 +22,14 @@ public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private long userId;
 
-    @Column(name = "email", nullable = false, unique = true, length = 45)
-    private String email;
+    @Column(name="firebase_uid", unique = true, length = 45)
+    private String firebaseUid;
 
-    @Column(name = "password", nullable = false, length = 45)
-    private String password;
+    @Column(name = "email", nullable = false, unique = true, length = 128)
+    private String email;
 
     @Column(name = "first_name", length = 45)
     private String firstName;
@@ -67,9 +67,10 @@ public class Users {
     private LocalDateTime updatedAt;
 
     // Relationships
-    @ManyToOne
-    @JoinColumn(name = "dorms_dorm_id", nullable = false)
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
+
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Parcels> parcels;

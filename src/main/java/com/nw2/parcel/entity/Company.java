@@ -12,14 +12,13 @@ import java.util.List;
 public class Company {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "company_id")
+    @Column(name = "company_id", nullable = false)
     private Long companyId;
 
     @Column(name = "company_name", nullable = false, length = 30)
     private String companyName;
 
-    @Column(name = "tracking_url", nullable = false, length = 45)
+    @Column(name = "tracking_url", length = 100)
     private String trackingUrl;
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
