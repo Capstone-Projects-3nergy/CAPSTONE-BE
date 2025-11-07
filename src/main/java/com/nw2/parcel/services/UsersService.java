@@ -89,7 +89,7 @@ public class UsersService {
         if (email == null) throw new ResponseStatusException(BAD_REQUEST, "Firebase account has no email");
 
         Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Please register before login"));
+                .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Please register before login"));
 
         if (user.getFirebaseUid() == null) {
             user.setFirebaseUid(tok.getUid());

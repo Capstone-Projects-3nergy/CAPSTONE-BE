@@ -3,6 +3,8 @@
 # =========================================================
 server:
   port: 8080
+  servlet:
+    context-path: /api
 
 spring:
   jpa:
@@ -11,7 +13,7 @@ spring:
       hibernate:
         format_sql: true
 
-# แสดง error message แบบละเอียด (เช่น validation errors)
+  # แสดง error message แบบละเอียด (เช่น validation errors)
   error:
     include-message: always
     include-binding-errors: always
