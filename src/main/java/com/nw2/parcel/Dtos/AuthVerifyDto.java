@@ -2,7 +2,7 @@ package com.nw2.parcel.Dtos;
 
 public record AuthVerifyDto(
         boolean authenticated,  // token ผ่านการยืนยันแล้ว
-        long userId,
+        Integer userId,
         String email,
         String firstName,
         String lastName,

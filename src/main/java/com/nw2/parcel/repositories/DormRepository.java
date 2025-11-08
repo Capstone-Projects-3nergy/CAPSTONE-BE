@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface DormRepository extends JpaRepository<Dorm, Long> {
+public interface DormRepository extends JpaRepository<Dorm, Integer> {
 //    // ค้นหาแบบ exact match (ignore case)
 //    List<Dorm> findByDormTypeIgnoreCase(String dormType);
 //

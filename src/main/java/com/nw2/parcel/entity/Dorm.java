@@ -7,21 +7,19 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Entity
 @Table(name = "dorms")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Dorm {
-    public enum DormType {
-        Female_Dormitory,
-        Male_Dormitory
-    }
+
+    public enum DormType { Female_Dormitory, Male_Dormitory }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // ⬅ เพิ่ม
     @Column(name = "dorm_id" , nullable = false)
-    private Long dormId;
+    private Integer dormId;                              // ⬅ เปลี่ยน Long -> Integer
 
     @Column(name = "dorm_name", nullable = false, length = 100)
     private String dormName;
@@ -45,10 +43,10 @@ public class Dorm {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relationships
     @OneToMany(mappedBy = "dorm", cascade = CascadeType.ALL)
     private List<Users> users;
 
     @OneToMany(mappedBy = "dorm", cascade = CascadeType.ALL)
     private List<StaffDorm> staffDorms;
 }
+

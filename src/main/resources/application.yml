@@ -8,6 +8,7 @@ server:
 
 spring:
   jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
     properties:
       hibernate:
@@ -35,7 +36,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # dev ให้ auto สร้างตารางได้
+      ddl-auto: validate   # dev ให้ auto สร้างตารางได้
 
 firebase:
   config:
@@ -59,7 +60,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none   # ใน container ไม่ให้ spring ไปสร้าง/แก้ schema เอง
+      ddl-auto: validate    # ใน container ไม่ให้ spring ไปสร้าง/แก้ schema เอง
 
 # Firebase จะใช้ Application Default Credentials (ADC)
 # ซึ่งมาจาก env GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase.json

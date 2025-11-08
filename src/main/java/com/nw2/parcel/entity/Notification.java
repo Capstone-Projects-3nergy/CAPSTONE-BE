@@ -11,17 +11,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Notification {
 
-    public enum Status {
-        PENDING, SENT, FAILED
-    }
-
-    public enum Type {
-        EMAIL, LINE
-    }
+    public enum Status { PENDING, SENT, FAILED }
+    public enum Type   { EMAIL, LINE }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)   // ⬅ เพิ่ม
     @Column(name = "notification_id", nullable = false)
-    private Long notificationId;
+    private Integer notificationId;                       // ⬅ เปลี่ยน Long -> Integer
 
     @Column(name = "noti_title", nullable = false, length = 45)
     private String notiTitle;
@@ -46,7 +42,6 @@ public class Notification {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Relationships
     @ManyToOne
     @JoinColumn(name = "parcel_id", nullable = false)
     private Parcels parcel;

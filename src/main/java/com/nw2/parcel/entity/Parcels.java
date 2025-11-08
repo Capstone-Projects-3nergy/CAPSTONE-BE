@@ -12,13 +12,12 @@ import java.util.List;
 @AllArgsConstructor
 public class Parcels {
 
-    public enum Status {
-        PENDING, RECEIVED, PICKED_UP
-    }
+    public enum Status { PENDING, RECEIVED, PICKED_UP }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // ⬅ เพิ่ม
     @Column(name = "parcel_id", nullable = false)
-    private Long parcelId;
+    private Integer parcelId;                            // ⬅ เปลี่ยน Long -> Integer
 
     @Column(name = "tracking_number", nullable = false, length = 45)
     private String trackingNumber;
@@ -48,7 +47,6 @@ public class Parcels {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relationships
     @ManyToOne
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;

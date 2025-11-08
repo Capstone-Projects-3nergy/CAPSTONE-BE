@@ -30,3 +30,4 @@ public class StaffDorm {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
+
