@@ -1,7 +1,7 @@
 package com.nw2.parcel.Dtos;
 
 public record UserDto(
-        long userId,
+        Integer userId,
         String firebaseUid,
         String email,
         String firstName,

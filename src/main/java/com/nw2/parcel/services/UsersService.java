@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -36,39 +35,32 @@ public class UsersService {
             throw new ResponseStatusException(CONFLICT, "Email already registered");
         }
 
-        // role
         final Users.Role role = parseRole(req.role());
 
         Dorm dorm = null;
-
         if (role == Users.Role.RESIDENT) {
-            // ✅ ลองหา dorm จาก id ก่อน
+            // หมายเหตุ: ถ้า entity id เป็น Integer ให้เปลี่ยน RegisterDto.dormId เป็น Integer ด้วย
             if (req.dormId() != null && req.dormId() > 0) {
                 dorm = dormRepository.findById(req.dormId())
                         .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm not found"));
-            }
-            // ✅ ถ้าไม่มี dormId แต่มีชื่อหอ → หาใน DB
-            else if (req.dormName() != null && !req.dormName().trim().isEmpty()) {
+            } else if (hasText(req.dormName())) {
                 dorm = dormRepository.findByDormNameIgnoreCase(req.dormName().trim())
                         .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Dorm name not found"));
-            }
-            else {
+            } else {
                 throw new ResponseStatusException(BAD_REQUEST, "Dorm ID or Name is required for RESIDENT");
             }
 
-            // ตรวจห้อง
             if (!hasText(req.roomNumber())) {
                 throw new ResponseStatusException(BAD_REQUEST, "roomNumber is required for RESIDENT");
             }
-        }
-        else if (role == Users.Role.STAFF) {
-            // ต้องมี position (ไม่ต้องมี dorm/roomNumber)
+        } else if (role == Users.Role.STAFF) {
             if (!hasText(req.position())) {
                 throw new ResponseStatusException(BAD_REQUEST, "position is required for STAFF");
             }
         }
 
         Users user = new Users();
+        user.setUserId(null); // กัน mapper เผลอเซ็ตค่า → ให้ DB gen ตาม AUTO_INCREMENT
         user.setEmail(email);
         user.setFirstName(safeTrim(req.firstName()));
         user.setLastName(safeTrim(req.lastName()));
@@ -80,7 +72,8 @@ public class UsersService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
-        return usersRepository.save(user);
+        // ใช้ saveAndFlush เพื่อให้ constraint/FK error โผล่ทันที
+        return usersRepository.saveAndFlush(user);
     }
 
     @Transactional
@@ -94,16 +87,11 @@ public class UsersService {
         if (user.getFirebaseUid() == null) {
             user.setFirebaseUid(tok.getUid());
         } else if (!user.getFirebaseUid().equals(tok.getUid())) {
-            // กันเคส email นี้ถูกผูกกับ Firebase UID อื่นไปแล้ว
             throw new ResponseStatusException(CONFLICT, "Email already linked to another Firebase account");
         }
 
-        // อัปเดตโปรไฟล์เบาๆ จาก Firebase (ตามเหมาะสม)
-//        if (hasText(tok.getPicture())) user.setProfileImageUrl(tok.getPicture());
-        // ถ้าต้องการแยกชื่อจาก tok.getName() ค่อยเพิ่ม split ที่นี่
-
         user.setUpdatedAt(LocalDateTime.now());
-        return usersRepository.save(user);
+        return usersRepository.saveAndFlush(user);
     }
 
     // ---------- helpers ----------
@@ -124,4 +112,3 @@ public class UsersService {
         }
     }
 }
-

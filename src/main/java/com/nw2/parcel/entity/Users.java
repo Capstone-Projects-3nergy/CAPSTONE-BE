@@ -12,18 +12,13 @@ import java.util.List;
 @AllArgsConstructor
 public class Users {
 
-    public enum Role {
-        RESIDENT, STAFF, ADMIN
-    }
-
-    public enum Status {
-        ACTIVE, INACTIVE
-    }
+    public enum Role { RESIDENT, STAFF, ADMIN }
+    public enum Status { ACTIVE, INACTIVE }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
-    private long userId;
+    private Integer userId;     // ⬅ เปลี่ยน long -> Integer (wrapper)
 
     @Column(name="firebase_uid", unique = true, length = 45)
     private String firebaseUid;
@@ -66,11 +61,9 @@ public class Users {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relationships
     @ManyToOne(optional = true)
     @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
-
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Parcels> parcels;

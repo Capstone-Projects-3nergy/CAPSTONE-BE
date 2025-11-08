@@ -12,8 +12,9 @@ import java.util.List;
 public class Company {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)   // ⬅ เพิ่ม
     @Column(name = "company_id", nullable = false)
-    private Long companyId;
+    private Integer companyId;                            // ⬅ เปลี่ยน Long -> Integer
 
     @Column(name = "company_name", nullable = false, length = 30)
     private String companyName;
@@ -24,3 +25,4 @@ public class Company {
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     private List<Parcels> parcels;
 }
+
