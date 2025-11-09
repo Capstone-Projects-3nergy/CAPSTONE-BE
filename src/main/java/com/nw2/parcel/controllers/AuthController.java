@@ -38,7 +38,8 @@ public class AuthController {
                 user.getLastName(),
                 user.getRole() != null ? user.getRole().name() : null,
                 user.getDorm() != null ? user.getDorm().getDormName() : null,
-                user.getRoomNumber()
+                user.getRoomNumber(),
+                user.getPosition()
         );
 
         return ResponseEntity.ok(body);
