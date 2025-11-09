@@ -8,5 +8,6 @@ public record AuthVerifyDto(
         String lastName,
         String role,
         String dormName,
-        String roomNumber
+        String roomNumber,
+        String position
 ) {}
