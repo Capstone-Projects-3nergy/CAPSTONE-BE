@@ -2,7 +2,7 @@
 # GLOBAL DEFAULT CONFIG (ใช้ร่วมทุกโปรไฟล์)
 # =========================================================
 server:
-  port: 8081
+  port: 8080
   servlet:
     context-path: /api
 
@@ -31,8 +31,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${DB_HOST:localhost}:3306/capstone?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8&serverTimezone=Asia/Bangkok
-    username: cp25nw2
-    password: CapstoneNW2!
+    username: root
+    password: Dear_pim25
 
   jpa:
     hibernate:

@@ -13,7 +13,6 @@ import java.io.InputStream;
 @Component
 public class FirebaseConfig {
 
-    // ทำให้ optional: ถ้าไม่มี property นี้ (prod) จะไม่ fail
     @Value("${firebase.config.path:}")
     private Resource serviceAccount;
 
@@ -23,21 +22,28 @@ public class FirebaseConfig {
 
         FirebaseOptions.Builder builder = FirebaseOptions.builder();
 
-        // 1) ถ้ามี ADC ให้ใช้ก่อน (GOOGLE_APPLICATION_CREDENTIALS หรือ Metadata)
         try {
+            // 🔹 (1) พยายามใช้ ADC ก่อน (สำหรับ container/VM)
             GoogleCredentials adc = GoogleCredentials.getApplicationDefault();
             builder.setCredentials(adc);
+            // ✅ ใส่ projectId ให้ตรงกับโปรเจกต์ tractify-dpms-capstone-3nergy
+            builder.setProjectId("tractify-dpms-capstone-3nergy");
         } catch (Exception ignored) {
-            // 2) ถ้า ADC ใช้ไม่ได้ ค่อย fallback เป็นไฟล์ใน classpath (dev)
+            // 🔹 (2) ถ้าไม่มี ADC ใช้ไฟล์ใน classpath (สำหรับ local dev)
             if (serviceAccount == null || !serviceAccount.exists()) {
                 throw new IllegalStateException(
-                        "No ADC and no firebase.config.path. Set GOOGLE_APPLICATION_CREDENTIALS or provide firebase.config.path for dev.");
+                        "No ADC and no firebase.config.path. " +
+                                "Set GOOGLE_APPLICATION_CREDENTIALS or provide firebase.config.path for dev.");
             }
             try (InputStream in = serviceAccount.getInputStream()) {
                 builder.setCredentials(GoogleCredentials.fromStream(in));
+                // ✅ ใส่ projectId ตรงนี้ด้วย
+                builder.setProjectId("tractify-dpms-capstone-3nergy");
             }
         }
 
         FirebaseApp.initializeApp(builder.build());
+        System.out.println("✅ Firebase Admin initialized for project: " +
+                FirebaseApp.getInstance().getOptions().getProjectId());
     }
 }

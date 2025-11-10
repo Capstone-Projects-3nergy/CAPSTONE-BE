@@ -1,37 +1,34 @@
+// com.nw2.parcel.controllers.AuthController
 package com.nw2.parcel.controllers;
 
 import com.google.firebase.auth.FirebaseToken;
 import com.nw2.parcel.Dtos.AuthVerifyDto;
+import com.nw2.parcel.Dtos.RegisterDto;
+import com.nw2.parcel.Dtos.UserDto;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.services.UsersService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = {  "http://localhost:5173", "http://127.0.0.1:5173", "http://bscit.sit.kmutt.ac.th" }, allowedHeaders = {"Authorization", "Content-Type"}, methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/auth")   // << ขยับมาใต้ /api
+@CrossOrigin(origins = { "http://localhost:5173", "http://127.0.0.1:5173", "http://bscit.sit.kmutt.ac.th","https://bscit.sit.kmutt.ac.th" },
+        allowedHeaders = {"Authorization","Content-Type"},
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
 public class AuthController {
-
     private final UsersService usersService;
+    public AuthController(UsersService usersService) { this.usersService = usersService; }
 
-    public AuthController(UsersService usersService) {
-        this.usersService = usersService;
-    }
-
-    /**
-     * ยืนยันว่า ID token ถูกต้อง (ผ่าน FirebaseAuthFilter แล้ว)
-     * และ "ผูก firebaseUid" ให้ user ที่สมัครไว้ ถ้ายังไม่เคยผูก (ครั้งแรก)
-     * ใช้สำหรับเปิดแอป/รีเฟรชหน้า แล้วเช็คว่าผู้ใช้ล็อกอินอยู่จริง
-     */
+    /** GET /api/auth/verify (ต้องแนบ Firebase ID token) */
     @GetMapping("/verify")
     public ResponseEntity<AuthVerifyDto> verify(Authentication auth) {
         FirebaseToken tok = (FirebaseToken) auth.getDetails();
-        System.out.println("Verified ID token for uid: " );
-        Users user = usersService.linkFirebaseOnLogin(tok);     // ครั้งแรกจะผูก uid ให้, ครั้งต่อๆ ไปจะผ่านเฉยๆ
+        Users user = usersService.linkFirebaseOnLogin(tok);
 
-        AuthVerifyDto body = new AuthVerifyDto(
-                true,                           // authenticated
+        var body = new AuthVerifyDto(
+                true,
                 user.getUserId(),
                 user.getEmail(),
                 user.getFirstName(),
@@ -41,8 +38,27 @@ public class AuthController {
                 user.getRoomNumber(),
                 user.getPosition()
         );
-
         return ResponseEntity.ok(body);
     }
+    @PostMapping("/register")
+    public ResponseEntity<UserDto> register(@Validated @RequestBody RegisterDto req) {
+        Users user = usersService.register(req);
+        String dormName = (user.getDorm() != null) ? user.getDorm().getDormName() : null;
 
+        return ResponseEntity.ok(new UserDto(
+                user.getUserId(),
+                user.getFirebaseUid(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getProfileImageUrl(),
+                user.getRole().name(),
+                user.getStatus().name(),
+                dormName,
+                user.getRoomNumber(),
+                user.getLineId(),
+                user.getPosition()
+        ));
+    }
 }
