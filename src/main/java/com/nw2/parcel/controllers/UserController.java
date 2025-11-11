@@ -7,6 +7,10 @@ import com.nw2.parcel.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://bscit.sit.kmutt.ac.th",
+        "https://bscit.sit.kmutt.ac.th" })
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
