@@ -22,8 +22,12 @@ public class UserController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestHeader("Authorization") String header) throws Exception {
-        // รับ token จาก header เช่น "Bearer eyJhbGciOi..."
-        String token = header.replace("Bearer ", "");
+        if (header == null || !header.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing or invalid Authorization header");
+        }
+        String token = header.replace("Bearer ", "").trim();
         return userService.login(token, firebaseService);
     }
+
+
 }
