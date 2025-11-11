@@ -1,0 +1,30 @@
+package com.nw2.parcel.controllers;
+
+import com.nw2.parcel.entity.Dorm;
+import com.nw2.parcel.repositories.DormRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/dorms")
+@RequiredArgsConstructor
+public class DormController {
+
+    private final DormRepository dormRepository;
+
+    // 📍 ดึง dorm ทั้งหมด
+    @GetMapping
+    public List<Dorm> getAllDorms() {
+        return dormRepository.findAll();
+    }
+
+    // 📍 ดึง dorm ตามชื่อ
+    @GetMapping("/{dormName}")
+    public Dorm getDormByName(@PathVariable String dormName) {
+        return dormRepository.findByDormName(dormName)
+                .orElseThrow(() -> new RuntimeException("Dorm not found: " + dormName));
+    }
+}
+
