@@ -31,7 +31,7 @@ public class Dorm {
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "dorm_type", nullable = false)
+    @Column(name = "dorm_type", nullable = true)
     private DormType dormType;
 
     @Column(name = "email", length = 45)

@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // ✅ เปิดให้ signup/login ได้โดยไม่ต้อง auth
                         .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/dorms/**").permitAll()
                         // ✅ อนุญาต preflight (ถ้ามี CORS)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         // 🔒 ที่เหลือต้อง authenticated

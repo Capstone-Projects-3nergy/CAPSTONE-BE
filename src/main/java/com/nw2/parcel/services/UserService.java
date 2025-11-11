@@ -61,11 +61,52 @@ public class UserService {
 
         usersRepository.save(user);
 
-        return new LoginResponse(userRecord.getUid(), req.getEmail(), "Signup successful");
+        // ✅ แทนที่ส่วน return เดิมด้วยบล็อกนี้
+        LoginResponse resp = new LoginResponse();
+        resp.setFirebaseUid(userRecord.getUid());
+        resp.setEmail(req.getEmail());
+        resp.setFirstName(req.getFirstName());
+        resp.setLastName(req.getLastName());
+        resp.setRole(req.getRole());
+        resp.setPosition(req.getPosition());
+        resp.setDormName(req.getDormName());
+        resp.setRoomNumber(req.getRoomNumber());
+        resp.setMessage("Signup successful");
+
+        return resp;
     }
 
-    public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
-        var decoded = firebaseService.verifyIdToken(idToken);
-        return new LoginResponse(decoded.getUid(), decoded.getEmail(), "Login successful");
+
+    //    public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
+//        var decoded = firebaseService.verifyIdToken(idToken);
+//        return new LoginResponse(decoded.getUid(), decoded.getEmail(), "Login successful");
+//    }
+public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
+    var decoded = firebaseService.verifyIdToken(idToken); // ตรวจ Firebase ID token
+    final String uid = decoded.getUid();
+    final String emailFromToken = decoded.getEmail();
+
+    // หา Users ใน DB ด้วย firebaseUid (แนะนำให้มี index/unique)
+    Users u = usersRepository.findByFirebaseUid(uid)
+            .orElseThrow(() -> new IllegalArgumentException("Please register before login"));
+
+    // map → LoginResponse
+    LoginResponse resp = new LoginResponse();
+    resp.setUserId(u.getUserId());
+    resp.setFirebaseUid(uid);
+    resp.setEmail(u.getEmail() != null ? u.getEmail() : emailFromToken);
+
+    resp.setFirstName(u.getFirstName());
+    resp.setLastName(u.getLastName());
+    resp.setRole(u.getRole() != null ? u.getRole().name() : null);
+    resp.setPosition(u.getPosition());
+
+    if (u.getDorm() != null) {
+        resp.setDormName(u.getDorm().getDormName());
     }
+    resp.setRoomNumber(u.getRoomNumber());
+
+    resp.setMessage("Login successful");
+    return resp;
+}
 }

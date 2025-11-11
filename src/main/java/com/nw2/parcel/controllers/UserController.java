@@ -5,6 +5,7 @@ import com.nw2.parcel.Dtos.LoginResponse;
 import com.nw2.parcel.services.FirebaseService;
 import com.nw2.parcel.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = {
@@ -25,13 +26,20 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestHeader("Authorization") String header) throws Exception {
+//    public LoginResponse login(@RequestHeader("Authorization") String header) throws Exception {
+//        if (header == null || !header.startsWith("Bearer ")) {
+//            throw new IllegalArgumentException("Missing or invalid Authorization header");
+//        }
+//        String token = header.replace("Bearer ", "").trim();
+//        return userService.login(token, firebaseService);
+//    }
+    public ResponseEntity<LoginResponse> login(@RequestHeader("Authorization") String header) throws Exception {
         if (header == null || !header.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Missing or invalid Authorization header");
         }
-        String token = header.replace("Bearer ", "").trim();
-        return userService.login(token, firebaseService);
+        String token = header.substring(7).trim();
+        LoginResponse resp = userService.login(token, firebaseService);
+        return ResponseEntity.ok(resp);
     }
-
 
 }
