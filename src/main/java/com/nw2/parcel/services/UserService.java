@@ -22,7 +22,7 @@ public class UserService {
     private final DormRepository dormRepository;
 
     public LoginResponse signUp(SignUpRequest req) throws Exception {
-        // 1️⃣ สร้าง user ใน Firebase
+        // 1) สร้างผู้ใช้ใน Firebase
         UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest()
                 .setEmail(req.getEmail())
                 .setPassword(req.getPassword())
@@ -30,22 +30,17 @@ public class UserService {
 
         UserRecord userRecord = FirebaseAuth.getInstance().createUser(createRequest);
 
-        // 2️⃣ ตรวจว่ามี Dorm นี้อยู่หรือยัง (เฉพาะ role RESIDENT)
+        // 2) ถ้าเป็น RESIDENT ต้องมี dormId และต้องหา Dorm ให้เจอ (ไม่สร้างใหม่แล้ว)
         Dorm dorm = null;
-        if (req.getRole().equalsIgnoreCase("RESIDENT") && req.getDormName() != null) {
-            dorm = dormRepository.findByDormName(req.getDormName())
-                    .orElseGet(() -> {
-                        Dorm newDorm = new Dorm();
-                        newDorm.setDormName(req.getDormName());
-                        newDorm.setAddress("N/A");
-                        newDorm.setDormType(Dorm.DormType.Male_Dormitory); // default
-                        newDorm.setCreatedAt(LocalDateTime.now());
-                        newDorm.setUpdatedAt(LocalDateTime.now());
-                        return dormRepository.save(newDorm);
-                    });
+        if ("RESIDENT".equalsIgnoreCase(req.getRole())) {
+            if (req.getDormId() == null) {
+                throw new IllegalArgumentException("dormId is required for RESIDENT.");
+            }
+            dorm = dormRepository.findById(req.getDormId())
+                    .orElseThrow(() -> new IllegalArgumentException("Dorm not found: " + req.getDormId()));
         }
 
-        // 3️⃣ สร้าง user ใน DB
+        // 3) บันทึก Users ใน DB
         Users user = new Users();
         user.setFirebaseUid(userRecord.getUid());
         user.setEmail(req.getEmail());
@@ -53,60 +48,57 @@ public class UserService {
         user.setLastName(req.getLastName());
         user.setRole(Users.Role.valueOf(req.getRole().toUpperCase()));
         user.setStatus(Users.Status.ACTIVE);
-        user.setPosition(req.getPosition());
+        user.setPosition(req.getPosition());     // ใช้เฉพาะ STAFF
+        user.setRoomNumber(req.getRoomNumber()); // ใช้เฉพาะ RESIDENT
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
-        if (dorm != null) user.setDorm(dorm);
+        if (dorm != null) {
+            user.setDorm(dorm); // ผูก FK
+        }
 
         usersRepository.save(user);
 
-        // ✅ แทนที่ส่วน return เดิมด้วยบล็อกนี้
+        // 4) ตอบกลับ (แนะนำให้มี dormId ใน response)
         LoginResponse resp = new LoginResponse();
+        resp.setUserId(user.getUserId());
         resp.setFirebaseUid(userRecord.getUid());
         resp.setEmail(req.getEmail());
         resp.setFirstName(req.getFirstName());
         resp.setLastName(req.getLastName());
         resp.setRole(req.getRole());
         resp.setPosition(req.getPosition());
-        resp.setDormName(req.getDormName());
+        resp.setDormId(dorm != null ? dorm.getDormId() : null);   // ⬅️ ส่ง dormId
+        // ถ้าอยากโชว์ชื่อด้วยก็เติมได้ (ไม่จำเป็นสำหรับ payload ฝั่ง FE)
+        resp.setDormName(dorm != null ? dorm.getDormName() : null);
         resp.setRoomNumber(req.getRoomNumber());
         resp.setMessage("Signup successful");
-
         return resp;
     }
 
+    public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
+        var decoded = firebaseService.verifyIdToken(idToken);
+        final String uid = decoded.getUid();
+        final String emailFromToken = decoded.getEmail();
 
-    //    public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
-//        var decoded = firebaseService.verifyIdToken(idToken);
-//        return new LoginResponse(decoded.getUid(), decoded.getEmail(), "Login successful");
-//    }
-public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
-    var decoded = firebaseService.verifyIdToken(idToken); // ตรวจ Firebase ID token
-    final String uid = decoded.getUid();
-    final String emailFromToken = decoded.getEmail();
+        Users u = usersRepository.findByFirebaseUid(uid)
+                .orElseThrow(() -> new IllegalArgumentException("Please register before login"));
 
-    // หา Users ใน DB ด้วย firebaseUid (แนะนำให้มี index/unique)
-    Users u = usersRepository.findByFirebaseUid(uid)
-            .orElseThrow(() -> new IllegalArgumentException("Please register before login"));
+        LoginResponse resp = new LoginResponse();
+        resp.setUserId(u.getUserId());
+        resp.setFirebaseUid(uid);
+        resp.setEmail(u.getEmail() != null ? u.getEmail() : emailFromToken);
+        resp.setFirstName(u.getFirstName());
+        resp.setLastName(u.getLastName());
+        resp.setRole(u.getRole() != null ? u.getRole().name() : null);
+        resp.setPosition(u.getPosition());
 
-    // map → LoginResponse
-    LoginResponse resp = new LoginResponse();
-    resp.setUserId(u.getUserId());
-    resp.setFirebaseUid(uid);
-    resp.setEmail(u.getEmail() != null ? u.getEmail() : emailFromToken);
-
-    resp.setFirstName(u.getFirstName());
-    resp.setLastName(u.getLastName());
-    resp.setRole(u.getRole() != null ? u.getRole().name() : null);
-    resp.setPosition(u.getPosition());
-
-    if (u.getDorm() != null) {
-        resp.setDormName(u.getDorm().getDormName());
+        if (u.getDorm() != null) {
+            resp.setDormId(u.getDorm().getDormId());               // ⬅️ ส่งเป็น dormId
+            resp.setDormName(u.getDorm().getDormName());           // (ถ้าต้องการแสดงชื่อด้วย)
+        }
+        resp.setRoomNumber(u.getRoomNumber());
+        resp.setMessage("Login successful");
+        return resp;
     }
-    resp.setRoomNumber(u.getRoomNumber());
-
-    resp.setMessage("Login successful");
-    return resp;
-}
 }

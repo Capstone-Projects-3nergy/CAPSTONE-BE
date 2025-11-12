@@ -15,7 +15,8 @@ public class LoginResponse {
     private String lastName;
     private String role;        // RESIDENT | STAFF | ADMIN
     private String position;    // STAFF เท่านั้น (อาจเป็น null)
-    private String dormName;    // RESIDENT เท่านั้น (อาจเป็น null)
+    private Integer dormId;    // ⬅️ ที่เพิ่ม
+    private String dormName;   // RESIDENT เท่านั้น (อาจเป็น null)
     private String roomNumber;  // RESIDENT เท่านั้น (อาจเป็น null)
     private String message;
 }

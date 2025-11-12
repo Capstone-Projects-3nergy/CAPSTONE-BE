@@ -1,5 +1,6 @@
 package com.nw2.parcel.controllers;
 
+import com.nw2.parcel.Dtos.DormListDto;
 import com.nw2.parcel.entity.Dorm;
 import com.nw2.parcel.repositories.DormRepository;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://bscit.sit.kmutt.ac.th",
+        "https://bscit.sit.kmutt.ac.th" })
 @RestController
 @RequestMapping("/api/dorms")   // ⬅ เปลี่ยนเป็น /api/dorms
 @RequiredArgsConstructor
@@ -19,8 +24,21 @@ public class DormController {
         return dormRepository.findAll();
     }
 
-    @GetMapping("/{dormName}")
-    public Dorm getDormByName(@PathVariable String dormName) {
+    @GetMapping("/{id}") // ⬅️ เปลี่ยนเป็นดึงด้วย id
+    public Dorm getDormById(@PathVariable Integer id) {
+        return dormRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dorm not found: " + id));
+    }
+
+    @GetMapping("/list")  // GET /api/dorms/list
+    public List<DormListDto> listDormsForSelect() {
+        return dormRepository.findAllAsListDto();
+    }
+
+    // ถ้าอยากค้นหาด้วยชื่อแบบ optional ให้ใช้ query param ได้แบบนี้
+    // GET /api/dorms/search?name=KMUTT%20Female%20Dorm%20B
+    @GetMapping("/search")
+    public Dorm getDormByName(@RequestParam("name") String dormName) {
         return dormRepository.findByDormName(dormName)
                 .orElseThrow(() -> new RuntimeException("Dorm not found: " + dormName));
     }
