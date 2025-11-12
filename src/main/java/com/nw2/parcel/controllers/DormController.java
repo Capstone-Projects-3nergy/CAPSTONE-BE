@@ -1,5 +1,6 @@
 package com.nw2.parcel.controllers;
 
+import com.nw2.parcel.Dtos.DormListDto;
 import com.nw2.parcel.entity.Dorm;
 import com.nw2.parcel.repositories.DormRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,11 @@ public class DormController {
     public Dorm getDormById(@PathVariable Integer id) {
         return dormRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dorm not found: " + id));
+    }
+
+    @GetMapping("/list")  // GET /api/dorms/list
+    public List<DormListDto> listDormsForSelect() {
+        return dormRepository.findAllAsListDto();
     }
 
     // ถ้าอยากค้นหาด้วยชื่อแบบ optional ให้ใช้ query param ได้แบบนี้
