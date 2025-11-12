@@ -9,7 +9,7 @@ public class SignUpRequest {
     private String email;
     private String password;
     private String position;     // ใช้เฉพาะ staff
-    private String dormName;     // ใช้เฉพาะ resident
+    private Integer dormId;     // ใช้เฉพาะ resident
     private String roomNumber;
     private String role;         // RESIDENT หรือ STAFF
 }
