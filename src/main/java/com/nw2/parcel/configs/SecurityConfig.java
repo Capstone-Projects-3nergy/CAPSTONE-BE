@@ -27,7 +27,7 @@ public class SecurityConfig {
                                 // ✅ อนุญาต preflight (ถ้ามี CORS)
                                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                                 // 🔒 ที่เหลือต้อง authenticated
-                                .anyRequest().permitAll()
+                                .anyRequest().authenticated()
                 )
                 .addFilterBefore(
                         new com.nw2.parcel.configs.FirebaseAuthenticationFilter(firebaseService),
@@ -38,3 +38,18 @@ public class SecurityConfig {
     }
 }
 
+
+//public class SecurityConfig {
+//
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/api/signup", "/api/login").permitAll()
+//                        .anyRequest().authenticated()
+//                );
+//
+//        return http.build();
+//    }
+//}
