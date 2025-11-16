@@ -23,8 +23,13 @@ public class ParcelService {
         Company company = companyRepository.findById(req.getCompanyId())
                 .orElseThrow(() -> new RuntimeException("Company not found: " + req.getCompanyId()));
 
-        Users user = usersRepository.findById(req.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found: " + req.getUserId()));
+//        Users user = usersRepository.findById(req.getUserId())
+//                .orElseThrow(() -> new RuntimeException("User not found: " + req.getUserId()));
+        Users resident = usersRepository
+                .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
+                .orElseThrow(() -> new RuntimeException(
+                        "Resident not found with id: " + req.getUserId()
+                ));
 
         Parcels parcel = new Parcels();
         parcel.setTrackingNumber(req.getTrackingNumber());
@@ -33,7 +38,8 @@ public class ParcelService {
         parcel.setSenderName(req.getSenderName());
         parcel.setStatus(Parcels.Status.PENDING);   // ตั้งค่า default
         parcel.setCompany(company);
-        parcel.setUser(user);
+//        parcel.setUser(user);
+        parcel.setUser(resident);
         // receivedAt / updatedAt ให้ @PrePersist จัดการ
 
         return parcelsRepository.save(parcel);
