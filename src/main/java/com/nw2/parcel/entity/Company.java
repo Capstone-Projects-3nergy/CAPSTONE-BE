@@ -22,6 +22,7 @@ public class Company {
     @Column(name = "tracking_url", length = 100)
     private String trackingUrl;
 
+
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     private List<Parcels> parcels;
 }
