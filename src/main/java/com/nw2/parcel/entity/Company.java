@@ -1,5 +1,6 @@
 package com.nw2.parcel.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -22,6 +23,7 @@ public class Company {
     @Column(name = "tracking_url", length = 100)
     private String trackingUrl;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
     private List<Parcels> parcels;
 }
