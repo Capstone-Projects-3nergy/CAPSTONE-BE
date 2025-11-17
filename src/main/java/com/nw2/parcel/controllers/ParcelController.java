@@ -2,11 +2,14 @@ package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.CreateParcelDto;
 import com.nw2.parcel.Dtos.ParcelDto;
+import com.nw2.parcel.Dtos.ParcelListItemDto;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.services.ParcelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/parcels")
@@ -39,5 +42,9 @@ public class ParcelController {
         );
     }
 
+    @GetMapping
+    public List<ParcelListItemDto> getAllParcelsForStaff() {
+        return parcelService.getAllParcelsForStaff();
+    }
     // ต่อไปจะมี GET /api/parcels, GET /api/parcels/{id}, PUT, PATCH /status ฯลฯ ได้อีก
 }

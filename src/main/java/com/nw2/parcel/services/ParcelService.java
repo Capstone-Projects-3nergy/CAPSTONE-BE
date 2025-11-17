@@ -1,6 +1,7 @@
 package com.nw2.parcel.services;
 
 import com.nw2.parcel.Dtos.CreateParcelDto;
+import com.nw2.parcel.Dtos.ParcelListItemDto;
 import com.nw2.parcel.entity.Company;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Users;
@@ -9,6 +10,9 @@ import com.nw2.parcel.repositories.ParcelsRepository;
 import com.nw2.parcel.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,5 +47,38 @@ public class ParcelService {
         // receivedAt / updatedAt ให้ @PrePersist จัดการ
 
         return parcelsRepository.save(parcel);
+    }
+
+    public List<ParcelListItemDto> getAllParcelsForStaff() {
+        List<Parcels> parcels = parcelsRepository.findAllByOrderByReceivedAtDesc();
+
+        return parcels.stream()
+                .map(p -> {
+                    // ถ้ามี user (RESIDENT) ผูกอยู่
+                    String ownerName = null;
+                    String roomNumber = null;
+                    String contactEmail = null;
+
+                    if (p.getUser() != null) {
+                        ownerName = (p.getUser().getFirstName() != null ? p.getUser().getFirstName() : "")
+                                + (p.getUser().getLastName() != null ? " " + p.getUser().getLastName() : "");
+                        roomNumber = p.getUser().getRoomNumber();
+                        contactEmail = p.getUser().getEmail();
+                    } else {
+                        // fallback ใช้ recipientName ถ้าไม่มี Users
+                        ownerName = p.getRecipientName();
+                    }
+
+                    return new ParcelListItemDto(
+                            p.getParcelId(),
+                            p.getTrackingNumber(),
+                            ownerName,
+                            roomNumber,
+                            contactEmail,
+                            p.getStatus(),
+                            p.getReceivedAt()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }

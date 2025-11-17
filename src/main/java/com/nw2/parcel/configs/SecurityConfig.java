@@ -36,7 +36,7 @@ public class SecurityConfig {
                         // 🟦 /api/residents/** ให้เฉพาะ STAFF
                         .requestMatchers("/api/residents/**").hasAuthority("STAFF")
 
-                        // 🔒 ที่เหลือต้องแค่ login ก็พอ
+                        // 🔒 ที่เหลือต้องแค่ login ก็พอ authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
