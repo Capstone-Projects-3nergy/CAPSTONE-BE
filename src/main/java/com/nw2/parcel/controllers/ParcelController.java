@@ -1,8 +1,6 @@
 package com.nw2.parcel.controllers;
 
-import com.nw2.parcel.Dtos.CreateParcelDto;
-import com.nw2.parcel.Dtos.ParcelDto;
-import com.nw2.parcel.Dtos.ParcelListItemDto;
+import com.nw2.parcel.Dtos.*;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.services.ParcelService;
 import lombok.RequiredArgsConstructor;
@@ -42,9 +40,34 @@ public class ParcelController {
         );
     }
 
+    //view
     @GetMapping
     public List<ParcelListItemDto> getAllParcelsForStaff() {
+
         return parcelService.getAllParcelsForStaff();
     }
-    // ต่อไปจะมี GET /api/parcels, GET /api/parcels/{id}, PUT, PATCH /status ฯลฯ ได้อีก
+
+    //details
+    @GetMapping("/{id}")
+    public ParcelDetailDto getParcelDetail(@PathVariable Integer id) {
+        return parcelService.getParcelDetail(id);
+    }
+
+    //edit
+    @PutMapping("/{id}")
+    public ParcelDetailDto updateParcel(
+            @PathVariable Integer id,
+            @RequestBody UpdateParcelDto req
+    ) {
+        return parcelService.updateParcelForStaff(id, req);
+    }
+
+//    // ✏️ update เฉพาะ status
+//    @PatchMapping("/{id}/status")
+//    public ParcelDetailDto updateParcelStatus(
+//            @PathVariable Integer id,
+//            @RequestBody UpdateParcelStatusDto req
+//    ) {
+//        return parcelService.updateParcelStatus(id, req.getStatus());
+//    }
 }
