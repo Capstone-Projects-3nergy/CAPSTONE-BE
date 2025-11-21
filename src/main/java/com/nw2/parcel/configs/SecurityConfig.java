@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/residents/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
 
                         // 🔒 ที่เหลือต้องแค่ login ก็พอ authenticated()
                         .anyRequest().authenticated()

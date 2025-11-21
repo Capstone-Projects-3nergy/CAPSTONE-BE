@@ -62,6 +62,13 @@ public class ParcelController {
         return parcelService.updateParcelForStaff(id, req);
     }
 
+    // delete
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteParcel(@PathVariable Integer id) {
+        parcelService.deleteParcelById(id);
+    }
+
 //    // ✏️ update เฉพาะ status
 //    @PatchMapping("/{id}/status")
 //    public ParcelDetailDto updateParcelStatus(

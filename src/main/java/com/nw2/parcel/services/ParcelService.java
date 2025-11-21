@@ -359,4 +359,11 @@ public class ParcelService {
                 email
         );
     }
+
+    public void deleteParcelById(Integer parcelId) {
+        Parcels parcel = parcelsRepository.findById(parcelId)
+                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+
+        parcelsRepository.delete(parcel);
+    }
 }
