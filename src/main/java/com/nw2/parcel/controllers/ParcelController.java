@@ -16,6 +16,8 @@ import java.util.List;
         "http://bscit.sit.kmutt.ac.th",
         "https://bscit.sit.kmutt.ac.th"
 })
+
+//staff manage
 @RequiredArgsConstructor
 public class ParcelController {
 
