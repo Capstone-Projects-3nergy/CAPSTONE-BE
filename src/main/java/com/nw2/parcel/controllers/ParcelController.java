@@ -1,12 +1,13 @@
 package com.nw2.parcel.controllers;
 
-import com.nw2.parcel.Dtos.CreateParcelDto;
-import com.nw2.parcel.Dtos.ParcelDto;
+import com.nw2.parcel.Dtos.*;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.services.ParcelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/parcels")
@@ -39,5 +40,41 @@ public class ParcelController {
         );
     }
 
-    // ต่อไปจะมี GET /api/parcels, GET /api/parcels/{id}, PUT, PATCH /status ฯลฯ ได้อีก
+    //view
+    @GetMapping
+    public List<ParcelListItemDto> getAllParcelsForStaff() {
+
+        return parcelService.getAllParcelsForStaff();
+    }
+
+    //details
+    @GetMapping("/{id}")
+    public ParcelDetailDto getParcelDetail(@PathVariable Integer id) {
+        return parcelService.getParcelDetail(id);
+    }
+
+    //edit
+    @PutMapping("/{id}")
+    public ParcelDetailDto updateParcel(
+            @PathVariable Integer id,
+            @RequestBody UpdateParcelDto req
+    ) {
+        return parcelService.updateParcelForStaff(id, req);
+    }
+
+    // delete
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteParcel(@PathVariable Integer id) {
+        parcelService.deleteParcelById(id);
+    }
+
+//    // ✏️ update เฉพาะ status
+//    @PatchMapping("/{id}/status")
+//    public ParcelDetailDto updateParcelStatus(
+//            @PathVariable Integer id,
+//            @RequestBody UpdateParcelStatusDto req
+//    ) {
+//        return parcelService.updateParcelStatus(id, req.getStatus());
+//    }
 }

@@ -33,10 +33,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
 
+                        // เฉพาะ ADMIN เท่านั้นที่เข้า /api/admin/**
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+
                         // 🟦 /api/residents/** ให้เฉพาะ STAFF
                         .requestMatchers("/api/residents/**").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
 
-                        // 🔒 ที่เหลือต้องแค่ login ก็พอ
+                        // 🔒 ที่เหลือต้องแค่ login ก็พอ authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
