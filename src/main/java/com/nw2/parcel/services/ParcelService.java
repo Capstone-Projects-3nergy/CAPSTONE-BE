@@ -542,5 +542,4 @@ public class ParcelService {
                 email
         );
     }
-
 }
