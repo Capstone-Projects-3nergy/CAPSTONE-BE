@@ -366,4 +366,180 @@ public class ParcelService {
 
         parcelsRepository.delete(parcel);
     }
+
+    private Users getCurrentResident() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new IllegalStateException("No authenticated user");
+        }
+
+        // principal ที่เราเซ็ตใน FirebaseAuthenticationFilter = org.springframework.security.core.userdetails.User
+        org.springframework.security.core.userdetails.User principal =
+                (org.springframework.security.core.userdetails.User) auth.getPrincipal();
+
+        String firebaseUid = principal.getUsername(); // = decoded.getUid()
+
+        Users u = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new IllegalArgumentException("User not found in system"));
+
+        if (u.getRole() != Users.Role.RESIDENT) {
+            throw new IllegalArgumentException("Current user is not a RESIDENT");
+        }
+
+        return u;
+    }
+
+    // 🟢 resident list ของตัวเอง
+    public List<ParcelListItemDto> getParcelsForCurrentResident() {
+        Users currentResident = getCurrentResident();
+
+        List<Parcels> parcels =
+                parcelsRepository.findByUserUserIdOrderByReceivedAtDesc(currentResident.getUserId());
+
+        return parcels.stream()
+                .map(p -> {
+                    String ownerName = null;
+                    String roomNumber = null;
+                    String contactEmail = null;
+
+                    if (p.getUser() != null) {
+                        String firstName = p.getUser().getFirstName();
+                        String lastName = p.getUser().getLastName();
+                        ownerName =
+                                (firstName != null ? firstName : "") +
+                                        (lastName != null ? " " + lastName : "");
+                        roomNumber = p.getUser().getRoomNumber();
+                        contactEmail = p.getUser().getEmail();
+                    } else {
+                        ownerName = p.getRecipientName();
+                    }
+
+                    return new ParcelListItemDto(
+                            p.getParcelId(),
+                            p.getTrackingNumber(),
+                            ownerName,
+                            roomNumber,
+                            contactEmail,
+                            p.getStatus(),
+                            p.getReceivedAt()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    // 🟢 VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
+    public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
+        Users currentResident = getCurrentResident();
+
+        Parcels p = parcelsRepository
+                .findByParcelIdAndUserUserId(parcelId, currentResident.getUserId())
+                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+
+        Integer companyId = null;
+        String companyName = null;
+        if (p.getCompany() != null) {
+            companyId = p.getCompany().getCompanyId();
+            companyName = p.getCompany().getCompanyName();
+        }
+
+        Integer residentId = null;
+        String residentName = null;
+        String roomNumber = null;
+        String email = null;
+        if (p.getUser() != null) {
+            residentId = p.getUser().getUserId();
+            String firstName = p.getUser().getFirstName();
+            String lastName = p.getUser().getLastName();
+            residentName =
+                    (firstName != null ? firstName : "") +
+                            (lastName != null ? " " + lastName : "");
+            roomNumber = p.getUser().getRoomNumber();
+            email = p.getUser().getEmail();
+        }
+
+        return new ParcelDetailDto(
+                p.getParcelId(),
+                p.getTrackingNumber(),
+                p.getRecipientName(),
+                p.getStatus(),
+                p.getParcelType(),
+                p.getSenderName(),
+                p.getImageUrl(),
+                p.getReceivedAt(),
+                p.getPickedUpAt(),
+                p.getUpdatedAt(),
+                companyId,
+                companyName,
+                residentId,
+                residentName,
+                roomNumber,
+                email
+        );
+    }
+
+    // 🟢 CONFIRM-RECEIVED-PARCEL
+    public ParcelDetailDto confirmParcelReceivedByResident(Integer parcelId) {
+        Users currentResident = getCurrentResident();
+
+        Parcels p = parcelsRepository
+                .findByParcelIdAndUserUserId(parcelId, currentResident.getUserId())
+                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+
+        // 🧠 กฎ: ให้ resident กด confirm ได้เฉพาะตอนสถานะ RECEIVED
+        if (p.getStatus() != Parcels.Status.RECEIVED) {
+            throw new IllegalArgumentException(
+                    "Parcel cannot be confirmed in current status: " + p.getStatus()
+            );
+        }
+
+        p.setStatus(Parcels.Status.PICKED_UP);
+
+        if (p.getPickedUpAt() == null) {
+            p.setPickedUpAt(LocalDateTime.now());
+        }
+
+        Parcels updated = parcelsRepository.save(p);
+
+        Integer companyId = null;
+        String companyName = null;
+        if (updated.getCompany() != null) {
+            companyId = updated.getCompany().getCompanyId();
+            companyName = updated.getCompany().getCompanyName();
+        }
+
+        Integer residentId = null;
+        String residentName = null;
+        String roomNumber = null;
+        String email = null;
+        if (updated.getUser() != null) {
+            residentId = updated.getUser().getUserId();
+            String firstName = updated.getUser().getFirstName();
+            String lastName = updated.getUser().getLastName();
+            residentName =
+                    (firstName != null ? firstName : "") +
+                            (lastName != null ? " " + lastName : "");
+            roomNumber = updated.getUser().getRoomNumber();
+            email = updated.getUser().getEmail();
+        }
+
+        return new ParcelDetailDto(
+                updated.getParcelId(),
+                updated.getTrackingNumber(),
+                updated.getRecipientName(),
+                updated.getStatus(),
+                updated.getParcelType(),
+                updated.getSenderName(),
+                updated.getImageUrl(),
+                updated.getReceivedAt(),
+                updated.getPickedUpAt(),
+                updated.getUpdatedAt(),
+                companyId,
+                companyName,
+                residentId,
+                residentName,
+                roomNumber,
+                email
+        );
+    }
 }

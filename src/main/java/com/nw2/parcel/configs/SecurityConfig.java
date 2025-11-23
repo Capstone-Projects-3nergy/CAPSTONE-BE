@@ -42,7 +42,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
 
-                        // 🔒 ที่เหลือต้องแค่ login ก็พอ authenticated()
+                        // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
+                        .requestMatchers("/api/OwnerParcels/**").hasAuthority("RESIDENT")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
