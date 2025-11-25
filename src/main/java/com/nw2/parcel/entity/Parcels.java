@@ -47,6 +47,13 @@ public class Parcels {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // 🔴 ใหม่: ฟิลด์สำหรับถังขยะ
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "company_id")
     private Company company;
@@ -61,6 +68,7 @@ public class Parcels {
     @PrePersist
     void prePersist() {
         if (receivedAt == null) receivedAt = LocalDateTime.now();
+        if (isDeleted == null) isDeleted = false;
         updatedAt = LocalDateTime.now();
     }
 

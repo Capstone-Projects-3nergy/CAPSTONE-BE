@@ -67,8 +67,8 @@ public class ParcelController {
     // delete
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteParcel(@PathVariable Integer id) {
-        parcelService.deleteParcelById(id);
+    public void moveParcelToTrash(@PathVariable Integer id) {
+        parcelService.moveParcelToTrash(id);
     }
 
 //    // ✏️ update เฉพาะ status

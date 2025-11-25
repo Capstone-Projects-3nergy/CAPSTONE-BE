@@ -315,11 +315,21 @@ public class ParcelService {
         );
     }
 
-    public void deleteParcelById(Integer parcelId) {
-        Parcels parcel = parcelsRepository.findById(parcelId)
+//    public void deleteParcelById(Integer parcelId) {
+//        Parcels parcel = parcelsRepository.findById(parcelId)
+//                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+//
+//        parcelsRepository.delete(parcel);
+//    }
+
+    public void moveParcelToTrash(Integer parcelId) {
+        Parcels parcel = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        parcelsRepository.delete(parcel);
+        parcel.setIsDeleted(true);
+        parcel.setDeletedAt(LocalDateTime.now());
+
+        parcelsRepository.save(parcel);
     }
 
     private Users getCurrentResident() {
