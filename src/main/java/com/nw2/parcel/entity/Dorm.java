@@ -30,9 +30,9 @@ public class Dorm {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "dorm_type", nullable = true)
-    private DormType dormType;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "dorm_type", nullable = true)
+//    private DormType dormType;
 
     @Column(name = "email", length = 45)
     private String email;

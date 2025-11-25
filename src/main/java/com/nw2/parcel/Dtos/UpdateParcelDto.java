@@ -12,9 +12,9 @@ public class UpdateParcelDto {
 
     private String trackingNumber;
     private String recipientName;
-    private String parcelType;
+    private Parcels.Parceltype parcelType;
     private String senderName;
-    private Parcels.Status status;   // PENDING / RECEIVED / PICKED_UP
+    private Parcels.Status status;   //  RECEIVED / PICKED_UP
     private Integer companyId;       // เปลี่ยนขนส่งได้
     private String imageUrl;         // เปลี่ยนรูป (เช่น URL ใหม่)
 }

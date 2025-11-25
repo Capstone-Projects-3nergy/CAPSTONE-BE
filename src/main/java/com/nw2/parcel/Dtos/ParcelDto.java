@@ -13,7 +13,7 @@ public class ParcelDto {
     private String trackingNumber;
     private String recipientName;
     private Parcels.Status status;
-    private String parcelType;
+    private Parcels.Parceltype parcelType;
     private String senderName;
 
     private Integer companyId;

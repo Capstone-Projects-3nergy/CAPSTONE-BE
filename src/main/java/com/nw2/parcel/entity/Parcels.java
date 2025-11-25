@@ -10,7 +10,8 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Parcels {
 
-    public enum Status { PENDING, RECEIVED, PICKED_UP }
+    public enum Status { RECEIVED, PICKED_UP }
+    public enum Parceltype {BOX, DOCUMENT, ELECTRONIC}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +26,11 @@ public class Parcels {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.PENDING;
+    private Status status = Status.RECEIVED;
 
-    @Column(name = "parcel_type", length = 45)
-    private String parcelType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "parcel_type")
+    private Parceltype parcelType = Parceltype.BOX;
 
     @Column(name = "image_url", length = 300)
     private String imageUrl;

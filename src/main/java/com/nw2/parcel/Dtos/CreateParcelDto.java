@@ -1,5 +1,6 @@
 package com.nw2.parcel.Dtos;
 
+import com.nw2.parcel.entity.Parcels;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class CreateParcelDto {
     private String trackingNumber;
     private String recipientName;
-    private String parcelType;
+    private Parcels.Parceltype parcelType;
     private String senderName;
     private Integer companyId;  // FK ไป Company
 //    private String roomNumber;

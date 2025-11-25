@@ -47,7 +47,7 @@ public class ParcelService {
         parcel.setRecipientName(req.getRecipientName());
         parcel.setParcelType(req.getParcelType());
         parcel.setSenderName(req.getSenderName());
-        parcel.setStatus(Parcels.Status.PENDING);   // default
+        parcel.setStatus(Parcels.Status.RECEIVED);   // default
         parcel.setCompany(company);
         parcel.setUser(resident);
 
@@ -172,31 +172,26 @@ public class ParcelService {
             p.setCompany(company);
         }
 
-        // ---------- ส่วนของ status + กฎ transition ----------
-        Parcels.Status oldStatus = p.getStatus();
+        // ---------- ส่วนของ status (ไม่เช็คกฎแล้ว) ----------
         Parcels.Status newStatus = req.getStatus();
-
-        // เช็กกฎก่อน ถ้าผิดจะ throw 400 ทันที
-        validateStatusTransition(oldStatus, newStatus);
-
-        if (newStatus != null && newStatus != oldStatus) {
+        if (newStatus != null) {
             p.setStatus(newStatus);
 
-            // ถ้า transition คือ RECEIVED -> PICKED_UP (เพิ่งเปลี่ยนเป็น PICKED_UP ครั้งแรก)
-            if (newStatus == Parcels.Status.PICKED_UP && p.getPickedUpAt() == null) {
-                p.setPickedUpAt(java.time.LocalDateTime.now());
+            // ถ้าเป็น PICKED_UP ให้เซ็ตเวลา pickedUpAt
+            if (newStatus == Parcels.Status.PICKED_UP) {
+                if (p.getPickedUpAt() == null) {
+                    p.setPickedUpAt(java.time.LocalDateTime.now());
+                }
+            } else {
+                // ถ้ากลับมาเป็น RECEIVED ให้ล้างเวลา pickedUpAt
+                p.setPickedUpAt(null);
             }
-
-            // ถ้าอยาก strict กว่านี้ เช่น:
-            // - ไม่ให้ย้อน RECEIVED -> PENDING
-            // - ไม่ให้แก้เวลา pickedUpAt ย้อนหลัง
-            // สามารถขยาย logic ตรงนี้เพิ่มได้
         }
 
-        // save -> จะไปเข้า @PreUpdate แล้ว updatedAt = now ให้อัตโนมัติ
+        // save -> @PreUpdate จะเซ็ต updatedAt ให้อัตโนมัติ
         Parcels updated = parcelsRepository.save(p);
 
-        // ---------- map กลับเป็น ParcelDetailDto (เหมือน getParcelDetail) ----------
+        // ---------- map กลับเป็น ParcelDetailDto ----------
         Integer companyId = null;
         String companyName = null;
         if (updated.getCompany() != null) {
@@ -238,41 +233,6 @@ public class ParcelService {
                 email
         );
     }
-
-    // เช็ก transition ระหว่าง oldStatus -> newStatus
-    private void validateStatusTransition(Parcels.Status oldStatus, Parcels.Status newStatus) {
-        if (newStatus == null || oldStatus == newStatus) {
-            // ไม่เปลี่ยน หรือ ไม่ส่ง status มาเลย -> ok
-            return;
-        }
-        switch (oldStatus) {
-            case PENDING:
-                // จาก PENDING -> อนุญาตแค่ RECEIVED
-                if (newStatus != Parcels.Status.RECEIVED) {
-                    throw new IllegalArgumentException(
-                            "Invalid status transition: PENDING can only change to RECEIVED");
-                }
-                break;
-
-            case RECEIVED:
-                // จาก RECEIVED -> อนุญาตแค่ PICKED_UP
-                if (newStatus != Parcels.Status.PICKED_UP) {
-                    throw new IllegalArgumentException(
-                            "Invalid status transition: RECEIVED can only change to PICKED_UP");
-                }
-                break;
-
-            case PICKED_UP:
-                // จาก PICKED_UP -> ห้ามเปลี่ยนเป็นอย่างอื่นแล้ว
-                throw new IllegalArgumentException(
-                        "Invalid status transition: cannot change status after PICKED_UP");
-
-            default:
-                throw new IllegalArgumentException(
-                        "Unknown status: " + oldStatus);
-        }
-    }
-    // 🟥 ADMIN ใช้บังคับเปลี่ยน status (ไม่เช็คกฎ transition)
     public ParcelDetailDto forceUpdateParcelStatus(Integer parcelId, ForceUpdateParcelStatusDto req) {
         Parcels p = parcelsRepository.findById(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
@@ -298,26 +258,21 @@ public class ParcelService {
                 req.getNote()
         );
 
-        // 🔥 ไม่ใช้ validateStatusTransition() ที่เข้มสำหรับ staff
-        if (oldStatus != newStatus) {
-            p.setStatus(newStatus);
+        // ไม่ต้องเช็คกฏ transition แล้ว เปลี่ยนตรง ๆ ได้เลย
+        p.setStatus(newStatus);
 
-            // ถ้าในระบบอยากให้ pickedUpAt ตรงกับสถานะปัจจุบันด้วย
-            if (newStatus == Parcels.Status.PICKED_UP && p.getPickedUpAt() == null) {
+        if (newStatus == Parcels.Status.PICKED_UP) {
+            if (p.getPickedUpAt() == null) {
                 p.setPickedUpAt(java.time.LocalDateTime.now());
             }
-
-            // ถ้า admin เปลี่ยนจาก PICKED_UP -> สถานะอื่น
-            // จะ "เก็บ" pickedUpAt เดิมไว้เป็นหลักฐาน
-            // หรือถ้าอยากล้างเวลา ก็เขียนแบบนี้แทน:
-            // if (newStatus != Parcels.Status.PICKED_UP) {
-            //     p.setPickedUpAt(null);
-            // }
+        } else {
+            // RECEIVED
+            p.setPickedUpAt(null);
         }
 
         Parcels updated = parcelsRepository.save(p); // @PreUpdate จะเซ็ต updatedAt ให้อัตโนมัติ
 
-        // map เป็น ParcelDetailDto (reuse logic เดิม)
+        // map เป็น ParcelDetailDto
         Integer companyId = null;
         String companyName = null;
         if (updated.getCompany() != null) {
