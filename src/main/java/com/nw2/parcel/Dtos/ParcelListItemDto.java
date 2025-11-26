@@ -21,9 +21,11 @@ public class ParcelListItemDto {
 
     private String roomNumber;     // จาก Users.roomNumber
 
+
     private String contactEmail;   // email ของเจ้าของพัสดุ
 
     private Parcels.Status status; // PENDING / RECEIVED / PICKED_UP
 
     private LocalDateTime receivedAt; // เวลา receive ไว้โชว์ในตาราง
+    private LocalDateTime updatedAt;
 }

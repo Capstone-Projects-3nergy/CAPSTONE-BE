@@ -22,6 +22,7 @@ import java.util.List;
 public class ParcelController {
 
     private final ParcelService parcelService;
+    private final ParcelService parcelMetaService;
 
     //add
     @PostMapping("/add")
@@ -71,12 +72,8 @@ public class ParcelController {
         parcelService.moveParcelToTrash(id);
     }
 
-//    // ✏️ update เฉพาะ status
-//    @PatchMapping("/{id}/status")
-//    public ParcelDetailDto updateParcelStatus(
-//            @PathVariable Integer id,
-//            @RequestBody UpdateParcelStatusDto req
-//    ) {
-//        return parcelService.updateParcelStatus(id, req.getStatus());
-//    }
+    @GetMapping("/types")
+    public List<String> getParcelTypes() {
+        return parcelMetaService.getParcelTypes();
+    }
 }

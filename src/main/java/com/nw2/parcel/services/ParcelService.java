@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,7 +81,8 @@ public class ParcelService {
                             roomNumber,
                             contactEmail,
                             p.getStatus(),
-                            p.getReceivedAt()
+                            p.getReceivedAt(),
+                            p.getUpdatedAt()
                     );
                 })
                 .collect(Collectors.toList());
@@ -387,7 +389,8 @@ public class ParcelService {
                             roomNumber,
                             contactEmail,
                             p.getStatus(),
-                            p.getReceivedAt()
+                            p.getReceivedAt(),
+                            p.getUpdatedAt()
                     );
                 })
                 .collect(Collectors.toList());
@@ -506,5 +509,11 @@ public class ParcelService {
                 roomNumber,
                 email
         );
+    }
+
+    public List<String> getParcelTypes() {
+        return Arrays.stream(Parcels.Parceltype.values())
+                .map(Enum::name)
+                .toList();
     }
 }
