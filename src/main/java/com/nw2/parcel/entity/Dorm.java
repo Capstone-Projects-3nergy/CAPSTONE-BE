@@ -17,9 +17,9 @@ public class Dorm {
     public enum DormType { Female_Dormitory, Male_Dormitory }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)  // ⬅ เพิ่ม
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "dorm_id" , nullable = false)
-    private Integer dormId;                              // ⬅ เปลี่ยน Long -> Integer
+    private Integer dormId;
 
     @Column(name = "dorm_name", nullable = false, length = 100)
     private String dormName;
@@ -30,9 +30,9 @@ public class Dorm {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "dorm_type", nullable = true)
-    private DormType dormType;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "dorm_type", nullable = true)
+//    private DormType dormType;
 
     @Column(name = "email", length = 45)
     private String email;

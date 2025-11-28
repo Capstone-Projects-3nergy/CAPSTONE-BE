@@ -56,34 +56,3 @@ public class SecurityConfig {
     }
 }
 
-
-//@Configuration
-//@EnableWebSecurity
-//public class SecurityConfig {
-//
-//    private final FirebaseService firebaseService;
-//
-//    public SecurityConfig(FirebaseService firebaseService) {
-//        this.firebaseService = firebaseService;
-//    }
-//
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http.csrf(csrf -> csrf.disable())
-//                .authorizeHttpRequests(auth -> auth
-//                                .requestMatchers("/api/auth/signup", "/api/auth/login","/api/dorms/**").permitAll()
-////                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/dorms/**").permitAll()
-//                                // ✅ อนุญาต preflight (ถ้ามี CORS)
-//                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-//                                // 🔒 ที่เหลือต้อง authenticated
-//                                .anyRequest().authenticated()
-//                )
-//                .addFilterBefore(
-//                        new com.nw2.parcel.configs.FirebaseAuthenticationFilter(firebaseService),
-//                        UsernamePasswordAuthenticationFilter.class
-//                );
-//
-//        return http.build();
-//    }
-//}
-

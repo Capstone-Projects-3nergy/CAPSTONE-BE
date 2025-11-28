@@ -22,6 +22,7 @@ import java.util.List;
 public class ParcelController {
 
     private final ParcelService parcelService;
+    private final ParcelService parcelMetaService;
 
     //add
     @PostMapping("/add")
@@ -67,16 +68,12 @@ public class ParcelController {
     // delete
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteParcel(@PathVariable Integer id) {
-        parcelService.deleteParcelById(id);
+    public void moveParcelToTrash(@PathVariable Integer id) {
+        parcelService.moveParcelToTrash(id);
     }
 
-//    // ✏️ update เฉพาะ status
-//    @PatchMapping("/{id}/status")
-//    public ParcelDetailDto updateParcelStatus(
-//            @PathVariable Integer id,
-//            @RequestBody UpdateParcelStatusDto req
-//    ) {
-//        return parcelService.updateParcelStatus(id, req.getStatus());
-//    }
+    @GetMapping("/types")
+    public List<String> getParcelTypes() {
+        return parcelMetaService.getParcelTypes();
+    }
 }

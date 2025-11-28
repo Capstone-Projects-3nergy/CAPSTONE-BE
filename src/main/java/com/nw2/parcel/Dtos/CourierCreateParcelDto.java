@@ -8,12 +8,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateParcelDto {
+public class CourierCreateParcelDto {
+
     private String trackingNumber;
     private String recipientName;
     private Parcels.Parceltype parcelType;
     private String senderName;
     private Integer companyId;
-    private Integer userId;
 
 }

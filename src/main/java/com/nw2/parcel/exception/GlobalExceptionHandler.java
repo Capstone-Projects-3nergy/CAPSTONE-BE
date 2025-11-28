@@ -9,25 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestControllerAdvice
-//public class GlobalExceptionHandler {
-//
-//    @ExceptionHandler(IllegalArgumentException.class)
-//    public ResponseEntity<Map<String,Object>> handleIllegalArgument(IllegalArgumentException ex) {
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-//                "message", ex.getMessage(),
-//                "status", 400
-//        ));
-//    }
-//
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<Map<String,Object>> handleAny(Exception ex) {
-//        // ในโปรดักชัน ควร log และซ่อนข้อความภายใน
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-//                "message", "Internal server error",
-//                "status", 500
-//        ));
-//    }
-//}
 public class GlobalExceptionHandler {
 
     // ✅ 1. Parcel ไม่เจอ → 404
@@ -73,5 +54,20 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // ✅ 4. Email ซ้ำ → 409 Conflict
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleEmailAlreadyExists(
+            EmailAlreadyExistsException ex,
+            HttpServletRequest request
+    ) {
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT.value(),                  // 409
+                HttpStatus.CONFLICT.getReasonPhrase(),        // "Conflict"
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 }

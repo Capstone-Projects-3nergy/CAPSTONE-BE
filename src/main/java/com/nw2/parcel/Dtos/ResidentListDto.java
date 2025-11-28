@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ResidentListDto {
-
     private Integer userId;
     private String firstName;
     private String lastName;

@@ -10,7 +10,8 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Parcels {
 
-    public enum Status { PENDING, RECEIVED, PICKED_UP }
+    public enum Status { RECEIVED, PICKED_UP }
+    public enum Parceltype {BOX, DOCUMENT, ELECTRONIC}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +26,11 @@ public class Parcels {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.PENDING;
+    private Status status = Status.RECEIVED;
 
-    @Column(name = "parcel_type", length = 45)
-    private String parcelType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "parcel_type")
+    private Parceltype parcelType = Parceltype.BOX;
 
     @Column(name = "image_url", length = 300)
     private String imageUrl;
@@ -39,11 +41,17 @@ public class Parcels {
     @Column(name = "received_at", nullable = false)
     private LocalDateTime receivedAt;
 
-    @Column(name = "picked_up_at") // nullable ในสคีมา
+    @Column(name = "picked_up_at")
     private LocalDateTime pickedUpAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "company_id")
@@ -51,7 +59,7 @@ public class Parcels {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
-    private Users user; // เจ้าของพัสดุ = resident
+    private Users user;
 
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)
     private List<Notification> notifications;
@@ -59,6 +67,7 @@ public class Parcels {
     @PrePersist
     void prePersist() {
         if (receivedAt == null) receivedAt = LocalDateTime.now();
+        if (isDeleted == null) isDeleted = false;
         updatedAt = LocalDateTime.now();
     }
 

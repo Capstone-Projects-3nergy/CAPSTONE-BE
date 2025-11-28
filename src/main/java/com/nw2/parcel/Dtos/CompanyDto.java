@@ -8,5 +8,4 @@ import lombok.Data;
 public class CompanyDto {
     private Integer companyId;
     private String companyName;
-//    private String trackingUrl;
 }

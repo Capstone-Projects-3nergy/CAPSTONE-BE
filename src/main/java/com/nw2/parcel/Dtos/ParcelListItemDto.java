@@ -11,19 +11,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ParcelListItemDto {
-
     private Integer parcelId;
-
     private String trackingNumber;
-
-    // ชื่อเจ้าของพัสดุ (resident)
-    private String ownerName;      // ex. "Pimpajee Sxxxxxx"
-
-    private String roomNumber;     // จาก Users.roomNumber
-
-    private String contactEmail;   // email ของเจ้าของพัสดุ
-
-    private Parcels.Status status; // PENDING / RECEIVED / PICKED_UP
-
-    private LocalDateTime receivedAt; // เวลา receive ไว้โชว์ในตาราง
+    private String ownerName;
+    private String roomNumber;
+    private String contactEmail;
+    private Parcels.Status status;
+    private LocalDateTime receivedAt;
+    private LocalDateTime updatedAt;
 }

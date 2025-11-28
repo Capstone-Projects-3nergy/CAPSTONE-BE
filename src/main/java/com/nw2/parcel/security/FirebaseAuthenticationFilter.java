@@ -51,9 +51,7 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                 List<GrantedAuthority> authorities = new ArrayList<>();
 
                 if (userEntity != null && userEntity.getRole() != null) {
-                    // role ใน DB = RESIDENT / STAFF / ADMIN
                     authorities.add(new SimpleGrantedAuthority(userEntity.getRole().name()));
-                    // เช่น "STAFF", "RESIDENT"
                 }
 
                 User principal = new User(decoded.getUid(), "", authorities);
@@ -77,41 +75,3 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 }
-
-//public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
-//
-//    private final FirebaseService firebaseService;
-//
-//    public FirebaseAuthenticationFilter(FirebaseService firebaseService) {
-//        this.firebaseService = firebaseService;
-//    }
-//
-//    @Override
-//    protected void doFilterInternal(HttpServletRequest request,
-//                                    HttpServletResponse response,
-//                                    FilterChain chain)
-//            throws ServletException, IOException {
-//
-//        String header = request.getHeader("Authorization");
-//        if (header != null && header.startsWith("Bearer ")) {
-//            String token = header.replace("Bearer ", "");
-//            try {
-//                FirebaseToken decoded = firebaseService.verifyIdToken(token);
-//                var auth = new UsernamePasswordAuthenticationToken(
-//                        new User(decoded.getUid(), "", Collections.emptyList()),
-//                        null,
-//                        Collections.emptyList()
-//                );
-//                SecurityContextHolder.getContext().setAuthentication(auth);
-//            } catch (FirebaseAuthException e) {
-//                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Firebase token");
-//                return;
-//            } catch (Exception ex) {
-//                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Token verification failed");
-//                return;
-//            }
-//        }
-//
-//        chain.doFilter(request, response);
-//    }
-//}

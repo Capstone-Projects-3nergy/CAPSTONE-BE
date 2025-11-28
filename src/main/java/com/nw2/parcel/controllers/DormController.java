@@ -35,8 +35,6 @@ public class DormController {
         return dormRepository.findAllAsListDto();
     }
 
-    // ถ้าอยากค้นหาด้วยชื่อแบบ optional ให้ใช้ query param ได้แบบนี้
-    // GET /api/dorms/search?name=KMUTT%20Female%20Dorm%20B
     @GetMapping("/search")
     public Dorm getDormByName(@RequestParam("name") String dormName) {
         return dormRepository.findByDormName(dormName)

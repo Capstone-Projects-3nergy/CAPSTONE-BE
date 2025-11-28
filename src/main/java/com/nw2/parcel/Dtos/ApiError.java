@@ -1,7 +1,13 @@
 package com.nw2.parcel.Dtos;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ApiError {
 
     private int status;
@@ -17,6 +23,4 @@ public class ApiError {
         this.path = path;
         this.timestamp = LocalDateTime.now();
     }
-
-    // getters / setters
 }

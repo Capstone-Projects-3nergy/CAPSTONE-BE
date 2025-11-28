@@ -15,9 +15,9 @@ public class Notification {
     public enum Type   { EMAIL, LINE }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)   // ⬅ เพิ่ม
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notification_id", nullable = false)
-    private Integer notificationId;                       // ⬅ เปลี่ยน Long -> Integer
+    private Integer notificationId;
 
     @Column(name = "noti_title", nullable = false, length = 45)
     private String notiTitle;

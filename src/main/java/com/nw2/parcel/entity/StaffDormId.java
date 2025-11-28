@@ -9,7 +9,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StaffDormId implements Serializable {
-    private Integer dormId;   // ⬅ เปลี่ยน Long -> Integer
-    private Integer userId;   // ⬅ เปลี่ยน Long -> Integer
+    private Integer dormId;
+    private Integer userId;
 }
 
