@@ -174,26 +174,21 @@ public class ParcelService {
             p.setCompany(company);
         }
 
-        // ---------- ส่วนของ status (ไม่เช็คกฎแล้ว) ----------
         Parcels.Status newStatus = req.getStatus();
         if (newStatus != null) {
             p.setStatus(newStatus);
 
-            // ถ้าเป็น PICKED_UP ให้เซ็ตเวลา pickedUpAt
             if (newStatus == Parcels.Status.PICKED_UP) {
                 if (p.getPickedUpAt() == null) {
                     p.setPickedUpAt(java.time.LocalDateTime.now());
                 }
             } else {
-                // ถ้ากลับมาเป็น RECEIVED ให้ล้างเวลา pickedUpAt
                 p.setPickedUpAt(null);
             }
         }
 
-        // save -> @PreUpdate จะเซ็ต updatedAt ให้อัตโนมัติ
         Parcels updated = parcelsRepository.save(p);
 
-        // ---------- map กลับเป็น ParcelDetailDto ----------
         Integer companyId = null;
         String companyName = null;
         if (updated.getCompany() != null) {
@@ -246,7 +241,6 @@ public class ParcelService {
             throw new IllegalArgumentException("New status must not be null");
         }
 
-        // ดึงข้อมูล admin ปัจจุบันจาก SecurityContext
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String adminIdentifier = auth != null ? auth.getName() : "UNKNOWN_ADMIN";
 
@@ -260,7 +254,6 @@ public class ParcelService {
                 req.getNote()
         );
 
-        // ไม่ต้องเช็คกฏ transition แล้ว เปลี่ยนตรง ๆ ได้เลย
         p.setStatus(newStatus);
 
         if (newStatus == Parcels.Status.PICKED_UP) {
@@ -317,13 +310,6 @@ public class ParcelService {
         );
     }
 
-//    public void deleteParcelById(Integer parcelId) {
-//        Parcels parcel = parcelsRepository.findById(parcelId)
-//                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
-//
-//        parcelsRepository.delete(parcel);
-//    }
-
     public void moveParcelToTrash(Integer parcelId) {
         Parcels parcel = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
@@ -357,7 +343,7 @@ public class ParcelService {
         return u;
     }
 
-    // 🟢 resident list ของตัวเอง
+    // resident list ของตัวเอง
     public List<ParcelListItemDto> getParcelsForCurrentResident() {
         Users currentResident = getCurrentResident();
 
@@ -396,7 +382,7 @@ public class ParcelService {
                 .collect(Collectors.toList());
     }
 
-    // 🟢 VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
+    // VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
     public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
 
@@ -446,7 +432,7 @@ public class ParcelService {
         );
     }
 
-    // 🟢 CONFIRM-RECEIVED-PARCEL
+    // CONFIRM-RECEIVED-PARCEL
     public ParcelDetailDto confirmParcelReceivedByResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
 
@@ -454,7 +440,7 @@ public class ParcelService {
                 .findByParcelIdAndUserUserId(parcelId, currentResident.getUserId())
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        // 🧠 กฎ: ให้ resident กด confirm ได้เฉพาะตอนสถานะ RECEIVED
+        // resident กด confirm ได้เฉพาะตอนสถานะ RECEIVED
         if (p.getStatus() != Parcels.Status.RECEIVED) {
             throw new IllegalArgumentException(
                     "Parcel cannot be confirmed in current status: " + p.getStatus()

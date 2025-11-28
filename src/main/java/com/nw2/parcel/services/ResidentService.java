@@ -18,7 +18,7 @@ public class ResidentService {
 
         List<Users> residents = usersRepository.findByRoleAndStatus(
                 Users.Role.RESIDENT,
-                Users.Status.ACTIVE   // เอาเฉพาะคนที่ยัง active
+                Users.Status.ACTIVE
         );
 
         return residents.stream()

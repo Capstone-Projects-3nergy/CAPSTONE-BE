@@ -25,15 +25,12 @@ public class UserService {
     private final DormRepository dormRepository;
 
     public LoginResponse signUp(SignUpRequest req) throws Exception {
-        // ✅ 0) Normalize email ก่อน
         String normalizedEmail = req.getEmail().trim().toLowerCase();
 
-        // ✅ 1) เช็คใน DB ก่อนเลย
         if (usersRepository.existsByEmail(normalizedEmail)) {
             throw new EmailAlreadyExistsException("Email is already in use.");
         }
 
-        // ✅ 2) สร้างผู้ใช้ใน Firebase (Firebase ก็กัน email ซ้ำด้วย)
         UserRecord userRecord;
         try {
             UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest()
@@ -48,10 +45,9 @@ public class UserService {
             if ("EMAIL_ALREADY_EXISTS".equals(e.getErrorCode())) {
                 throw new EmailAlreadyExistsException("Email is already in use.");
             }
-            throw e; // error อื่นก็ปล่อยให้ handler 500 จัดการ
+            throw e;
         }
 
-        // 3) ถ้าเป็น RESIDENT ต้องมี dorm
         Dorm dorm = null;
         if ("RESIDENT".equalsIgnoreCase(req.getRole())) {
             if (req.getDormId() == null) {
@@ -61,7 +57,6 @@ public class UserService {
                     .orElseThrow(() -> new IllegalArgumentException("Dorm not found: " + req.getDormId()));
         }
 
-        // 4) บันทึก Users ใน DB
         Users user = new Users();
         user.setFirebaseUid(userRecord.getUid());
         user.setEmail(normalizedEmail);

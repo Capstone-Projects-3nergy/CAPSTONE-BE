@@ -13,9 +13,9 @@ import java.util.List;
 public class Company {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)   // ⬅ เพิ่ม
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "company_id", nullable = false)
-    private Integer companyId;                            // ⬅ เปลี่ยน Long -> Integer
+    private Integer companyId;
 
     @Column(name = "company_name", nullable = false, length = 30)
     private String companyName;

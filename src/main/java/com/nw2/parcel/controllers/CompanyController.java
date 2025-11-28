@@ -20,14 +20,12 @@ public class CompanyController {
 
     private final CompanyRepository companyRepository;
 
-    // ✅ ดึง list บริษัททั้งหมด (เอาไว้ populate dropdown)
     @GetMapping
     public List<CompanyDto> getAll() {
         return companyRepository.findAll().stream()
                 .map(c -> new CompanyDto(
                         c.getCompanyId(),
                         c.getCompanyName()
-//                        c.getTrackingUrl()
                 ))
                 .toList();
     }
@@ -41,7 +39,6 @@ public class CompanyController {
         return new CompanyDto(
                 c.getCompanyId(),
                 c.getCompanyName()
-//                c.getTrackingUrl()
         );
     }
 }

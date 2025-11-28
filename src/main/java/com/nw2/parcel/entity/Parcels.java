@@ -41,13 +41,12 @@ public class Parcels {
     @Column(name = "received_at", nullable = false)
     private LocalDateTime receivedAt;
 
-    @Column(name = "picked_up_at") // nullable ในสคีมา
+    @Column(name = "picked_up_at")
     private LocalDateTime pickedUpAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // 🔴 ใหม่: ฟิลด์สำหรับถังขยะ
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
@@ -60,7 +59,7 @@ public class Parcels {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id")
-    private Users user; // เจ้าของพัสดุ = resident
+    private Users user;
 
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)
     private List<Notification> notifications;

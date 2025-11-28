@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class ForceUpdateParcelStatusDto {
-    private Parcels.Status status;  // สถานะใหม่ที่ admin อยากเซ็ต
-    private String note;            // เหตุผล / คำอธิบาย (optional)
+    private Parcels.Status status;
+    private String note;
 }

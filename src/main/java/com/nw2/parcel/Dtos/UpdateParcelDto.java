@@ -14,8 +14,8 @@ public class UpdateParcelDto {
     private String recipientName;
     private Parcels.Parceltype parcelType;
     private String senderName;
-    private Parcels.Status status;   //  RECEIVED / PICKED_UP
-    private Integer companyId;       // เปลี่ยนขนส่งได้
-    private String imageUrl;         // เปลี่ยนรูป (เช่น URL ใหม่)
+    private Parcels.Status status;
+    private Integer companyId;
+    private String imageUrl;
 }
-//ทุกฟิลด์ใน DTO นี้คือ "ของที่สตาฟมีสิทธิ์แก้"
+

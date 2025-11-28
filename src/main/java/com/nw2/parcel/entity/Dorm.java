@@ -17,9 +17,9 @@ public class Dorm {
     public enum DormType { Female_Dormitory, Male_Dormitory }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)  // ⬅ เพิ่ม
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "dorm_id" , nullable = false)
-    private Integer dormId;                              // ⬅ เปลี่ยน Long -> Integer
+    private Integer dormId;
 
     @Column(name = "dorm_name", nullable = false, length = 100)
     private String dormName;

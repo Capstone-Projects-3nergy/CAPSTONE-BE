@@ -13,13 +13,7 @@ public class CreateParcelDto {
     private String recipientName;
     private Parcels.Parceltype parcelType;
     private String senderName;
-    private Integer companyId;  // FK ไป Company
-//    private String roomNumber;
+    private Integer companyId;
+    private Integer userId;
 
-
-    private Integer userId;     // FK ไป Users (เจ้าของพัสดุ = resident)
-
-    // ถ้าอยากเก็บเพิ่ม เช่น roomNumber/contact ไว้ใช้ทีหลัง
-    // private String roomNumber;
-    // private String contact;
 }

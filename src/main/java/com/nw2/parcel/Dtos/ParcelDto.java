@@ -15,14 +15,8 @@ public class ParcelDto {
     private Parcels.Status status;
     private Parcels.Parceltype parcelType;
     private String senderName;
-
     private Integer companyId;
     private String companyName;
+    private Integer userId;
 
-    private Integer userId;   // owner (resident)
-
-    // ถ้าอยากจะใส่เวลาเพิ่มก็เติมได้ เช่น
-    // private LocalDateTime receivedAt;
-    // private LocalDateTime pickedUpAt;
-    // private LocalDateTime updatedAt;
 }
