@@ -10,7 +10,7 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Parcels {
 
-    public enum Status { RECEIVED, PICKED_UP }
+    public enum Status { WAITING_FOR_STAFF,RECEIVED, PICKED_UP }
     public enum Parceltype {BOX, DOCUMENT, ELECTRONIC}
 
     @Id
@@ -58,7 +58,7 @@ public class Parcels {
     private Company company;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id",nullable = true)
     private Users user;
 
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)

@@ -8,6 +8,7 @@ import com.nw2.parcel.Dtos.LoginResponse;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.entity.Dorm;
 import com.nw2.parcel.exception.EmailAlreadyExistsException;
+import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.UsersRepository;
 import com.nw2.parcel.repositories.DormRepository;
 import lombok.RequiredArgsConstructor;
@@ -96,29 +97,38 @@ public class UserService {
         return resp;
     }
 
-    public LoginResponse login(String idToken, FirebaseService firebaseService) throws Exception {
-        var decoded = firebaseService.verifyIdToken(idToken);
-        final String uid = decoded.getUid();
-        final String emailFromToken = decoded.getEmail();
+    public LoginResponse login(String idToken, FirebaseService firebaseService) {
+        try {
+            // 1) ตรวจสอบ token กับ Firebase
+            var decoded = firebaseService.verifyIdToken(idToken);
+            final String uid = decoded.getUid();
+            final String emailFromToken = decoded.getEmail();
 
-        Users u = usersRepository.findByFirebaseUid(uid)
-                .orElseThrow(() -> new IllegalArgumentException("Please register before login"));
+            // 2) หา user ใน DB
+            Users u = usersRepository.findByFirebaseUid(uid)
+                    .orElseThrow(() -> new UnauthorizedException("Please register before login"));
 
-        LoginResponse resp = new LoginResponse();
-        resp.setUserId(u.getUserId());
-        resp.setFirebaseUid(uid);
-        resp.setEmail(u.getEmail() != null ? u.getEmail() : emailFromToken);
-        resp.setFirstName(u.getFirstName());
-        resp.setLastName(u.getLastName());
-        resp.setRole(u.getRole() != null ? u.getRole().name() : null);
-        resp.setPosition(u.getPosition());
+            // 3) สร้าง response
+            LoginResponse resp = new LoginResponse();
+            resp.setUserId(u.getUserId());
+            resp.setFirebaseUid(uid);
+            resp.setEmail(u.getEmail() != null ? u.getEmail() : emailFromToken);
+            resp.setFirstName(u.getFirstName());
+            resp.setLastName(u.getLastName());
+            resp.setRole(u.getRole() != null ? u.getRole().name() : null);
+            resp.setPosition(u.getPosition());
 
-        if (u.getDorm() != null) {
-            resp.setDormId(u.getDorm().getDormId());               // ⬅️ ส่งเป็น dormId
-            resp.setDormName(u.getDorm().getDormName());           // (ถ้าต้องการแสดงชื่อด้วย)
+            if (u.getDorm() != null) {
+                resp.setDormId(u.getDorm().getDormId());
+                resp.setDormName(u.getDorm().getDormName());
+            }
+            resp.setRoomNumber(u.getRoomNumber());
+            resp.setMessage("Login successful");
+            return resp;
+
+        } catch (FirebaseAuthException e) {
+            // ⬅️ token ไม่ผ่าน / หมดอายุ / ผิด
+            throw new UnauthorizedException("Invalid or expired token");
         }
-        resp.setRoomNumber(u.getRoomNumber());
-        resp.setMessage("Login successful");
-        return resp;
     }
 }

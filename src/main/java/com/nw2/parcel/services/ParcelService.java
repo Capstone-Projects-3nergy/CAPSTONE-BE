@@ -502,4 +502,26 @@ public class ParcelService {
                 .map(Enum::name)
                 .toList();
     }
+
+    public Parcels createParcelFromPublicForm(SenderCreateParcelDto req) {
+
+        // 1) หา company จาก id ที่คนส่งเลือก
+        Company company = companyRepository.findById(req.getCompanyId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
+                );
+
+        Parcels parcel = new Parcels();
+        parcel.setTrackingNumber(req.getTrackingNumber());
+        parcel.setRecipientName(req.getRecipientName());
+        parcel.setParcelType(req.getParcelType());
+        parcel.setSenderName(req.getSenderName());
+        parcel.setCompany(company);
+        parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
+
+        // ❗ ไม่ set user เพราะยังไม่รู้ว่า recipient คนนี้ตรงกับ resident คนไหนในระบบ
+        parcel.setUser(null);
+
+        return parcelsRepository.save(parcel);
+    }
 }

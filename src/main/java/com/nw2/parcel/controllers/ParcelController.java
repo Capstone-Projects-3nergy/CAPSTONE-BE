@@ -46,7 +46,6 @@ public class ParcelController {
     //view
     @GetMapping
     public List<ParcelListItemDto> getAllParcelsForStaff() {
-
         return parcelService.getAllParcelsForStaff();
     }
 
