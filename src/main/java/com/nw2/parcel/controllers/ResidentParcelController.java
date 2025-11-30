@@ -20,19 +20,19 @@ public class ResidentParcelController {
 
     private final ParcelService parcelService;
 
-    // (extra) list ของ resident เอง
+    //(extra) list ของ resident เอง
     @GetMapping
     public List<ParcelListItemDto> getMyParcels() {
         return parcelService.getParcelsForCurrentResident();
     }
 
-    // 📌 VIEW-PARCEL-DETAIL (resident)
+    //VIEW-PARCEL-DETAIL (resident)
     @GetMapping("/{id}")
     public ParcelDetailDto getMyParcelDetail(@PathVariable Integer id) {
         return parcelService.getParcelDetailForResident(id);
     }
 
-    // 📌 CONFIRM-RECEIVED-PARCEL (resident กด confirm รับพัสดุแล้ว)
+    //CONFIRM-RECEIVED-PARCEL (resident กด confirm รับพัสดุแล้ว)
     @PostMapping("/{id}/confirm")
     public ParcelDetailDto confirmMyParcel(@PathVariable Integer id) {
         return parcelService.confirmParcelReceivedByResident(id);

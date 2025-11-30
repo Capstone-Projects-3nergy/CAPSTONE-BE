@@ -11,7 +11,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ✅ 1. Parcel ไม่เจอ → 404
+    // 1. Parcel ไม่เจอ → 404
     @ExceptionHandler(ParcelNotFoundException.class)
     public ResponseEntity<ApiError> handleParcelNotFound(
             ParcelNotFoundException ex,
@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    // ✅ 2. Request/Argument ไม่ถูก → 400 (เช่น company ไม่เจอ, dormId null ฯลฯ)
+    // 2. Request/Argument ไม่ถูก → 400 (เช่น company ไม่เจอ, dormId null ฯลฯ)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(
             IllegalArgumentException ex,
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // ✅ 3. อื่น ๆ ที่ไม่รู้จริง ๆ → 500
+    // 3. อื่น ๆ ที่ไม่รู้จริง ๆ → 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleException(
             Exception ex,
@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // ✅ 4. Email ซ้ำ → 409 Conflict
+    // 4. Email ซ้ำ → 409 Conflict
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleEmailAlreadyExists(
             EmailAlreadyExistsException ex,
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
-    // ✅ 5. Unauthorized → 401
+    // 5. Unauthorized → 401
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiError> handleUnauthorized(
             UnauthorizedException ex,
