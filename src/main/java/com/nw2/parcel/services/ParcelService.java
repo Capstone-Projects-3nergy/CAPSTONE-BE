@@ -90,7 +90,8 @@ public class ParcelService {
 
     // details
     public ParcelDetailDto getParcelDetail(Integer parcelId) {
-        Parcels p = parcelsRepository.findById(parcelId)
+        // ✅ ใช้ค้นจาก field parcelId + เช็คว่าไม่ถูกลบ
+        Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         // company info
@@ -518,8 +519,6 @@ public class ParcelService {
         parcel.setSenderName(req.getSenderName());
         parcel.setCompany(company);
         parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
-
-        // ❗ ไม่ set user เพราะยังไม่รู้ว่า recipient คนนี้ตรงกับ resident คนไหนในระบบ
         parcel.setUser(null);
 
         return parcelsRepository.save(parcel);
