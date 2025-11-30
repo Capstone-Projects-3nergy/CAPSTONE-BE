@@ -140,7 +140,7 @@ public class ParcelService {
 
     // ✏️ edit parcel + status สำหรับ STAFF
     public ParcelDetailDto updateParcelForStaff(Integer parcelId, UpdateParcelDto req) {
-        Parcels p = parcelsRepository.findById(parcelId)
+        Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         // ---------- ฟิลด์ทั่วไป ----------
@@ -242,12 +242,13 @@ public class ParcelService {
                 email
         );
     }
+
     public ParcelDetailDto forceUpdateParcelStatus(Integer parcelId, ForceUpdateParcelStatusDto req) {
-        Parcels p = parcelsRepository.findById(parcelId)
+        Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         Parcels.Status oldStatus = p.getStatus();
-        Parcels.Status newStatus = req.getStatus();
+        Parcels.Status newStatus = req.getStatus()
 
         if (newStatus == null) {
             throw new IllegalArgumentException("New status must not be null");
