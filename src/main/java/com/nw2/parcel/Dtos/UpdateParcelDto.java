@@ -17,5 +17,6 @@ public class UpdateParcelDto {
     private Parcels.Status status;
     private Integer companyId;
     private String imageUrl;
+    private Integer userId;
 }
 

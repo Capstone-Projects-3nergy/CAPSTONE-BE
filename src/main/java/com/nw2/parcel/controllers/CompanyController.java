@@ -12,8 +12,8 @@ import java.util.List;
 @RequestMapping("/api/companies")
 @CrossOrigin(origins = {
         "http://localhost:5173",
-        "http://bscit.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "http://cp25nw2.sit.kmutt.ac.th",
+        "https://cp25nw2.sit.kmutt.ac.th"
 })
 @RequiredArgsConstructor
 public class CompanyController {

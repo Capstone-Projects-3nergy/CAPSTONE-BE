@@ -13,8 +13,8 @@ import java.util.List;
 @RequestMapping("/api/parcels")
 @CrossOrigin(origins = {
         "http://localhost:5173",
-        "http://bscit.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "http://cp25nw2.sit.kmutt.ac.th",
+        "https://cp25nw2.sit.kmutt.ac.th"
 })
 
 //staff manage
@@ -46,7 +46,6 @@ public class ParcelController {
     //view
     @GetMapping
     public List<ParcelListItemDto> getAllParcelsForStaff() {
-
         return parcelService.getAllParcelsForStaff();
     }
 

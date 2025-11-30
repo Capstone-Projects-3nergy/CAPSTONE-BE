@@ -90,7 +90,8 @@ public class ParcelService {
 
     // details
     public ParcelDetailDto getParcelDetail(Integer parcelId) {
-        Parcels p = parcelsRepository.findById(parcelId)
+        // ✅ ใช้ค้นจาก field parcelId + เช็คว่าไม่ถูกลบ
+        Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         // company info
@@ -139,10 +140,12 @@ public class ParcelService {
 
     // ✏️ edit parcel + status สำหรับ STAFF
     public ParcelDetailDto updateParcelForStaff(Integer parcelId, UpdateParcelDto req) {
-        Parcels p = parcelsRepository.findById(parcelId)
+        Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        // ---------- ฟิลด์ทั่วไปที่อนุญาตให้แก้ ----------
+        boolean assignedNewResident = false;
+
+        // ---------- ฟิลด์ทั่วไป ----------
         if (req.getTrackingNumber() != null) {
             p.setTrackingNumber(req.getTrackingNumber());
         }
@@ -174,13 +177,32 @@ public class ParcelService {
             p.setCompany(company);
         }
 
+        // ✅ ผูก parcel กับ resident ที่ staff เลือก
+        if (req.getUserId() != null) {
+            if (p.getUser() == null || !p.getUser().getUserId().equals(req.getUserId())) {
+                Users resident = usersRepository
+                        .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Resident not found with id: " + req.getUserId())
+                        );
+                p.setUser(resident);
+                assignedNewResident = true;
+            }
+        }
+
+        // ---------- สถานะ ----------
         Parcels.Status newStatus = req.getStatus();
+
+        if (assignedNewResident && p.getStatus() == Parcels.Status.WAITING_FOR_STAFF) {
+            newStatus = Parcels.Status.RECEIVED;
+        }
+
         if (newStatus != null) {
             p.setStatus(newStatus);
 
             if (newStatus == Parcels.Status.PICKED_UP) {
                 if (p.getPickedUpAt() == null) {
-                    p.setPickedUpAt(java.time.LocalDateTime.now());
+                    p.setPickedUpAt(LocalDateTime.now());
                 }
             } else {
                 p.setPickedUpAt(null);
@@ -230,8 +252,10 @@ public class ParcelService {
                 email
         );
     }
+
+
     public ParcelDetailDto forceUpdateParcelStatus(Integer parcelId, ForceUpdateParcelStatusDto req) {
-        Parcels p = parcelsRepository.findById(parcelId)
+        Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         Parcels.Status oldStatus = p.getStatus();
@@ -501,5 +525,25 @@ public class ParcelService {
         return Arrays.stream(Parcels.Parceltype.values())
                 .map(Enum::name)
                 .toList();
+    }
+
+    public Parcels createParcelFromPublicForm(SenderCreateParcelDto req) {
+
+        // 1) หา company จาก id ที่คนส่งเลือก
+        Company company = companyRepository.findById(req.getCompanyId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
+                );
+
+        Parcels parcel = new Parcels();
+        parcel.setTrackingNumber(req.getTrackingNumber());
+        parcel.setRecipientName(req.getRecipientName());
+        parcel.setParcelType(req.getParcelType());
+        parcel.setSenderName(req.getSenderName());
+        parcel.setCompany(company);
+        parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
+        parcel.setUser(null);
+
+        return parcelsRepository.save(parcel);
     }
 }
