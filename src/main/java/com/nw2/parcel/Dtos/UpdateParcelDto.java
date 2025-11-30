@@ -17,5 +17,7 @@ public class UpdateParcelDto {
     private Parcels.Status status;
     private Integer companyId;
     private String imageUrl;
+    // ✅ user ที่ staff เลือกให้ parcel นี้
+    private Integer userId;
 }
 

@@ -143,7 +143,7 @@ public class ParcelService {
         Parcels p = parcelsRepository.findById(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        // ---------- ฟิลด์ทั่วไปที่อนุญาตให้แก้ ----------
+        // ---------- ฟิลด์ทั่วไป ----------
         if (req.getTrackingNumber() != null) {
             p.setTrackingNumber(req.getTrackingNumber());
         }
@@ -175,13 +175,24 @@ public class ParcelService {
             p.setCompany(company);
         }
 
+        // ✅ ผูก parcel กับ resident ที่ staff เลือก
+        if (req.getUserId() != null) {
+            Users resident = usersRepository
+                    .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Resident not found with id: " + req.getUserId())
+                    );
+            p.setUser(resident);
+        }
+
+        // ---------- สถานะ ----------
         Parcels.Status newStatus = req.getStatus();
         if (newStatus != null) {
             p.setStatus(newStatus);
 
             if (newStatus == Parcels.Status.PICKED_UP) {
                 if (p.getPickedUpAt() == null) {
-                    p.setPickedUpAt(java.time.LocalDateTime.now());
+                    p.setPickedUpAt(LocalDateTime.now());
                 }
             } else {
                 p.setPickedUpAt(null);
