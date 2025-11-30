@@ -143,6 +143,8 @@ public class ParcelService {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
+        boolean assignedNewResident = false;
+
         // ---------- ฟิลด์ทั่วไป ----------
         if (req.getTrackingNumber() != null) {
             p.setTrackingNumber(req.getTrackingNumber());
@@ -177,16 +179,24 @@ public class ParcelService {
 
         // ✅ ผูก parcel กับ resident ที่ staff เลือก
         if (req.getUserId() != null) {
-            Users resident = usersRepository
-                    .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
-                    .orElseThrow(() ->
-                            new IllegalArgumentException("Resident not found with id: " + req.getUserId())
-                    );
-            p.setUser(resident);
+            if (p.getUser() == null || !p.getUser().getUserId().equals(req.getUserId())) {
+                Users resident = usersRepository
+                        .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Resident not found with id: " + req.getUserId())
+                        );
+                p.setUser(resident);
+                assignedNewResident = true;
+            }
         }
 
         // ---------- สถานะ ----------
         Parcels.Status newStatus = req.getStatus();
+
+        if (assignedNewResident && p.getStatus() == Parcels.Status.WAITING_FOR_STAFF) {
+            newStatus = Parcels.Status.RECEIVED;
+        }
+
         if (newStatus != null) {
             p.setStatus(newStatus);
 
@@ -243,12 +253,13 @@ public class ParcelService {
         );
     }
 
+
     public ParcelDetailDto forceUpdateParcelStatus(Integer parcelId, ForceUpdateParcelStatusDto req) {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         Parcels.Status oldStatus = p.getStatus();
-        Parcels.Status newStatus = req.getStatus()
+        Parcels.Status newStatus = req.getStatus();
 
         if (newStatus == null) {
             throw new IllegalArgumentException("New status must not be null");
