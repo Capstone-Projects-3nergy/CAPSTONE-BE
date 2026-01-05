@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/dorms/**","/api/public/parcels/**","/api/public/email")
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/companies/**", "/api/residents/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
 
@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
 
                         // 🟦 /api/residents/** ให้เฉพาะ STAFF
-                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
+//                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
