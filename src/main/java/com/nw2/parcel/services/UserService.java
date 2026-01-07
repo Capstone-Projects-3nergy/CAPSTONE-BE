@@ -104,6 +104,9 @@ public class UserService {
             final String uid = decoded.getUid();
             final String emailFromToken = decoded.getEmail();
 
+            if (!decoded.isEmailVerified()) {
+                throw new UnauthorizedException("Email not verified");
+            }
             // 2) หา user ใน DB
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
