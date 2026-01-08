@@ -1,6 +1,7 @@
 package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.ParcelListItemDto;
+import com.nw2.parcel.Dtos.TrashListItemDto;
 import com.nw2.parcel.services.TrashService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,12 +23,12 @@ public class TrashController {
 
     // ดูของที่อยู่ใน trash
     @GetMapping
-    public List<ParcelListItemDto> getTrashParcels() {
+    public List<TrashListItemDto> getTrashParcels() {
         return trashService.getTrashParcels();
     }
 
     // restore
-    @PostMapping("/{parcelId}/restore")
+    @PutMapping("/{parcelId}/restore")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void restoreParcel(@PathVariable Integer parcelId) {
         trashService.restoreParcel(parcelId);

@@ -21,11 +21,7 @@ public class Trash {
 
     // 🔗 One-to-One กับ Parcels
     @OneToOne
-    @JoinColumn(
-            name = "parcel_id",
-            nullable = false,
-            unique = true
-    )
+    @JoinColumn(name = "parcel_id", nullable = false, unique = true)
     private Parcels parcel;
 
     @Column(name = "deleted_at", nullable = false)
@@ -33,9 +29,6 @@ public class Trash {
 
     // 🔗 Many-to-One กับ Users (คนลบ)
     @ManyToOne
-    @JoinColumn(
-            name = "users_user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "users_user_id", nullable = false)
     private Users deletedBy;
 }
