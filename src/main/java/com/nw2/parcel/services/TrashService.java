@@ -68,6 +68,7 @@ public List<TrashListItemDto> getTrashParcels() {
                         ownerName,
                         roomNumber,
                         contactEmail,
+                        p.getStatus(),
                         t.getDeletedAt(),
                         deletedByName
                 );

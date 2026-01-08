@@ -1,5 +1,6 @@
 package com.nw2.parcel.Dtos;
 
+import com.nw2.parcel.entity.Parcels;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ public class TrashListItemDto {
     private String ownerName;
     private String roomNumber;
     private String contactEmail;
+    private Parcels.Status status;
     private LocalDateTime deletedAt;
     private String deletedByName;
 }
