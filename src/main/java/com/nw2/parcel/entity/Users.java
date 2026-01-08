@@ -73,4 +73,7 @@ public class Users {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<StaffDorm> staffDorms;
+
+    @OneToMany(mappedBy = "deletedBy")
+    private List<Trash> deletedTrashList;
 }

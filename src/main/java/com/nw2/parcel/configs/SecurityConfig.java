@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
+                        .requestMatchers("/api/trash/**").hasAuthority("STAFF")
 
                         // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
                         .requestMatchers("/api/OwnerParcels/**").hasAuthority("RESIDENT")

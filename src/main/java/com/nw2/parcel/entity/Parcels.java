@@ -64,6 +64,9 @@ public class Parcels {
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)
     private List<Notification> notifications;
 
+    @OneToOne(mappedBy = "parcel")
+    private Trash trash;
+
     @PrePersist
     void prePersist() {
         if (receivedAt == null) receivedAt = LocalDateTime.now();

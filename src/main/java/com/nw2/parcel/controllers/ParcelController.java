@@ -71,18 +71,18 @@ public class ParcelController {
         parcelService.moveParcelToTrash(id);
     }
 
-    // restore parcel from trash
-    @PutMapping("/{id}/restore")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void restoreParcel(@PathVariable Integer id) {
-        parcelService.restoreParcel(id);
-    }
-
-    // view trash for staff
-    @GetMapping("/trash")
-    public List<ParcelListItemDto> getTrashParcels() {
-        return parcelService.getTrashParcels();
-    }
+//    // restore parcel from trash
+//    @PutMapping("/{id}/restore")
+//    @ResponseStatus(HttpStatus.NO_CONTENT)
+//    public void restoreParcel(@PathVariable Integer id) {
+//        parcelService.restoreParcel(id);
+//    }
+//
+//    // view trash for staff
+//    @GetMapping("/trash")
+//    public List<ParcelListItemDto> getTrashParcels() {
+//        return parcelService.getTrashParcels();
+//    }
 
     @GetMapping("/types")
     public List<String> getParcelTypes() {
