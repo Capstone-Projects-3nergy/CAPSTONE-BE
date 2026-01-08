@@ -3,6 +3,7 @@ package com.nw2.parcel.services;
 import com.nw2.parcel.Dtos.ParcelListItemDto;
 import com.nw2.parcel.Dtos.TrashListItemDto;
 import com.nw2.parcel.entity.Parcels;
+import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.repositories.ParcelsRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import lombok.RequiredArgsConstructor;
@@ -76,27 +77,50 @@ public List<TrashListItemDto> getTrashParcels() {
             .toList();
 }
 
-    @Transactional
-    public void restoreParcel(Integer parcelId) {
+//    @Transactional
+//    public void restoreParcel(Integer parcelId) {
+//
+//        Parcels parcel = parcelsRepository
+//                .findByParcelIdAndIsDeletedTrue(parcelId)
+//                .orElseThrow(() ->
+//                        new IllegalStateException("Parcel not found in trash")
+//                );
+//
+//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
+//            throw new IllegalStateException("Cannot restore a picked-up parcel");
+//        }
+//
+//        parcel.setIsDeleted(false);
+//        parcel.setDeletedAt(null);
+//
+//        parcelsRepository.save(parcel);
+//        trashRepository.deleteByParcelParcelId(parcelId);
+//
+//        log.info("Parcel {} restored from trash", parcelId);
+//    }
+@Transactional
+public void restoreParcel(Integer parcelId) {
 
-        Parcels parcel = parcelsRepository
-                .findByParcelIdAndIsDeletedTrue(parcelId)
-                .orElseThrow(() ->
-                        new IllegalStateException("Parcel not found in trash")
-                );
+    Trash trash = trashRepository.findByParcelParcelId(parcelId)
+            .orElseThrow(() ->
+                    new IllegalStateException("Parcel not found in trash")
+            );
 
-        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-            throw new IllegalStateException("Cannot restore a picked-up parcel");
-        }
+    Parcels parcel = trash.getParcel();
 
-        parcel.setIsDeleted(false);
-        parcel.setDeletedAt(null);
-
-        parcelsRepository.save(parcel);
-        trashRepository.deleteByParcelParcelId(parcelId);
-
-        log.info("Parcel {} restored from trash", parcelId);
+    if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
+        throw new IllegalStateException("Cannot restore a picked-up parcel");
     }
+
+    parcel.setIsDeleted(false);
+    parcel.setDeletedAt(null);
+
+    parcelsRepository.save(parcel);
+    trashRepository.delete(trash);
+
+    log.info("Parcel {} restored from trash", parcelId);
+}
+
 
     @Transactional
     public void deletePermanently(Integer parcelId) {
