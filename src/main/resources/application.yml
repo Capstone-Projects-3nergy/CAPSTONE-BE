@@ -19,6 +19,8 @@ spring:
     include-message: always
     include-binding-errors: always
 
+trash:
+  retention-days: 1
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
 # =========================================================
@@ -64,3 +66,4 @@ spring:
 
 # Firebase จะใช้ Application Default Credentials (ADC)
 # ซึ่งมาจาก env GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase.json
+

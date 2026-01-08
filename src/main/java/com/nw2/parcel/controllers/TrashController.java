@@ -32,4 +32,11 @@ public class TrashController {
     public void restoreParcel(@PathVariable Integer parcelId) {
         trashService.restoreParcel(parcelId);
     }
+
+    // delete permanently
+    @DeleteMapping("/{parcelId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteParcelPermanently(@PathVariable Integer parcelId) {
+        trashService.deletePermanently(parcelId);
+    }
 }

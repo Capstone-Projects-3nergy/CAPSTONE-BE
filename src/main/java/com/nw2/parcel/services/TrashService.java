@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class TrashService {
                 .toList();
     }
 
+    @Transactional
     public void restoreParcel(Integer parcelId) {
 
         Parcels parcel = parcelsRepository
@@ -54,6 +56,24 @@ public class TrashService {
         trashRepository.deleteByParcelParcelId(parcelId);
 
         log.info("Parcel {} restored from trash", parcelId);
+    }
+
+    @Transactional
+    public void deletePermanently(Integer parcelId) {
+
+        // ตรวจว่ามีอยู่ใน trash จริง
+        trashRepository.findByParcelParcelId(parcelId)
+                .orElseThrow(() ->
+                        new IllegalStateException("Parcel not found in trash")
+                );
+
+        // ลบ trash ก่อน (เพราะมี FK)
+        trashRepository.deleteByParcelParcelId(parcelId);
+
+        // ลบ parcel จริง
+        parcelsRepository.deleteById(parcelId);
+
+        log.info("Parcel {} permanently deleted", parcelId);
     }
 
 }
