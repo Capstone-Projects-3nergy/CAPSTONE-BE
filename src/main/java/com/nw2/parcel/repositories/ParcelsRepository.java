@@ -12,6 +12,7 @@ public interface ParcelsRepository extends JpaRepository<Parcels, Integer> {
     List<Parcels> findAllByOrderByReceivedAtDesc();
     Optional<Parcels> findByParcelIdAndIsDeletedFalse(Integer parcelId);
     List<Parcels> findAllByIsDeletedTrueOrderByDeletedAtDesc();
+    List<Parcels> findAllByIsDeletedFalseOrderByReceivedAtDesc();
     List<Parcels> findByUserUserIdOrderByReceivedAtDesc(Integer userId);
     Optional<Parcels> findByParcelIdAndUserUserId(Integer parcelId, Integer userId);
     Optional<Parcels> findByParcelIdAndIsDeletedTrue(Integer parcelId);

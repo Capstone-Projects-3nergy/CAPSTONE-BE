@@ -57,7 +57,9 @@ public class ParcelService {
 
     // view
     public List<ParcelListItemDto> getAllParcelsForStaff() {
-        List<Parcels> parcels = parcelsRepository.findAllByOrderByReceivedAtDesc();
+        List<Parcels> parcels = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
+//        List<Parcels> parcels = parcelsRepository.findAllByOrderByReceivedAtDesc();
+//        List<Parcels> parcelsDelete = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
 
         return parcels.stream()
                 .map(p -> {
