@@ -5,9 +5,11 @@ import com.nw2.parcel.Dtos.TrashListItemDto;
 import com.nw2.parcel.services.TrashService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/trash")
@@ -29,15 +31,17 @@ public class TrashController {
 
     // restore
     @PutMapping("/{parcelId}/restore")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void restoreParcel(@PathVariable Integer parcelId) {
+    public ResponseEntity<Void> restoreParcel(@PathVariable Integer parcelId) {
         trashService.restoreParcel(parcelId);
+        return ResponseEntity.ok().build();
     }
 
     // delete permanently
     @DeleteMapping("/{parcelId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteParcelPermanently(@PathVariable Integer parcelId) {
+    public ResponseEntity<Map<String, String>> deleteParcelPermanently(@PathVariable Integer parcelId) {
         trashService.deletePermanently(parcelId);
+        return ResponseEntity.ok(
+                Map.of("message", "Parcel permanently deleted")
+        );
     }
 }

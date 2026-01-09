@@ -1,6 +1,5 @@
 package com.nw2.parcel.services;
 
-import com.nw2.parcel.Dtos.ParcelListItemDto;
 import com.nw2.parcel.Dtos.TrashListItemDto;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
@@ -20,124 +19,92 @@ public class TrashService {
 
     private final ParcelsRepository parcelsRepository;
     private final TrashRepository trashRepository;
+
     private static final Logger log = LoggerFactory.getLogger(TrashService.class);
 
-//    public List<ParcelListItemDto> getTrashParcels() {
-//        return parcelsRepository.findAllByIsDeletedTrueOrderByDeletedAtDesc()
-//                .stream()
-//                .map(p -> new ParcelListItemDto(
-//                        p.getParcelId(),
-//                        p.getTrackingNumber(),
-//                        p.getRecipientName(),
-//                        null,
-//                        null,
-//                        p.getStatus(),
-//                        null,
-//                        p.getDeletedAt()
-//                ))
-//                .toList();
-//    }
-public List<TrashListItemDto> getTrashParcels() {
+    // GET TRASH
+    @Transactional(readOnly = true)
+    public List<TrashListItemDto> getTrashParcels() {
 
-    return trashRepository.findAll()
-            .stream()
-            .map(t -> {
-                var p = t.getParcel();
+        return trashRepository.findAll()
+                .stream()
+                .map(t -> {
+                    Parcels p = t.getParcel();
 
-                String ownerName;
-                String roomNumber = null;
-                String contactEmail = null;
+                    String ownerName;
+                    String roomNumber = null;
+                    String contactEmail = null;
 
-                if (p.getUser() != null) {
-                    ownerName =
-                            (p.getUser().getFirstName() != null ? p.getUser().getFirstName() : "") +
-                                    (p.getUser().getLastName() != null ? " " + p.getUser().getLastName() : "");
-                    roomNumber = p.getUser().getRoomNumber();
-                    contactEmail = p.getUser().getEmail();
-                } else {
-                    ownerName = p.getRecipientName();
-                }
+                    if (p.getUser() != null) {
+                        ownerName =
+                                (p.getUser().getFirstName() != null ? p.getUser().getFirstName() : "") +
+                                        (p.getUser().getLastName() != null ? " " + p.getUser().getLastName() : "");
+                        roomNumber = p.getUser().getRoomNumber();
+                        contactEmail = p.getUser().getEmail();
+                    } else {
+                        ownerName = p.getRecipientName();
+                    }
 
-                String deletedByName =
-                        t.getDeletedBy().getFirstName() +
-                                " " +
-                                t.getDeletedBy().getLastName();
+                    String deletedByName =
+                            t.getDeletedBy().getFirstName() + " " +
+                                    t.getDeletedBy().getLastName();
 
-                return new TrashListItemDto(
-                        p.getParcelId(),
-                        p.getTrackingNumber(),
-                        ownerName,
-                        roomNumber,
-                        contactEmail,
-                        p.getStatus(),
-                        t.getDeletedAt(),
-                        deletedByName
-                );
-            })
-            .toList();
-}
-
-//    @Transactional
-//    public void restoreParcel(Integer parcelId) {
-//
-//        Parcels parcel = parcelsRepository
-//                .findByParcelIdAndIsDeletedTrue(parcelId)
-//                .orElseThrow(() ->
-//                        new IllegalStateException("Parcel not found in trash")
-//                );
-//
-//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-//            throw new IllegalStateException("Cannot restore a picked-up parcel");
-//        }
-//
-//        parcel.setIsDeleted(false);
-//        parcel.setDeletedAt(null);
-//
-//        parcelsRepository.save(parcel);
-//        trashRepository.deleteByParcelParcelId(parcelId);
-//
-//        log.info("Parcel {} restored from trash", parcelId);
-//    }
-@Transactional
-public void restoreParcel(Integer parcelId) {
-
-    Trash trash = trashRepository.findByParcelParcelId(parcelId)
-            .orElseThrow(() ->
-                    new IllegalStateException("Parcel not found in trash")
-            );
-
-    Parcels parcel = trash.getParcel();
-
-    if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-        throw new IllegalStateException("Cannot restore a picked-up parcel");
+                    return new TrashListItemDto(
+                            p.getParcelId(),
+                            p.getTrackingNumber(),
+                            ownerName,
+                            roomNumber,
+                            contactEmail,
+                            p.getStatus(),
+                            t.getDeletedAt(),
+                            deletedByName
+                    );
+                })
+                .toList();
     }
 
-    parcel.setIsDeleted(false);
-    parcel.setDeletedAt(null);
-
-    parcelsRepository.save(parcel);
-    trashRepository.delete(trash);
-
-    log.info("Parcel {} restored from trash", parcelId);
-}
-
-
+    // RESTORE
     @Transactional
-    public void deletePermanently(Integer parcelId) {
+    public void restoreParcel(Integer parcelId) {
 
-        // ตรวจว่ามีอยู่ใน trash จริง
-        trashRepository.findByParcelParcelId(parcelId)
+        Trash trash = trashRepository.findByParcelParcelId(parcelId)
                 .orElseThrow(() ->
                         new IllegalStateException("Parcel not found in trash")
                 );
 
-        // ลบ trash ก่อน (เพราะมี FK)
-        trashRepository.deleteByParcelParcelId(parcelId);
+        Parcels parcel = trash.getParcel();
 
-        // ลบ parcel จริง
-        parcelsRepository.deleteById(parcelId);
+        /* 1) restore parcel */
+        parcel.setIsDeleted(false);
+        parcel.setDeletedAt(null);
+
+        /* 2) ตัด relation เพื่อ orphanRemoval */
+        parcel.setTrash(null);
+
+        parcelsRepository.save(parcel);
+        trashRepository.delete(trash);
+
+        log.info("Parcel {} restored from trash", parcelId);
+    }
+
+
+    // DELETE PERMANENTLY
+    @Transactional
+    public void deletePermanently(Integer parcelId) {
+
+        Trash trash = trashRepository.findByParcelParcelId(parcelId)
+                .orElseThrow(() ->
+                        new IllegalStateException("Parcel not found in trash")
+                );
+
+        Parcels parcel = trash.getParcel();
+
+        /* 🔥 ตัด relation */
+        parcel.setTrash(null);
+
+        trashRepository.delete(trash);
+        parcelsRepository.delete(parcel);
 
         log.info("Parcel {} permanently deleted", parcelId);
     }
-
 }
