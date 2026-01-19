@@ -27,7 +27,7 @@ public class UserProfileController {
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
             Authentication authentication
     ) {
-        String firebaseUid = authentication.getName(); // ✅ ใช้ได้แล้ว
+        String firebaseUid = authentication.getName();
         return userProfileService.updateProfile(firebaseUid, request, profileImage);
     }
 }
