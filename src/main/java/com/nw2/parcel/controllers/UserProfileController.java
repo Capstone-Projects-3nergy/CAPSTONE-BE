@@ -1,9 +1,11 @@
 package com.nw2.parcel.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nw2.parcel.Dtos.UpdateProfile;
 import com.nw2.parcel.Dtos.UserProfileResponse;
 import com.nw2.parcel.services.UserProfileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,12 +29,16 @@ public class UserProfileController {
         return userProfileService.getProfile(firebaseUid);
     }
 
-    @PutMapping(consumes = "multipart/form-data")
+    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public UserProfileResponse updateProfile(
-            @RequestPart("data") UpdateProfile request,
+            @RequestPart("data") String data,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
             Authentication authentication
-    ) {
+    ) throws Exception {
+
+        ObjectMapper mapper = new ObjectMapper();
+        UpdateProfile request = mapper.readValue(data, UpdateProfile.class);
+
         String firebaseUid = authentication.getName();
         return userProfileService.updateProfile(firebaseUid, request, profileImage);
     }
