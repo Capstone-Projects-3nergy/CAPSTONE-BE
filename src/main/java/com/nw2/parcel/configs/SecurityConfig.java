@@ -39,6 +39,7 @@ public class SecurityConfig {
 
                         // 🟦 /api/residents/** ให้เฉพาะ STAFF
 //                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
