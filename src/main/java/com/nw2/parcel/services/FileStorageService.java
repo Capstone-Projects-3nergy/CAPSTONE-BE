@@ -55,7 +55,7 @@ public class FileStorageService {
             );
 
             // ทำให้ public
-            blob.createAcl(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER));
+//            blob.createAcl(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER));
 
             // URL ที่ frontend ใช้ได้เลย
             return String.format(
