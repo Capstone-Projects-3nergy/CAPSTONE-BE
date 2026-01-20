@@ -20,7 +20,7 @@ spring:
     include-binding-errors: always
 
 trash:
-  retention-days: 1
+  retention-days: 30
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
 # =========================================================

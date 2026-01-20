@@ -41,8 +41,23 @@ public class UserProfileService {
         }
 
         // ===== profile image =====
+//        if (profileImage != null && !profileImage.isEmpty()) {
+//            String imageUrl = fileStorageService.uploadProfileImage(profileImage, user.getUserId());
+//            user.setProfileImageUrl(imageUrl);
+//        }
         if (profileImage != null && !profileImage.isEmpty()) {
-            String imageUrl = fileStorageService.uploadProfileImage(profileImage, user.getUserId());
+
+            // 🔄 ลบรูปเก่า
+            if (user.getProfileImageUrl() != null) {
+                fileStorageService.deleteFileByUrl(user.getProfileImageUrl());
+            }
+
+            // ⬆️ อัปโหลดรูปใหม่
+            String imageUrl = fileStorageService.uploadProfileImage(
+                    profileImage,
+                    user.getUserId()
+            );
+
             user.setProfileImageUrl(imageUrl);
         }
 
