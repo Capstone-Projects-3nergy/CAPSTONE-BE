@@ -19,6 +19,7 @@ package com.nw2.parcel.services;
 import com.google.cloud.storage.Acl;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.StorageException;
 import com.google.firebase.cloud.StorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,7 +65,12 @@ public class FileStorageService {
                     filePath
             );
 
-        } catch (IOException e) {
+        } catch (StorageException e) {
+            // 🔥 log ให้เห็นจริง
+            e.printStackTrace();
+            throw e; // อย่ากลืน
+        } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Failed to upload profile image", e);
         }
     }

@@ -21,6 +21,11 @@ spring:
 
 trash:
   retention-days: 30
+
+servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
 # =========================================================
