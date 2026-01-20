@@ -81,20 +81,24 @@ public class FileStorageService {
 
         try {
             Bucket bucket = getBucket();
-
-            // แปลง URL → path ใน bucket
             String bucketName = bucket.getName();
+
             String filePath = fileUrl.replace(
                     "https://storage.googleapis.com/" + bucketName + "/", ""
             );
 
             Blob blob = bucket.get(filePath);
-            if (blob != null) {
-                blob.delete();
+
+            if (blob == null) {
+                System.out.println("⚠️ File not found in bucket: " + filePath);
+                return; // 🔥 ห้าม throw
             }
 
+            blob.delete();
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to delete file", e);
+            // ❌ ห้าม throw RuntimeException
+            System.out.println("⚠️ Ignore delete error: " + e.getMessage());
         }
     }
 }
