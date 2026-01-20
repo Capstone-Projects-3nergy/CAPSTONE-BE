@@ -35,7 +35,7 @@ public class Users {
     @Column(name = "phone_number", length = 15)
     private String phoneNumber;
 
-    @Column(name = "profile_image_url", length = 300)
+    @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)

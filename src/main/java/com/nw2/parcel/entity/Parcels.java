@@ -32,7 +32,7 @@ public class Parcels {
     @Column(name = "parcel_type")
     private Parceltype parcelType = Parceltype.BOX;
 
-    @Column(name = "image_url", length = 300)
+    @Column(name = "image_url", length = 500)
     private String imageUrl;
 
     @Column(name = "sender_name", length = 100)

@@ -42,4 +42,5 @@ public class UserProfileController {
         String firebaseUid = authentication.getName();
         return userProfileService.updateProfile(firebaseUid, request, profileImage);
     }
+
 }
