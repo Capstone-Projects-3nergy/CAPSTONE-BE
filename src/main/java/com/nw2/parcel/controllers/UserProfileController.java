@@ -21,6 +21,12 @@ public class UserProfileController {
 
     private final UserProfileService userProfileService;
 
+    @GetMapping
+    public UserProfileResponse getProfile(Authentication authentication) {
+        String firebaseUid = authentication.getName();
+        return userProfileService.getProfile(firebaseUid);
+    }
+
     @PutMapping(consumes = "multipart/form-data")
     public UserProfileResponse updateProfile(
             @RequestPart("data") UpdateProfile request,

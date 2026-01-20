@@ -66,5 +66,13 @@ public class UserProfileService {
                 .status(user.getStatus().name())
                 .build();
     }
+
+    public UserProfileResponse getProfile(String firebaseUid) {
+
+        Users user = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        return mapToResponse(user);
+    }
 }
 
