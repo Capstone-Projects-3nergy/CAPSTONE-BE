@@ -40,24 +40,26 @@ public class UserProfileService {
             user.setPosition(req.getPosition());
         }
 
-        // ===== profile image =====
 //        if (profileImage != null && !profileImage.isEmpty()) {
 //            String imageUrl = fileStorageService.uploadProfileImage(profileImage, user.getUserId());
 //            user.setProfileImageUrl(imageUrl);
 //        }
+
+        // ===== profile image =====
         if (profileImage != null && !profileImage.isEmpty()) {
 
-            // 🔄 ลบรูปเก่า
+            // ลบรูปเก่า (ถ้ามี)
             if (user.getProfileImageUrl() != null) {
                 fileStorageService.deleteFileByUrl(user.getProfileImageUrl());
             }
 
-            // ⬆️ อัปโหลดรูปใหม่
+            // upload รูปใหม่
             String imageUrl = fileStorageService.uploadProfileImage(
                     profileImage,
                     user.getUserId()
             );
 
+            // save url ลง DB
             user.setProfileImageUrl(imageUrl);
         }
 

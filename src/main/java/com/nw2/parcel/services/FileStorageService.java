@@ -1,110 +1,70 @@
 package com.nw2.parcel.services;
 
-//import org.springframework.stereotype.Service;
-//import org.springframework.web.multipart.MultipartFile;
-//
-//import java.util.UUID;
-
-//@Service
-//public class FileStorageService {
-
-//    public String uploadProfileImage(MultipartFile file, Integer userId) {
-//        // TODO: upload ไป S3 / Firebase Storage / Local
-//        String filename = "profile_" + userId + "_" + UUID.randomUUID() + ".jpg";
-//        return "https://cdn.example.com/profile/" + filename;
-//    }
-
-//}
-
-import com.google.cloud.storage.Acl;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.StorageException;
 import com.google.firebase.cloud.StorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
 
-    private Bucket getBucket() {
-        return StorageClient.getInstance().bucket();
-    }
+    private static final String PROFILE_FOLDER = "profile-images";
 
+    /**
+     * อัปโหลดรูปโปรไฟล์
+     */
     public String uploadProfileImage(MultipartFile file, Integer userId) {
-
         try {
-            String extension = getExtension(file.getOriginalFilename());
+            Bucket bucket = StorageClient.getInstance().bucket();
 
-            String filePath = String.format(
-                    "profiles/user_%d/profile_%d_%s%s",
-                    userId,
-                    userId,
-                    UUID.randomUUID(),
-                    extension
-            );
-
-            Bucket bucket = getBucket();
+            String fileName = PROFILE_FOLDER + "/user_" + userId + "/"
+                    + UUID.randomUUID() + "_" + file.getOriginalFilename();
 
             Blob blob = bucket.create(
-                    filePath,
+                    fileName,
                     file.getBytes(),
                     file.getContentType()
             );
 
-            // ทำให้ public
-//            blob.createAcl(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER));
+            // ทำให้ไฟล์ public
+            blob.createAcl(com.google.cloud.storage.Acl.of(
+                    com.google.cloud.storage.Acl.User.ofAllUsers(),
+                    com.google.cloud.storage.Acl.Role.READER
+            ));
 
-            // URL ที่ frontend ใช้ได้เลย
+            // public url
             return String.format(
                     "https://storage.googleapis.com/%s/%s",
                     bucket.getName(),
-                    filePath
+                    fileName
             );
 
-        } catch (StorageException e) {
-            // 🔥 log ให้เห็นจริง
-            e.printStackTrace();
-            throw e; // อย่ากลืน
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to upload profile image", e);
+            throw new RuntimeException("Upload profile image failed", e);
         }
     }
 
-    private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return ".jpg";
-        }
-        return filename.substring(filename.lastIndexOf("."));
-    }
-
+    /**
+     * ลบไฟล์จาก Firebase Storage (ใช้ตอนเปลี่ยนรูป)
+     */
     public void deleteFileByUrl(String fileUrl) {
-        if (fileUrl == null || fileUrl.isBlank()) return;
-
         try {
-            Bucket bucket = getBucket();
-            String bucketName = bucket.getName();
+            Bucket bucket = StorageClient.getInstance().bucket();
 
-            String filePath = fileUrl.replace(
-                    "https://storage.googleapis.com/" + bucketName + "/", ""
+            String filePath = fileUrl.substring(
+                    fileUrl.indexOf(bucket.getName()) + bucket.getName().length() + 1
             );
 
             Blob blob = bucket.get(filePath);
-
-            if (blob == null) {
-                System.out.println("⚠️ File not found in bucket: " + filePath);
-                return; // 🔥 ห้าม throw
+            if (blob != null) {
+                blob.delete();
             }
-
-            blob.delete();
-
         } catch (Exception e) {
-            // ❌ ห้าม throw RuntimeException
-            System.out.println("⚠️ Ignore delete error: " + e.getMessage());
+            // ไม่ throw ก็ได้ กันระบบพัง
+            System.err.println("Failed to delete old profile image: " + e.getMessage());
         }
     }
 }
