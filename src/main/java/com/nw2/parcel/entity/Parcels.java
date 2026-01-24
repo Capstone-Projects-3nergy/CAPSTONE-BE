@@ -64,8 +64,8 @@ public class Parcels {
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)
     private List<Notification> notifications;
 
-    @OneToOne(mappedBy = "parcel", orphanRemoval = true)
-    private Trash trash;
+//    @OneToOne(mappedBy = "parcel", orphanRemoval = true)
+//    private Trash trash;
 
     @PrePersist
     void prePersist() {

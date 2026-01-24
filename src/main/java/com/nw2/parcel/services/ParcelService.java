@@ -581,7 +581,8 @@ public class ParcelService {
 
         // 3) สร้าง Trash record
         Trash trash = new Trash();
-        trash.setParcel(parcel);
+        trash.setTargetType(Trash.TargetType.PARCEL);
+        trash.setTargetId(parcelId);
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
 

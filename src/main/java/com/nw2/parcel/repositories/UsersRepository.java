@@ -14,4 +14,6 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
     Optional<Users> findByRoomNumberAndRole(String roomNumber, Users.Role role);
     List<Users> findByRole(Users.Role role);
     List<Users> findByRoleAndStatus(Users.Role role, Users.Status status);
+    List<Users> findByStatusNot(Users.Status status);
+
 }

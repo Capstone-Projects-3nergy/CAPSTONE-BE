@@ -44,8 +44,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers("/api/trash/**").hasAuthority("STAFF")
+                        .requestMatchers("/api/staff/users/**").hasAuthority("STAFF") //management
 
-                        // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
+
+                                // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
                         .requestMatchers("/api/OwnerParcels/**").hasAuthority("RESIDENT")
 
                         .anyRequest().authenticated()

@@ -13,7 +13,7 @@ import java.util.List;
 public class Users {
 
     public enum Role { RESIDENT, STAFF, ADMIN }
-    public enum Status { ACTIVE, INACTIVE }
+    public enum Status { ACTIVE, INACTIVE, DELETED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,6 +60,9 @@ public class Users {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @ManyToOne(optional = true)
     @JoinColumn(name = "dorm_id", nullable = true)
