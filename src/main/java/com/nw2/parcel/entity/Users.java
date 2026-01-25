@@ -68,13 +68,13 @@ public class Users {
     @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<Parcels> parcels;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<Notification> notifications;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<StaffDorm> staffDorms;
 
     @OneToMany(mappedBy = "deletedBy")

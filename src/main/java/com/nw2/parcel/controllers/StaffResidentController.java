@@ -1,11 +1,11 @@
 package com.nw2.parcel.controllers;
 
 import org.springframework.security.core.Authentication;
-import com.nw2.parcel.Dtos.ResidentDetailDto;
-import com.nw2.parcel.Dtos.ResidentListResponse;
-import com.nw2.parcel.Dtos.CreateResidentDto;
+import com.nw2.parcel.Dtos.ManagementDetailDto;
+import com.nw2.parcel.Dtos.ManagementListDto;
+import com.nw2.parcel.Dtos.ManagementAddDto;
 import com.nw2.parcel.entity.Users;
-import com.nw2.parcel.services.StaffResidentService;
+import com.nw2.parcel.services.ManagementService;
 import com.nw2.parcel.services.TrashService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,24 +20,24 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StaffResidentController {
 
-    private final StaffResidentService staffResidentService;
+    private final ManagementService staffResidentService;
     private final TrashService trashService;
 
     //list table
     @GetMapping
-    public List<ResidentListResponse> getAllResidents() {
+    public List<ManagementListDto> getAllResidents() {
         return staffResidentService.getAllResidents();
     }
 
     //detail
     @GetMapping("/{id}")
-    public ResidentDetailDto getDetail(@PathVariable Integer id) {
+    public ManagementDetailDto getDetail(@PathVariable Integer id) {
         return staffResidentService.getResidentDetail(id);
     }
 
     //add
     @PostMapping
-    public ResponseEntity<?> createResident(@RequestBody CreateResidentDto req) {
+    public ResponseEntity<?> createResident(@RequestBody ManagementAddDto req) {
         staffResidentService.addResident(req);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -46,7 +46,7 @@ public class StaffResidentController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateResident(
             @PathVariable Integer id,
-            @RequestBody CreateResidentDto req
+            @RequestBody ManagementAddDto req
     ) {
         staffResidentService.updateResident(id, req);
         return ResponseEntity.ok().build();

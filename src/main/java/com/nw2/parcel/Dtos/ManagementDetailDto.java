@@ -3,7 +3,7 @@ package com.nw2.parcel.Dtos;
 import lombok.Data;
 
 @Data
-public class ResidentDetailDto {
+public class ManagementDetailDto {
     private Integer userId;
     private String firstName;
     private String lastName;
@@ -12,5 +12,7 @@ public class ResidentDetailDto {
     private String phoneNumber;
     private String lineId;
     private String profileImageUrl;
+    private String role;
     private Integer dormId;
+    private String dormName;
 }

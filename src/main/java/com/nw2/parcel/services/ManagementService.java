@@ -1,8 +1,8 @@
 package com.nw2.parcel.services;
 
-import com.nw2.parcel.Dtos.ResidentDetailDto;
-import com.nw2.parcel.Dtos.ResidentListResponse;
-import com.nw2.parcel.Dtos.CreateResidentDto;
+import com.nw2.parcel.Dtos.ManagementDetailDto;
+import com.nw2.parcel.Dtos.ManagementListDto;
+import com.nw2.parcel.Dtos.ManagementAddDto;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.exception.EmailAlreadyExistsException;
 import com.nw2.parcel.repositories.DormRepository;
@@ -16,21 +16,25 @@ import java.util.List;
 //management
 @Service
 @RequiredArgsConstructor
-public class StaffResidentService {
+public class ManagementService {
 
     private final UsersRepository usersRepository;
     private final DormRepository dormRepository;
 
     // 1️⃣ list resident
-    public List<ResidentListResponse> getAllResidents() {
+    public List<ManagementListDto> getAllResidents() {
         return usersRepository.findByStatusNot(Users.Status.DELETED)
-                        .stream()
-                .map(user -> new ResidentListResponse(
+                .stream()
+                .map(user -> new ManagementListDto(
                         user.getUserId(),
                         user.getFirstName() + " " + user.getLastName(),
                         user.getEmail(),
                         user.getRoomNumber(),
                         user.getProfileImageUrl(),
+                        user.getRole().name(),
+                        user.getDorm() != null
+                                ? user.getDorm().getDormName()
+                                : null,
                         user.getStatus().name(),
                         user.getUpdatedAt()
                 ))
@@ -38,11 +42,11 @@ public class StaffResidentService {
     }
 
     // 2️⃣ detail
-    public ResidentDetailDto getResidentDetail(Integer id) {
+    public ManagementDetailDto getResidentDetail(Integer id) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
                 .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
 
-        ResidentDetailDto dto = new ResidentDetailDto();
+        ManagementDetailDto dto = new ManagementDetailDto();
         dto.setUserId(user.getUserId());
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
@@ -51,13 +55,19 @@ public class StaffResidentService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setLineId(user.getLineId());
         dto.setProfileImageUrl(user.getProfileImageUrl());
-        dto.setDormId(user.getDorm() != null ? user.getDorm().getDormId() : null);
+        dto.setRole(user.getRole().name());
+
+        if (user.getDorm() != null) {
+            dto.setDormId(user.getDorm().getDormId());
+            dto.setDormName(user.getDorm().getDormName());
+        }
 
         return dto;
     }
 
+
     // 3️⃣ add resident
-    public void addResident(CreateResidentDto req) {
+    public void addResident(ManagementAddDto req) {
         if (usersRepository.existsByEmail(req.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
@@ -83,7 +93,7 @@ public class StaffResidentService {
     }
 
     // 4️⃣ update resident
-    public void updateResident(Integer id, CreateResidentDto req) {
+    public void updateResident(Integer id, ManagementAddDto req) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
                 .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
 
