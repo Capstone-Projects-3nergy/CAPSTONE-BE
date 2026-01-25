@@ -36,4 +36,16 @@ public class UserController {
         return ResponseEntity.ok(resp);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String header) {
+        if (header == null || !header.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing or invalid Authorization header");
+        }
+
+        String token = header.substring(7).trim();
+        userService.logout(token, firebaseService);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

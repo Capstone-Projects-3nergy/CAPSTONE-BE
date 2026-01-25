@@ -25,13 +25,13 @@ public class UserProfileService {
         Users user = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-        // ===== update common fields =====
+        //update common fields
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setPhoneNumber(req.getPhoneNumber());
         user.setLineId(req.getLineId());
 
-        // ===== role specific =====
+        //role specific
         if (user.getRole() == Users.Role.RESIDENT) {
             user.setRoomNumber(req.getRoomNumber());
         }
@@ -40,12 +40,7 @@ public class UserProfileService {
             user.setPosition(req.getPosition());
         }
 
-//        if (profileImage != null && !profileImage.isEmpty()) {
-//            String imageUrl = fileStorageService.uploadProfileImage(profileImage, user.getUserId());
-//            user.setProfileImageUrl(imageUrl);
-//        }
-
-        // ===== profile image =====
+        //profile image
         if (profileImage != null && !profileImage.isEmpty()) {
 
             // ลบรูปเก่า (ถ้ามี)
@@ -59,7 +54,6 @@ public class UserProfileService {
                     user.getUserId()
             );
 
-            // save url ลง DB
             user.setProfileImageUrl(imageUrl);
         }
 
