@@ -410,7 +410,7 @@ public class ParcelService {
         Users currentResident = getCurrentResident();
 
         Parcels p = parcelsRepository
-                .findByParcelIdAndUserUserId(parcelId, currentResident.getUserId())
+                .findByParcelIdAndUserUserIdAndIsDeletedFalse(parcelId, currentResident.getUserId())
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         Integer companyId = null;
@@ -460,7 +460,7 @@ public class ParcelService {
         Users currentResident = getCurrentResident();
 
         Parcels p = parcelsRepository
-                .findByParcelIdAndUserUserId(parcelId, currentResident.getUserId())
+                .findByParcelIdAndUserUserIdAndIsDeletedFalse(parcelId, currentResident.getUserId())
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         // resident กด confirm ได้เฉพาะตอนสถานะ RECEIVED
