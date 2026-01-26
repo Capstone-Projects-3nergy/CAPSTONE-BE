@@ -104,9 +104,15 @@ public class UserService {
             final String uid = decoded.getUid();
             final String emailFromToken = decoded.getEmail();
 
+            if (!decoded.isEmailVerified()) {
+                throw new UnauthorizedException("Email not verified");
+            }
             // 2) หา user ใน DB
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
+            u.setStatus(Users.Status.ACTIVE);
+            u.setUpdatedAt(LocalDateTime.now());
+            usersRepository.save(u);
 
             // 3) สร้าง response
             LoginResponse resp = new LoginResponse();
@@ -128,6 +134,24 @@ public class UserService {
 
         } catch (FirebaseAuthException e) {
             // ⬅️ token ไม่ผ่าน / หมดอายุ / ผิด
+            throw new UnauthorizedException("Invalid or expired token");
+        }
+    }
+
+    public void logout(String idToken, FirebaseService firebaseService) {
+        try {
+            var decoded = firebaseService.verifyIdToken(idToken);
+            String uid = decoded.getUid();
+
+            Users user = usersRepository.findByFirebaseUid(uid)
+                    .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+            user.setStatus(Users.Status.INACTIVE);
+            user.setUpdatedAt(LocalDateTime.now());
+
+            usersRepository.save(user);
+
+        } catch (FirebaseAuthException e) {
             throw new UnauthorizedException("Invalid or expired token");
         }
     }

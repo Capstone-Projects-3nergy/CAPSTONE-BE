@@ -19,6 +19,19 @@ spring:
     include-message: always
     include-binding-errors: always
 
+trash:
+  retention-days: 30
+
+servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
 # =========================================================
@@ -36,13 +49,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate   # dev ให้ auto สร้างตารางได้
+      ddl-auto: validate
+      # dev ให้ auto สร้างตารางได้
 
 firebase:
   config:
     path: classpath:firebase/firebase-adminsdk.json
 
-
+cloudinary:
+  cloud-name: dfyouxpnu
+  api-key: 942824938494116
+  api-secret: EUVITbtwuWoJwLrj9
 # =========================================================
 # 🔹 CONTAINER PROFILE (ใช้ตอนรันใน Docker / VM)
 # =========================================================
@@ -64,3 +81,4 @@ spring:
 
 # Firebase จะใช้ Application Default Credentials (ADC)
 # ซึ่งมาจาก env GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase.json
+

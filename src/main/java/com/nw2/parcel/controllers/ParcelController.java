@@ -64,7 +64,7 @@ public class ParcelController {
         return parcelService.updateParcelForStaff(id, req);
     }
 
-    // delete
+    // soft delete
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void moveParcelToTrash(@PathVariable Integer id) {

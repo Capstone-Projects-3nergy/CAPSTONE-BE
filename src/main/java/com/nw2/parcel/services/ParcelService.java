@@ -3,10 +3,12 @@ package com.nw2.parcel.services;
 import com.nw2.parcel.Dtos.*;
 import com.nw2.parcel.entity.Company;
 import com.nw2.parcel.entity.Parcels;
+import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.exception.ParcelNotFoundException;
 import com.nw2.parcel.repositories.CompanyRepository;
 import com.nw2.parcel.repositories.ParcelsRepository;
+import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ public class ParcelService {
     private final ParcelsRepository parcelsRepository;
     private final CompanyRepository companyRepository;
     private final UsersRepository usersRepository;
+    private final TrashRepository trashRepository;
 
     // add
     public Parcels createParcel(CreateParcelDto req) {
@@ -57,7 +60,9 @@ public class ParcelService {
 
     // view
     public List<ParcelListItemDto> getAllParcelsForStaff() {
-        List<Parcels> parcels = parcelsRepository.findAllByOrderByReceivedAtDesc();
+        List<Parcels> parcels = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
+//        List<Parcels> parcels = parcelsRepository.findAllByOrderByReceivedAtDesc();
+//        List<Parcels> parcelsDelete = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
 
         return parcels.stream()
                 .map(p -> {
@@ -334,16 +339,6 @@ public class ParcelService {
         );
     }
 
-    public void moveParcelToTrash(Integer parcelId) {
-        Parcels parcel = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
-                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
-
-        parcel.setIsDeleted(true);
-        parcel.setDeletedAt(LocalDateTime.now());
-
-        parcelsRepository.save(parcel);
-    }
-
     private Users getCurrentResident() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -372,7 +367,10 @@ public class ParcelService {
         Users currentResident = getCurrentResident();
 
         List<Parcels> parcels =
-                parcelsRepository.findByUserUserIdOrderByReceivedAtDesc(currentResident.getUserId());
+                parcelsRepository
+                        .findByUserUserIdAndIsDeletedFalseOrderByReceivedAtDesc(
+                                currentResident.getUserId()
+                        );
 
         return parcels.stream()
                 .map(p -> {
@@ -403,8 +401,9 @@ public class ParcelService {
                             p.getUpdatedAt()
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
+
 
     // VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
     public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
@@ -546,4 +545,114 @@ public class ParcelService {
 
         return parcelsRepository.save(parcel);
     }
+
+    // soft delete
+//    public void moveParcelToTrash(Integer parcelId) {
+//        Parcels parcel = parcelsRepository
+//                .findByParcelIdAndIsDeletedFalse(parcelId)
+//                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+//
+//        // ไม่ให้ลบพัสดุที่รับไปแล้ว
+//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
+//            throw new IllegalStateException("Cannot delete a picked-up parcel");
+//        }
+//
+//        parcel.setIsDeleted(true);
+//        parcel.setDeletedAt(LocalDateTime.now());
+//
+//        parcelsRepository.save(parcel);
+//    }
+    public void moveParcelToTrash(Integer parcelId) {
+
+        Parcels parcel = parcelsRepository
+                .findByParcelIdAndIsDeletedFalse(parcelId)
+                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+
+        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
+            throw new IllegalStateException("Cannot delete a picked-up parcel");
+        }
+
+        // 1) soft delete parcel
+        parcel.setIsDeleted(true);
+        parcel.setDeletedAt(LocalDateTime.now());
+
+        // 2) หา user ที่ login อยู่ (STAFF)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String firebaseUid = auth.getName();
+
+        Users staff = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        // 3) สร้าง Trash record
+        Trash trash = new Trash();
+        trash.setTargetType(Trash.TargetType.PARCEL);
+        trash.setTargetId(parcelId);
+        trash.setDeletedAt(LocalDateTime.now());
+        trash.setDeletedBy(staff);
+
+        // 4) save ทั้งสอง
+        parcelsRepository.save(parcel);
+        trashRepository.save(trash);
+    }
+
+    public List<ParcelListItemDto> getTrashParcels() {
+        return parcelsRepository.findAllByIsDeletedTrueOrderByDeletedAtDesc()
+                .stream()
+                .map(p -> new ParcelListItemDto(
+                        p.getParcelId(),
+                        p.getTrackingNumber(),
+                        p.getRecipientName(),
+                        null,
+                        null,
+                        p.getStatus(),
+                        p.getReceivedAt(),
+                        p.getDeletedAt()
+                ))
+                .toList();
+    }
+
+    // restore from trash (STAFF only)
+//    public void restoreParcel(Integer parcelId) {
+//
+//        Parcels parcel = parcelsRepository
+//                .findByParcelIdAndIsDeletedTrue(parcelId)
+//                .orElseThrow(() ->
+//                        new IllegalStateException("Parcel not found in trash")
+//                );
+//
+//        // กู้คืนแล้วควรกลับไปอยู่สถานะที่ staff จัดการได้
+//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
+//            throw new IllegalStateException("Cannot restore a picked-up parcel");
+//        }
+//
+//        parcel.setIsDeleted(false);
+//        parcel.setDeletedAt(null);
+//
+//        parcelsRepository.save(parcel);
+//
+//        log.info("Parcel {} restored from trash", parcelId);
+//    }
+//    public void restoreParcel(Integer parcelId) {
+//
+//        Parcels parcel = parcelsRepository
+//                .findByParcelIdAndIsDeletedTrue(parcelId)
+//                .orElseThrow(() ->
+//                        new IllegalStateException("Parcel not found in trash")
+//                );
+//
+//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
+//            throw new IllegalStateException("Cannot restore a picked-up parcel");
+//        }
+//
+//        parcel.setIsDeleted(false);
+//        parcel.setDeletedAt(null);
+//
+//        parcelsRepository.save(parcel);
+//
+//        // 🔥 ลบ trash record
+//        trashRepository.deleteByParcelParcelId(parcelId);
+//
+//        log.info("Parcel {} restored from trash", parcelId);
+//    }
+
 }

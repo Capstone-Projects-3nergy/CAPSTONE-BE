@@ -15,5 +15,4 @@ public class CreateParcelDto {
     private String senderName;
     private Integer companyId;
     private Integer userId;
-
 }

@@ -28,9 +28,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/dorms/**","/api/public/parcels/**")
+                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/dorms/**","/api/public/parcels/**","/api/public/email/**")
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/companies/**", "/api/residents/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
 
@@ -38,12 +38,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
 
                         // 🟦 /api/residents/** ให้เฉพาะ STAFF
-                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
+//                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
+                        .requestMatchers("/api/trash/**").hasAuthority("STAFF")
+                        .requestMatchers("/api/staff/users/**").hasAuthority("STAFF") //management
 
-                        // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
+
+                                // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
                         .requestMatchers("/api/OwnerParcels/**").hasAuthority("RESIDENT")
 
                         .anyRequest().authenticated()

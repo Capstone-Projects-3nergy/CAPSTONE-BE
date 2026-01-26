@@ -13,7 +13,7 @@ import java.util.List;
 public class Users {
 
     public enum Role { RESIDENT, STAFF, ADMIN }
-    public enum Status { ACTIVE, INACTIVE }
+    public enum Status { ACTIVE, INACTIVE, DELETED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,7 +35,7 @@ public class Users {
     @Column(name = "phone_number", length = 15)
     private String phoneNumber;
 
-    @Column(name = "profile_image_url", length = 300)
+    @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)
@@ -61,16 +61,22 @@ public class Users {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @ManyToOne(optional = true)
     @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<Parcels> parcels;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<Notification> notifications;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<StaffDorm> staffDorms;
+
+    @OneToMany(mappedBy = "deletedBy")
+    private List<Trash> deletedTrashList;
 }
