@@ -367,7 +367,10 @@ public class ParcelService {
         Users currentResident = getCurrentResident();
 
         List<Parcels> parcels =
-                parcelsRepository.findByUserUserIdOrderByReceivedAtDesc(currentResident.getUserId());
+                parcelsRepository
+                        .findByUserUserIdAndIsDeletedFalseOrderByReceivedAtDesc(
+                                currentResident.getUserId()
+                        );
 
         return parcels.stream()
                 .map(p -> {
@@ -398,8 +401,9 @@ public class ParcelService {
                             p.getUpdatedAt()
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
+
 
     // VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
     public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
