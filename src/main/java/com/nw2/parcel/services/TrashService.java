@@ -1,6 +1,7 @@
 package com.nw2.parcel.services;
 
 import com.nw2.parcel.Dtos.TrashListItemDto;
+import com.nw2.parcel.Dtos.TrashResidentDto;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
@@ -129,4 +130,70 @@ public class TrashService {
         usersRepository.save(resident);
         trashRepository.save(trash);
     }
+
+    @Transactional(readOnly = true)
+    public List<TrashResidentDto> getTrashResidents() {
+
+        return trashRepository
+                .findAllByTargetTypeOrderByDeletedAtDesc(Trash.TargetType.USER)
+                .stream()
+                .map(trash -> {
+
+                    Users u = usersRepository.findById(trash.getTargetId())
+                            .orElseThrow(() ->
+                                    new IllegalStateException("User not found: " + trash.getTargetId())
+                            );
+
+                    return new TrashResidentDto(
+                            u.getUserId(),
+                            u.getEmail(),
+                            u.getFirstName(),
+                            u.getLastName(),
+                            u.getPhoneNumber(),
+                            u.getLineId(),
+                            u.getRoomNumber(),
+                            u.getPosition(),
+                            u.getProfileImageUrl(),
+                            u.getRole().name(),
+                            u.getStatus().name(),
+                            trash.getDeletedAt(),
+                            trash.getDeletedBy().getFirstName() + " " +
+                                    trash.getDeletedBy().getLastName()
+                    );
+                })
+                .toList();
+    }
+
+    @Transactional
+    public void restoreResident(Integer residentId) {
+
+        Trash trash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId)
+                .orElseThrow(() -> new IllegalStateException("Resident not found in trash"));
+
+        Users resident = usersRepository.findById(residentId)
+                .orElseThrow();
+
+        resident.setStatus(Users.Status.ACTIVE);
+        resident.setDeletedAt(null);
+
+        usersRepository.save(resident);
+        trashRepository.delete(trash);
+
+        log.info("Resident {} restored from trash", residentId);
+    }
+
+    @Transactional
+    public void deleteResidentPermanently(Integer residentId) {
+
+        Trash trash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId)
+                .orElseThrow(() -> new IllegalStateException("Resident not found in trash"));
+
+        usersRepository.deleteById(residentId);
+        trashRepository.delete(trash);
+
+        log.info("Resident {} permanently deleted", residentId);
+    }
+
 }
