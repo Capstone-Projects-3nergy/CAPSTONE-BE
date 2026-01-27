@@ -23,5 +23,5 @@ public class TrashResidentDto {
     private String role;
     private String status;
     private LocalDateTime deletedAt;
-    private String deletedBy;
+    private String deletedByName;
 }

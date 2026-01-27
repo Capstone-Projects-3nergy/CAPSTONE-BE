@@ -116,8 +116,12 @@ public class TrashService {
 
                     Users u = usersRepository.findById(trash.getTargetId())
                             .orElseThrow(() ->
-                                    new IllegalStateException("User not found: " + trash.getTargetId())
+                                    new IllegalArgumentException("User not found in trash")
                             );
+
+                    String deletedByName =
+                            trash.getDeletedBy().getFirstName() + " " +
+                                    trash.getDeletedBy().getLastName();
 
                     return new TrashResidentDto(
                             u.getUserId(),
@@ -127,13 +131,12 @@ public class TrashService {
                             u.getPhoneNumber(),
                             u.getLineId(),
                             u.getRoomNumber(),
-                            u.getPosition(),
+                            null, // position
                             u.getProfileImageUrl(),
                             u.getRole().name(),
                             u.getStatus().name(),
                             trash.getDeletedAt(),
-                            trash.getDeletedBy().getFirstName() + " " +
-                                    trash.getDeletedBy().getLastName()
+                            deletedByName
                     );
                 })
                 .toList();
