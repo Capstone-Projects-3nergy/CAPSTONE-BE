@@ -27,7 +27,8 @@ public class ManagementService {
 
     // 1️⃣ list resident
     public List<ManagementListDto> getAllResidents() {
-        return usersRepository.findByStatusNot(Users.Status.DELETED)
+        return usersRepository
+                .findByRoleAndStatusNot(Users.Role.RESIDENT, Users.Status.DELETED)
                 .stream()
                 .map(user -> new ManagementListDto(
                         user.getUserId(),
@@ -36,9 +37,7 @@ public class ManagementService {
                         user.getRoomNumber(),
                         user.getProfileImageUrl(),
                         user.getRole().name(),
-                        user.getDorm() != null
-                                ? user.getDorm().getDormName()
-                                : null,
+                        user.getDorm() != null ? user.getDorm().getDormName() : null,
                         user.getStatus().name(),
                         user.getUpdatedAt()
                 ))
