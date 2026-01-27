@@ -29,7 +29,10 @@ public class ManagementService {
     // 1️⃣ list resident
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
-                .findByRoleAndStatusNot(Users.Role.RESIDENT, Users.Status.DELETED)
+                .findByRoleAndStatusNot(
+                        List.of(Users.Role.RESIDENT, Users.Role.STAFF),
+                        Users.Status.DELETED
+                )
                 .stream()
                 .map(user -> new ManagementListDto(
                         user.getUserId(),
