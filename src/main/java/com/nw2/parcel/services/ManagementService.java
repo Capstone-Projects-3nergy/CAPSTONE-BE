@@ -113,45 +113,80 @@ public class ManagementService {
         usersRepository.save(user);
     }
 
+//    @Transactional
+//    public void softDeleteResident(Integer residentId, String staffEmail) {
+//
+//        Users staff = usersRepository.findByEmail(staffEmail)
+//                .orElseThrow(() -> new IllegalStateException("Staff not found"));
+//
+//        Users resident = usersRepository
+//                .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
+//                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+//
+//        // ป้องกันลบซ้ำ
+//        if (resident.getStatus() == Users.Status.DELETED) {
+//            throw new IllegalStateException("Resident already deleted");
+//        }
+//
+//        // Check if already in trash (prevent duplicate)
+//        Optional<Trash> existingTrash = trashRepository
+//                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId);
+//
+//        if (existingTrash.isPresent()) {
+//            throw new IllegalStateException("Resident already in trash");
+//        }
+//
+//        // soft delete
+//        resident.setStatus(Users.Status.DELETED);
+//        resident.setDeletedAt(LocalDateTime.now());
+//        resident.setUpdatedAt(LocalDateTime.now());
+//
+//        usersRepository.save(resident);
+//
+//        // move to trash
+//        Trash trash = new Trash();
+//        trash.setTargetType(Trash.TargetType.USER);
+//        trash.setTargetId(residentId);
+//        trash.setDeletedAt(LocalDateTime.now());
+//        trash.setDeletedBy(staff);
+//
+//        trashRepository.save(trash);
+//    }
+
     @Transactional
-    public void softDeleteResident(Integer residentId, String staffEmail) {
+    public void softDeleteResident(Integer userId, String staffEmail) {
 
         Users staff = usersRepository.findByEmail(staffEmail)
                 .orElseThrow(() -> new IllegalStateException("Staff not found"));
 
-        Users resident = usersRepository
-                .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
-                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // ป้องกันลบซ้ำ
-        if (resident.getStatus() == Users.Status.DELETED) {
-            throw new IllegalStateException("Resident already deleted");
+        if (user.getStatus() == Users.Status.DELETED) {
+            throw new IllegalStateException("User already deleted");
         }
 
-        // Check if already in trash (prevent duplicate)
-        Optional<Trash> existingTrash = trashRepository
-                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId);
-
-        if (existingTrash.isPresent()) {
-            throw new IllegalStateException("Resident already in trash");
+        if (trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.USER, userId)
+                .isPresent()) {
+            throw new IllegalStateException("User already in trash");
         }
 
-        // soft delete
-        resident.setStatus(Users.Status.DELETED);
-        resident.setDeletedAt(LocalDateTime.now());
-        resident.setUpdatedAt(LocalDateTime.now());
+        user.setStatus(Users.Status.DELETED);
+        user.setDeletedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
 
-        usersRepository.save(resident);
+        usersRepository.save(user);
 
-        // move to trash
         Trash trash = new Trash();
         trash.setTargetType(Trash.TargetType.USER);
-        trash.setTargetId(residentId);
+        trash.setTargetId(userId);
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
 
         trashRepository.save(trash);
     }
+
 
 }
 
