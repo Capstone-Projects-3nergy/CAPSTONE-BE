@@ -3,12 +3,15 @@ package com.nw2.parcel.services;
 import com.nw2.parcel.Dtos.ManagementDetailDto;
 import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
+import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.exception.EmailAlreadyExistsException;
 import com.nw2.parcel.repositories.DormRepository;
+import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +23,7 @@ public class ManagementService {
 
     private final UsersRepository usersRepository;
     private final DormRepository dormRepository;
+    private final TrashRepository trashRepository;
 
     // 1️⃣ list resident
     public List<ManagementListDto> getAllResidents() {
@@ -107,6 +111,37 @@ public class ManagementService {
         usersRepository.save(user);
     }
 
+    @Transactional
+    public void softDeleteResident(Integer residentId, String staffEmail) {
+
+        Users staff = usersRepository.findByEmail(staffEmail)
+                .orElseThrow(() -> new IllegalStateException("Staff not found"));
+
+        Users resident = usersRepository
+                .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
+                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+
+        // ป้องกันลบซ้ำ
+        if (resident.getStatus() == Users.Status.DELETED) {
+            throw new IllegalStateException("Resident already deleted");
+        }
+
+        // soft delete
+        resident.setStatus(Users.Status.DELETED);
+        resident.setDeletedAt(LocalDateTime.now());
+        resident.setUpdatedAt(LocalDateTime.now());
+
+        usersRepository.save(resident);
+
+        // move to trash
+        Trash trash = new Trash();
+        trash.setTargetType(Trash.TargetType.USER);
+        trash.setTargetId(residentId);
+        trash.setDeletedAt(LocalDateTime.now());
+        trash.setDeletedBy(staff);
+
+        trashRepository.save(trash);
+    }
 
 }
 

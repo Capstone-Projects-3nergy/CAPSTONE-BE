@@ -4,7 +4,6 @@ import org.springframework.security.core.Authentication;
 import com.nw2.parcel.Dtos.ManagementDetailDto;
 import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
-import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.services.ManagementService;
 import com.nw2.parcel.services.TrashService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/staff/users")
 @RequiredArgsConstructor
-public class StaffResidentController {
+public class ManagementController {
 
     private final ManagementService staffResidentService;
     private final TrashService trashService;
@@ -52,14 +51,14 @@ public class StaffResidentController {
         return ResponseEntity.ok().build();
     }
 
-    //delete
+    // soft delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> moveResidentToTrash(
             @PathVariable Integer id,
             Authentication authentication
     ) {
-        String email = authentication.getName(); // ✅ ได้ email แน่นอน
-        trashService.deleteResident(id, email);
+        String email = authentication.getName();
+        staffResidentService.softDeleteResident(id, email);
         return ResponseEntity.noContent().build();
     }
 

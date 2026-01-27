@@ -106,33 +106,6 @@ public class TrashService {
         log.info("Parcel {} permanently deleted", parcelId);
     }
 
-    @Transactional
-    public void deleteResident(Integer residentId, String staffEmail) {
-
-        Users staff = usersRepository.findByEmail(staffEmail)
-                .orElseThrow(() -> new IllegalStateException("Staff not found"));
-
-        Users resident = usersRepository
-                .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
-                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
-
-        if (resident.getStatus() == Users.Status.DELETED) {
-            throw new IllegalStateException("Resident already deleted");
-        }
-
-        resident.setStatus(Users.Status.DELETED);
-        resident.setDeletedAt(LocalDateTime.now());
-
-        Trash trash = new Trash();
-        trash.setTargetType(Trash.TargetType.USER);
-        trash.setTargetId(residentId);
-        trash.setDeletedAt(LocalDateTime.now());
-        trash.setDeletedBy(staff); // ✅ ไม่ null แล้ว
-
-        usersRepository.save(resident);
-        trashRepository.save(trash);
-    }
-
     @Transactional(readOnly = true)
     public List<TrashResidentDto> getTrashResidents() {
 
