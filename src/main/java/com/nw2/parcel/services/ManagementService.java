@@ -150,6 +150,7 @@ public class ManagementService {
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
 
+        usersRepository.save(resident);
         trashRepository.save(trash);
     }
 
