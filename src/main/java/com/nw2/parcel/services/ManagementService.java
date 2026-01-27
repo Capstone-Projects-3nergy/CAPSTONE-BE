@@ -27,12 +27,28 @@ public class ManagementService {
     private final TrashRepository trashRepository;
 
     // 1️⃣ list resident
+//    public List<ManagementListDto> getAllResidents() {
+//        return usersRepository
+//                .findByRoleAndStatusNot(
+//                        List.of(Users.Role.RESIDENT, Users.Role.STAFF),
+//                        Users.Status.DELETED
+//                )
+//                .stream()
+//                .map(user -> new ManagementListDto(
+//                        user.getUserId(),
+//                        user.getFirstName() + " " + user.getLastName(),
+//                        user.getEmail(),
+//                        user.getRoomNumber(),
+//                        user.getProfileImageUrl(),
+//                        user.getRole().name(),
+//                        user.getDorm() != null ? user.getDorm().getDormName() : null,
+//                        user.getStatus().name(),
+//                        user.getUpdatedAt()
+//                ))
+//                .toList();
+//    }
     public List<ManagementListDto> getAllResidents() {
-        return usersRepository
-                .findByRoleAndStatusNot(
-                        List.of(Users.Role.RESIDENT, Users.Role.STAFF),
-                        Users.Status.DELETED
-                )
+        return usersRepository.findByStatusNot(Users.Status.DELETED)
                 .stream()
                 .map(user -> new ManagementListDto(
                         user.getUserId(),
@@ -41,7 +57,9 @@ public class ManagementService {
                         user.getRoomNumber(),
                         user.getProfileImageUrl(),
                         user.getRole().name(),
-                        user.getDorm() != null ? user.getDorm().getDormName() : null,
+                        user.getDorm() != null
+                                ? user.getDorm().getDormName()
+                                : null,
                         user.getStatus().name(),
                         user.getUpdatedAt()
                 ))
