@@ -58,13 +58,9 @@ public class ManagementController {
 
     // soft delete
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> moveResidentToTrash(
-            @PathVariable Integer id,
-            Authentication authentication
-    ) {
-        String email = authentication.getName();
-        staffResidentService.softDeleteResident(id, email);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void moveResidentToTrash(@PathVariable Integer id) {
+        staffResidentService.softDeleteResident(id);
     }
 
 }

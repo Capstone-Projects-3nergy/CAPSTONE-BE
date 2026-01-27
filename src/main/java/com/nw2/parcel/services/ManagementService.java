@@ -10,6 +10,8 @@ import com.nw2.parcel.repositories.DormRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -154,11 +156,9 @@ public class ManagementService {
 //    }
 
     @Transactional
-    public void softDeleteResident(Integer userId, String staffEmail) {
+    public void softDeleteResident(Integer userId) {
 
-        Users staff = usersRepository.findByEmail(staffEmail)
-                .orElseThrow(() -> new IllegalStateException("Staff not found"));
-
+        // 1) หา user ที่จะถูกลบ
         Users user = usersRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -172,21 +172,27 @@ public class ManagementService {
             throw new IllegalStateException("User already in trash");
         }
 
+        // 2) หา staff ที่ login อยู่ (เหมือน parcel)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String firebaseUid = auth.getName(); // หรือ email แล้วแต่ config
+
+        Users staff = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new IllegalStateException("Staff not found"));
+
+        // 3) soft delete user
         user.setStatus(Users.Status.DELETED);
         user.setDeletedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-
         usersRepository.save(user);
 
+        // 4) insert trash
         Trash trash = new Trash();
         trash.setTargetType(Trash.TargetType.USER);
         trash.setTargetId(userId);
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
-
         trashRepository.save(trash);
     }
-
 
 }
 
