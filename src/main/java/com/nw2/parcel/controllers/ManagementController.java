@@ -16,6 +16,11 @@ import java.util.List;
 //management
 @RestController
 @RequestMapping("/api/staff/users")
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://cp25nw2.sit.kmutt.ac.th",
+        "https://cp25nw2.sit.kmutt.ac.th"
+})
 @RequiredArgsConstructor
 public class ManagementController {
 

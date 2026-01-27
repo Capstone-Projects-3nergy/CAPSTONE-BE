@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 //management
 @Service
@@ -67,7 +68,6 @@ public class ManagementService {
 
         return dto;
     }
-
 
     // 3️⃣ add resident
     public void addResident(ManagementAddDto req) {
@@ -123,6 +123,14 @@ public class ManagementService {
         // ป้องกันลบซ้ำ
         if (resident.getStatus() == Users.Status.DELETED) {
             throw new IllegalStateException("Resident already deleted");
+        }
+
+        // Check if already in trash (prevent duplicate)
+        Optional<Trash> existingTrash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId);
+
+        if (existingTrash.isPresent()) {
+            throw new IllegalStateException("Resident already in trash");
         }
 
         // soft delete
