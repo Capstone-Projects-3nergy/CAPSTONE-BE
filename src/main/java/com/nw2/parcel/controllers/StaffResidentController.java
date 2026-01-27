@@ -58,8 +58,8 @@ public class StaffResidentController {
             @PathVariable Integer id,
             Authentication authentication
     ) {
-        Users staff = (Users) authentication.getPrincipal();
-        trashService.deleteResident(id, staff);
+        String email = authentication.getName(); // ✅ ได้ email แน่นอน
+        trashService.deleteResident(id, email);
         return ResponseEntity.noContent().build();
     }
 

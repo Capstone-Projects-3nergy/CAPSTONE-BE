@@ -107,13 +107,15 @@ public class TrashService {
     }
 
     @Transactional
-    public void deleteResident(Integer residentId, Users staff) {
+    public void deleteResident(Integer residentId, String staffEmail) {
+
+        Users staff = usersRepository.findByEmail(staffEmail)
+                .orElseThrow(() -> new IllegalStateException("Staff not found"));
 
         Users resident = usersRepository
                 .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
                 .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
 
-        // ป้องกันลบซ้ำ
         if (resident.getStatus() == Users.Status.DELETED) {
             throw new IllegalStateException("Resident already deleted");
         }
@@ -125,7 +127,7 @@ public class TrashService {
         trash.setTargetType(Trash.TargetType.USER);
         trash.setTargetId(residentId);
         trash.setDeletedAt(LocalDateTime.now());
-        trash.setDeletedBy(staff);
+        trash.setDeletedBy(staff); // ✅ ไม่ null แล้ว
 
         usersRepository.save(resident);
         trashRepository.save(trash);
