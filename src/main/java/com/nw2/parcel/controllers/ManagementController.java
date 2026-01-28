@@ -27,17 +27,19 @@ public class ManagementController {
     private final ManagementService staffResidentService;
     private final TrashService trashService;
 
+    //view
     @GetMapping
     public List<ManagementListDto> getAllResidents() {
         return staffResidentService.getAllResidents();
     }
 
+    //detail
     @GetMapping("/{id}")
     public ManagementDetailDto getDetail(@PathVariable Integer id) {
         return staffResidentService.getResidentDetail(id);
     }
 
-    // ✅ รองรับ multipart/form-data
+    //add
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<Users> createResident(
             @RequestPart("data") ManagementAddDto req,
@@ -47,7 +49,7 @@ public class ManagementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
 
-    // ✅ รองรับ multipart/form-data
+    //edit
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<Users> updateResident(
             @PathVariable Integer id,
@@ -58,6 +60,7 @@ public class ManagementController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    //delete
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void moveResidentToTrash(@PathVariable Integer id) {
