@@ -58,11 +58,17 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
                 List<GrantedAuthority> authorities = new ArrayList<>();
 
-                if (userEntity != null && userEntity.getRole() != null) {
-                    authorities.add(
-                            new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
+                if (userEntity == null) {
+                    response.sendError(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "User not registered in system"
                     );
+                    return;
                 }
+
+                authorities.add(
+                        new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
+                );
 
                 User principal = new User(decoded.getUid(), "", authorities);
 

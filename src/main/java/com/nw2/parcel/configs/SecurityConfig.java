@@ -28,27 +28,25 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/dorms/**","/api/public/parcels/**","/api/public/email/**")
-                        .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/companies/**", "/api/residents/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
+                        // Public endpoints
+                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // เฉพาะ ADMIN เท่านั้นที่เข้า /api/admin/**
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // ADMIN endpoints
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                        // 🟦 /api/residents/** ให้เฉพาะ STAFF
-//                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasRole("STAFF")
-                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasRole("STAFF")
-                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasRole("STAFF")
-                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasRole("STAFF")
-                        .requestMatchers("/api/trash/**").hasRole("STAFF")
-                        .requestMatchers("/api/staff/users/**").hasRole("STAFF") //management
+                        // STAFF endpoints - ใช้ hasAuthority แทน hasRole
+                        .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers("/api/trash/**").hasAuthority("ROLE_STAFF")
 
-
-                                // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
-                        .requestMatchers("/api/OwnerParcels/**").hasRole("RESIDENT")
+                        // RESIDENT endpoints
+                        .requestMatchers("/api/OwnerParcels/**").hasAuthority("ROLE_RESIDENT")
 
                         .anyRequest().authenticated()
                 )

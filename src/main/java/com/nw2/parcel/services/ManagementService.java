@@ -33,6 +33,26 @@ public class ManagementService {
     private final FirebaseAuthService firebaseAuthService;
 
     //list resident
+//    public List<ManagementListDto> getAllResidents() {
+//        return usersRepository
+//                .findByRoleInAndStatusNot(
+//                        List.of(Users.Role.RESIDENT, Users.Role.STAFF),
+//                        Users.Status.DELETED
+//                )
+//                .stream()
+//                .map(user -> new ManagementListDto(
+//                        user.getUserId(),
+//                        user.getFirstName() + " " + user.getLastName(),
+//                        user.getEmail(),
+//                        user.getRoomNumber(),
+//                        user.getProfileImageUrl(),
+//                        user.getRole().name(),
+//                        user.getDorm() != null ? user.getDorm().getDormName() : null,
+//                        user.getStatus().name(),
+//                        user.getUpdatedAt()
+//                ))
+//                .toList();
+//    }
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
                 .findByRoleInAndStatusNot(
@@ -40,17 +60,24 @@ public class ManagementService {
                         Users.Status.DELETED
                 )
                 .stream()
-                .map(user -> new ManagementListDto(
-                        user.getUserId(),
-                        user.getFirstName() + " " + user.getLastName(),
-                        user.getEmail(),
-                        user.getRoomNumber(),
-                        user.getProfileImageUrl(),
-                        user.getRole().name(),
-                        user.getDorm() != null ? user.getDorm().getDormName() : null,
-                        user.getStatus().name(),
-                        user.getUpdatedAt()
-                ))
+                .map(user -> {
+                    String dormName = null;
+                    if (user.getDorm() != null) {
+                        dormName = user.getDorm().getDormName();
+                    }
+
+                    return new ManagementListDto(
+                            user.getUserId(),
+                            user.getFirstName() + " " + user.getLastName(),
+                            user.getEmail(),
+                            user.getRoomNumber(),
+                            user.getProfileImageUrl(),
+                            user.getRole().name(),
+                            dormName,
+                            user.getStatus().name(),
+                            user.getUpdatedAt()
+                    );
+                })
                 .toList();
     }
 
