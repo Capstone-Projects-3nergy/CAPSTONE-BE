@@ -54,20 +54,20 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/activate")
-    public ResponseEntity<Void> activateAccount(Authentication auth) {
-        String firebaseUid = auth.getName();
-
-        Users user = usersRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new IllegalStateException("User not found"));
-
-        if (user.getStatus() != Users.Status.ACTIVE) {
-            user.setStatus(Users.Status.ACTIVE);
-            user.setUpdatedAt(LocalDateTime.now());
-            usersRepository.save(user);
-        }
-
-        return ResponseEntity.ok().build();
-    }
+//    @PostMapping("/activate")
+//    public ResponseEntity<Void> activateAccount(Authentication auth) {
+//        String firebaseUid = auth.getName();
+//
+//        Users user = usersRepository.findByFirebaseUid(firebaseUid)
+//                .orElseThrow(() -> new IllegalStateException("User not found"));
+//
+//        if (user.getStatus() != Users.Status.ACTIVE) {
+//            user.setStatus(Users.Status.ACTIVE);
+//            user.setUpdatedAt(LocalDateTime.now());
+//            usersRepository.save(user);
+//        }
+//
+//        return ResponseEntity.ok().build();
+//    }
 
 }
