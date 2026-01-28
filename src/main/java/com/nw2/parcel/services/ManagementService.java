@@ -29,6 +29,8 @@ public class ManagementService {
     private final DormRepository dormRepository;
     private final TrashRepository trashRepository;
     private final FileStorageService fileStorageService;
+    private final EmailService emailService;
+    private final FirebaseAuthService firebaseAuthService;
 
     //list resident
     public List<ManagementListDto> getAllResidents() {
@@ -87,16 +89,27 @@ public class ManagementService {
         //สร้าง Firebase user
         UserRecord firebaseUser;
         try {
-            UserRecord.CreateRequest fbReq = new UserRecord.CreateRequest()
-                    .setEmail(req.getEmail())
-                    .setEmailVerified(false)
-                    .setDisabled(false);
+            firebaseUser = firebaseAuthService.createUser(req.getEmail());
 
-            firebaseUser = FirebaseAuth.getInstance().createUser(fbReq);
-
-            //ส่งอีเมลให้ตั้งรหัสผ่านเอง
-            FirebaseAuth.getInstance()
+            String resetLink = FirebaseAuth.getInstance()
                     .generatePasswordResetLink(req.getEmail());
+
+            String verifyLink = FirebaseAuth.getInstance()
+                    .generateEmailVerificationLink(req.getEmail());
+
+            emailService.send(
+                    req.getEmail(),
+                    "Activate your account",
+                    """
+                    Your account has been created by staff.
+        
+                    1) Set your password:
+                    %s
+        
+                    2) Verify your email:
+                    %s
+                    """.formatted(resetLink, verifyLink)
+            );
 
         } catch (FirebaseAuthException e) {
             throw new IllegalStateException("Cannot create Firebase user", e);

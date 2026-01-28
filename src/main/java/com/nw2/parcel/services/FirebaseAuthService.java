@@ -8,18 +8,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class FirebaseAuthService {
 
-    public UserRecord createUserAndSendResetEmail(String email)
-            throws FirebaseAuthException {
-
+    public UserRecord createUser(String email) throws FirebaseAuthException {
         UserRecord.CreateRequest request = new UserRecord.CreateRequest()
                 .setEmail(email)
                 .setEmailVerified(false)
                 .setDisabled(false);
 
-        UserRecord user = FirebaseAuth.getInstance().createUser(request);
-
-        FirebaseAuth.getInstance().generatePasswordResetLink(email);
-
-        return user;
+        return FirebaseAuth.getInstance().createUser(request);
     }
+
 }

@@ -3,8 +3,6 @@
 # =========================================================
 server:
   port: 8080
-#  servlet:
-#    context-path: /api
 
 spring:
   jpa:
@@ -14,23 +12,35 @@ spring:
       hibernate:
         format_sql: true
 
-  # แสดง error message แบบละเอียด (เช่น validation errors)
   error:
     include-message: always
     include-binding-errors: always
 
-trash:
-  retention-days: 30
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tractifycapstone@gmail.com
+    password: vmbstkwvngsadtxj
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
+  multipart:
+    max-file-size: 5MB
+    max-request-size: 5MB
+
+trash:
+  retention-days: 30
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
+
 
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
