@@ -35,20 +35,20 @@ public class SecurityConfig {
                         .permitAll()
 
                         // เฉพาะ ADMIN เท่านั้นที่เข้า /api/admin/**
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // 🟦 /api/residents/** ให้เฉพาะ STAFF
 //                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
-                        .requestMatchers("/api/trash/**").hasAuthority("STAFF")
-                        .requestMatchers("/api/staff/users/**").hasAuthority("STAFF") //management
+                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasRole("STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasRole("STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasRole("STAFF")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasRole("STAFF")
+                        .requestMatchers("/api/trash/**").hasRole("STAFF")
+                        .requestMatchers("/api/staff/users/**").hasRole("STAFF") //management
 
 
                                 // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
-                        .requestMatchers("/api/OwnerParcels/**").hasAuthority("RESIDENT")
+                        .requestMatchers("/api/OwnerParcels/**").hasRole("RESIDENT")
 
                         .anyRequest().authenticated()
                 )
