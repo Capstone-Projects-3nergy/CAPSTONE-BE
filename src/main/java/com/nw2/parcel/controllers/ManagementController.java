@@ -63,4 +63,5 @@ public class ManagementController {
     public void moveResidentToTrash(@PathVariable Integer id) {
         staffResidentService.softDeleteResident(id);
     }
+
 }

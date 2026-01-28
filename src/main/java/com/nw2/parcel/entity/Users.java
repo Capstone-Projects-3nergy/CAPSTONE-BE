@@ -13,7 +13,7 @@ import java.util.List;
 public class Users {
 
     public enum Role { RESIDENT, STAFF, ADMIN }
-    public enum Status { ACTIVE, INACTIVE, DELETED }
+    public enum Status { PENDING, ACTIVE, INACTIVE, DELETED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

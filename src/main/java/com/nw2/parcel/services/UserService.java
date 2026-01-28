@@ -110,9 +110,9 @@ public class UserService {
             // 2) หา user ใน DB
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
-            u.setStatus(Users.Status.ACTIVE);
+//            u.setStatus(Users.Status.ACTIVE);
             u.setUpdatedAt(LocalDateTime.now());
-            usersRepository.save(u);
+//            usersRepository.save(u);
 
             // 3) สร้าง response
             LoginResponse resp = new LoginResponse();

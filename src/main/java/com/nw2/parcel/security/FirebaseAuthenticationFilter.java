@@ -48,6 +48,14 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                 Users userEntity = usersRepository.findByFirebaseUid(decoded.getUid())
                         .orElse(null);
 
+                if (userEntity == null || userEntity.getStatus() != Users.Status.ACTIVE) {
+                    response.sendError(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "Account not activated"
+                    );
+                    return;
+                }
+
                 List<GrantedAuthority> authorities = new ArrayList<>();
 
                 if (userEntity != null && userEntity.getRole() != null) {

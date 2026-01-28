@@ -2,11 +2,16 @@ package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.SignUpRequest;
 import com.nw2.parcel.Dtos.LoginResponse;
+import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.repositories.UsersRepository;
 import com.nw2.parcel.services.FirebaseService;
 import com.nw2.parcel.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @CrossOrigin(origins = {
         "http://localhost:5173",
@@ -20,6 +25,7 @@ public class UserController {
 
     private final UserService userService;
     private final FirebaseService firebaseService;
+    private final UsersRepository usersRepository;
 
     @PostMapping("/signup")
     public LoginResponse signup(@RequestBody SignUpRequest req) throws Exception {
@@ -44,6 +50,22 @@ public class UserController {
 
         String token = header.substring(7).trim();
         userService.logout(token, firebaseService);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/activate")
+    public ResponseEntity<Void> activateAccount(Authentication auth) {
+        String firebaseUid = auth.getName();
+
+        Users user = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        if (user.getStatus() != Users.Status.ACTIVE) {
+            user.setStatus(Users.Status.ACTIVE);
+            user.setUpdatedAt(LocalDateTime.now());
+            usersRepository.save(user);
+        }
 
         return ResponseEntity.ok().build();
     }

@@ -1,5 +1,8 @@
 package com.nw2.parcel.services;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import com.nw2.parcel.Dtos.ManagementDetailDto;
 import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
@@ -27,7 +30,7 @@ public class ManagementService {
     private final TrashRepository trashRepository;
     private final FileStorageService fileStorageService;
 
-    // 1️⃣ list resident
+    //list resident
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
                 .findByRoleInAndStatusNot(
@@ -49,7 +52,7 @@ public class ManagementService {
                 .toList();
     }
 
-    // 2️⃣ detail
+    //detail
     public ManagementDetailDto getResidentDetail(Integer id) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
                 .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
@@ -73,16 +76,35 @@ public class ManagementService {
         return dto;
     }
 
-    // 3️⃣ add resident ✅ แก้ไขแล้ว
+    //add resident ✅ แก้ไขแล้ว
     @Transactional
     public Users addResident(ManagementAddDto req, MultipartFile profileImage) {
-        // 1. Check email ซ้ำ
+
         if (usersRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        // 2. สร้าง user ก่อน (ไม่มีรูปยัง)
+        //สร้าง Firebase user
+        UserRecord firebaseUser;
+        try {
+            UserRecord.CreateRequest fbReq = new UserRecord.CreateRequest()
+                    .setEmail(req.getEmail())
+                    .setEmailVerified(false)
+                    .setDisabled(false);
+
+            firebaseUser = FirebaseAuth.getInstance().createUser(fbReq);
+
+            //ส่งอีเมลให้ตั้งรหัสผ่านเอง
+            FirebaseAuth.getInstance()
+                    .generatePasswordResetLink(req.getEmail());
+
+        } catch (FirebaseAuthException e) {
+            throw new IllegalStateException("Cannot create Firebase user", e);
+        }
+
+        //สร้าง user ใน DB
         Users user = new Users();
+        user.setFirebaseUid(firebaseUser.getUid());
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setEmail(req.getEmail());
@@ -90,7 +112,7 @@ public class ManagementService {
         user.setPhoneNumber(req.getPhoneNumber());
         user.setLineId(req.getLineId());
         user.setRole(Users.Role.RESIDENT);
-        user.setStatus(Users.Status.ACTIVE);
+        user.setStatus(Users.Status.PENDING);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
@@ -99,10 +121,9 @@ public class ManagementService {
                     .orElseThrow(() -> new IllegalArgumentException("Dorm not found")));
         }
 
-        // 3. บันทึก user เพื่อได้ userId
         Users savedUser = usersRepository.save(user);
 
-        // 4. Upload รูปภาพด้วย userId ที่ได้
+        // รูป (เหมือนเดิม)
         if (profileImage != null && !profileImage.isEmpty()) {
             String imageUrl = fileStorageService.uploadProfileImage(
                     profileImage,
@@ -115,7 +136,8 @@ public class ManagementService {
         return savedUser;
     }
 
-    // 4️⃣ update resident ✅ รองรับ multipart
+
+    //update resident องรับ multipart
     @Transactional
     public Users updateResident(Integer id, ManagementAddDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
@@ -152,6 +174,7 @@ public class ManagementService {
         return usersRepository.save(user);
     }
 
+    //move to trash
     @Transactional
     public void softDeleteResident(Integer userId) {
         // 1) หา user ที่จะถูกลบ
