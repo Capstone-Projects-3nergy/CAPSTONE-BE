@@ -59,7 +59,9 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                 List<GrantedAuthority> authorities = new ArrayList<>();
 
                 if (userEntity != null && userEntity.getRole() != null) {
-                    authorities.add(new SimpleGrantedAuthority(userEntity.getRole().name()));
+                    authorities.add(
+                            new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
+                    );
                 }
 
                 User principal = new User(decoded.getUid(), "", authorities);
