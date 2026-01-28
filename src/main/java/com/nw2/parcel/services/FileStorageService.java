@@ -108,6 +108,24 @@ public class FileStorageService {
         }
     }
 
+    public String store(MultipartFile file) {
+        try {
+            validateImage(file);
+
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "uploads",
+                            "resource_type", "image"
+                    )
+            );
+
+            return uploadResult.get("secure_url").toString();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Upload file failed", e);
+        }
+    }
     /**
      * Delete image by URL
      */

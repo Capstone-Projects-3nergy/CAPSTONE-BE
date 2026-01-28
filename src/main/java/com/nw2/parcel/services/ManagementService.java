@@ -5,7 +5,6 @@ import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
-import com.nw2.parcel.exception.EmailAlreadyExistsException;
 import com.nw2.parcel.repositories.DormRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
@@ -14,12 +13,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-//management
 @Service
 @RequiredArgsConstructor
 public class ManagementService {
@@ -27,6 +25,7 @@ public class ManagementService {
     private final UsersRepository usersRepository;
     private final DormRepository dormRepository;
     private final TrashRepository trashRepository;
+    private final FileStorageService fileStorageService;
 
     // 1️⃣ list resident
     public List<ManagementListDto> getAllResidents() {
@@ -74,12 +73,15 @@ public class ManagementService {
         return dto;
     }
 
-    // 3️⃣ add resident
-    public void addResident(ManagementAddDto req) {
+    // 3️⃣ add resident ✅ แก้ไขแล้ว
+    @Transactional
+    public Users addResident(ManagementAddDto req, MultipartFile profileImage) {
+        // 1. Check email ซ้ำ
         if (usersRepository.existsByEmail(req.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new IllegalArgumentException("Email already exists");
         }
 
+        // 2. สร้าง user ก่อน (ไม่มีรูปยัง)
         Users user = new Users();
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
@@ -97,14 +99,29 @@ public class ManagementService {
                     .orElseThrow(() -> new IllegalArgumentException("Dorm not found")));
         }
 
-        usersRepository.save(user);
+        // 3. บันทึก user เพื่อได้ userId
+        Users savedUser = usersRepository.save(user);
+
+        // 4. Upload รูปภาพด้วย userId ที่ได้
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String imageUrl = fileStorageService.uploadProfileImage(
+                    profileImage,
+                    savedUser.getUserId()
+            );
+            savedUser.setProfileImageUrl(imageUrl);
+            savedUser = usersRepository.save(savedUser);
+        }
+
+        return savedUser;
     }
 
-    // 4️⃣ update resident
-    public void updateResident(Integer id, ManagementAddDto req) {
-        Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
-                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+    // 4️⃣ update resident ✅ รองรับ multipart
+    @Transactional
+    public Users updateResident(Integer id, ManagementAddDto req, MultipartFile profileImage) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        // อัปเดตข้อมูล
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setRoomNumber(req.getRoomNumber());
@@ -112,52 +129,31 @@ public class ManagementService {
         user.setLineId(req.getLineId());
         user.setUpdatedAt(LocalDateTime.now());
 
-        usersRepository.save(user);
-    }
+        // อัปเดต dorm ถ้ามี
+        if (req.getDormId() != null) {
+            user.setDorm(dormRepository.findById(req.getDormId())
+                    .orElseThrow(() -> new IllegalArgumentException("Dorm not found")));
+        }
 
-//    @Transactional
-//    public void softDeleteResident(Integer residentId, String staffEmail) {
-//
-//        Users staff = usersRepository.findByEmail(staffEmail)
-//                .orElseThrow(() -> new IllegalStateException("Staff not found"));
-//
-//        Users resident = usersRepository
-//                .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
-//                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
-//
-//        // ป้องกันลบซ้ำ
-//        if (resident.getStatus() == Users.Status.DELETED) {
-//            throw new IllegalStateException("Resident already deleted");
-//        }
-//
-//        // Check if already in trash (prevent duplicate)
-//        Optional<Trash> existingTrash = trashRepository
-//                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId);
-//
-//        if (existingTrash.isPresent()) {
-//            throw new IllegalStateException("Resident already in trash");
-//        }
-//
-//        // soft delete
-//        resident.setStatus(Users.Status.DELETED);
-//        resident.setDeletedAt(LocalDateTime.now());
-//        resident.setUpdatedAt(LocalDateTime.now());
-//
-//        usersRepository.save(resident);
-//
-//        // move to trash
-//        Trash trash = new Trash();
-//        trash.setTargetType(Trash.TargetType.USER);
-//        trash.setTargetId(residentId);
-//        trash.setDeletedAt(LocalDateTime.now());
-//        trash.setDeletedBy(staff);
-//
-//        trashRepository.save(trash);
-//    }
+        // Upload รูปใหม่ถ้ามี
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // ลบรูปเก่าก่อน
+            if (user.getProfileImageUrl() != null) {
+                fileStorageService.deleteFileByUrl(user.getProfileImageUrl());
+            }
+
+            String newImageUrl = fileStorageService.uploadProfileImage(
+                    profileImage,
+                    user.getUserId()
+            );
+            user.setProfileImageUrl(newImageUrl);
+        }
+
+        return usersRepository.save(user);
+    }
 
     @Transactional
     public void softDeleteResident(Integer userId) {
-
         // 1) หา user ที่จะถูกลบ
         Users user = usersRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -172,9 +168,9 @@ public class ManagementService {
             throw new IllegalStateException("User already in trash");
         }
 
-        // 2) หา staff ที่ login อยู่ (เหมือน parcel)
+        // 2) หา staff ที่ login อยู่
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String firebaseUid = auth.getName(); // หรือ email แล้วแต่ config
+        String firebaseUid = auth.getName();
 
         Users staff = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new IllegalStateException("Staff not found"));
@@ -193,6 +189,4 @@ public class ManagementService {
         trash.setDeletedBy(staff);
         trashRepository.save(trash);
     }
-
 }
-
