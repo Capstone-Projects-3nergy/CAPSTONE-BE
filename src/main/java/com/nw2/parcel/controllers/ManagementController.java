@@ -3,6 +3,7 @@ package com.nw2.parcel.controllers;
 import com.nw2.parcel.Dtos.ManagementDetailDto;
 import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
+import com.nw2.parcel.Dtos.ManagementUpdateDto;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.services.ManagementService;
 import com.nw2.parcel.services.TrashService;
@@ -53,12 +54,13 @@ public class ManagementController {
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<Users> updateResident(
             @PathVariable Integer id,
-            @RequestPart("data") ManagementAddDto req,
+            @RequestPart("data") ManagementUpdateDto req,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ) {
         Users updatedUser = staffResidentService.updateResident(id, req, profileImage);
         return ResponseEntity.ok(updatedUser);
     }
+
 
     //delete
     @DeleteMapping("/{id}")

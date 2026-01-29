@@ -6,6 +6,7 @@ import com.google.firebase.auth.UserRecord;
 import com.nw2.parcel.Dtos.ManagementDetailDto;
 import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
+import com.nw2.parcel.Dtos.ManagementUpdateDto;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.repositories.DormRepository;
@@ -179,11 +180,10 @@ public class ManagementService {
 
     //update resident องรับ multipart
     @Transactional
-    public Users updateResident(Integer id, ManagementAddDto req, MultipartFile profileImage) {
+    public Users updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // อัปเดตข้อมูล
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setRoomNumber(req.getRoomNumber());
@@ -191,28 +191,23 @@ public class ManagementService {
         user.setLineId(req.getLineId());
         user.setUpdatedAt(LocalDateTime.now());
 
-        // อัปเดต dorm ถ้ามี
         if (req.getDormId() != null) {
             user.setDorm(dormRepository.findById(req.getDormId())
                     .orElseThrow(() -> new IllegalArgumentException("Dorm not found")));
         }
 
-        // Upload รูปใหม่ถ้ามี
         if (profileImage != null && !profileImage.isEmpty()) {
-            // ลบรูปเก่าก่อน
             if (user.getProfileImageUrl() != null) {
                 fileStorageService.deleteFileByUrl(user.getProfileImageUrl());
             }
-
-            String newImageUrl = fileStorageService.uploadProfileImage(
-                    profileImage,
-                    user.getUserId()
-            );
+            String newImageUrl =
+                    fileStorageService.uploadProfileImage(profileImage, user.getUserId());
             user.setProfileImageUrl(newImageUrl);
         }
 
         return usersRepository.save(user);
     }
+
 
     //move to trash
     @Transactional
