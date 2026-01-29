@@ -108,7 +108,7 @@ public class ManagementService {
 
     //add resident ✅ แก้ไขแล้ว
     @Transactional
-    public Users addResident(ManagementAddDto req, MultipartFile profileImage) {
+    public ManagementDetailDto addResident(ManagementAddDto req, MultipartFile profileImage) {
 
         if (usersRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
@@ -164,7 +164,7 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
-        // รูป (เหมือนเดิม)
+        // รูป
         if (profileImage != null && !profileImage.isEmpty()) {
             String imageUrl = fileStorageService.uploadProfileImage(
                     profileImage,
@@ -174,13 +174,30 @@ public class ManagementService {
             savedUser = usersRepository.save(savedUser);
         }
 
-        return savedUser;
+        // ✅ Convert to DTO เพื่อหลีกเลี่ยง circular reference
+        ManagementDetailDto dto = new ManagementDetailDto();
+        dto.setUserId(savedUser.getUserId());
+        dto.setFirstName(savedUser.getFirstName());
+        dto.setLastName(savedUser.getLastName());
+        dto.setEmail(savedUser.getEmail());
+        dto.setRoomNumber(savedUser.getRoomNumber());
+        dto.setPhoneNumber(savedUser.getPhoneNumber());
+        dto.setLineId(savedUser.getLineId());
+        dto.setProfileImageUrl(savedUser.getProfileImageUrl());
+        dto.setRole(savedUser.getRole().name());
+
+        if (savedUser.getDorm() != null) {
+            dto.setDormId(savedUser.getDorm().getDormId());
+            dto.setDormName(savedUser.getDorm().getDormName());
+        }
+
+        return dto;
     }
 
 
     //update resident องรับ multipart
     @Transactional
-    public Users updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
+    public ManagementDetailDto updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -200,12 +217,30 @@ public class ManagementService {
             if (user.getProfileImageUrl() != null) {
                 fileStorageService.deleteFileByUrl(user.getProfileImageUrl());
             }
-            String newImageUrl =
-                    fileStorageService.uploadProfileImage(profileImage, user.getUserId());
+            String newImageUrl = fileStorageService.uploadProfileImage(profileImage, user.getUserId());
             user.setProfileImageUrl(newImageUrl);
         }
 
-        return usersRepository.save(user);
+        Users savedUser = usersRepository.save(user);
+
+        // Convert to DTO to avoid circular reference
+        ManagementDetailDto dto = new ManagementDetailDto();
+        dto.setUserId(savedUser.getUserId());
+        dto.setFirstName(savedUser.getFirstName());
+        dto.setLastName(savedUser.getLastName());
+        dto.setEmail(savedUser.getEmail());
+        dto.setRoomNumber(savedUser.getRoomNumber());
+        dto.setPhoneNumber(savedUser.getPhoneNumber());
+        dto.setLineId(savedUser.getLineId());
+        dto.setProfileImageUrl(savedUser.getProfileImageUrl());
+        dto.setRole(savedUser.getRole().name());
+
+        if (savedUser.getDorm() != null) {
+            dto.setDormId(savedUser.getDorm().getDormId());
+            dto.setDormName(savedUser.getDorm().getDormName());
+        }
+
+        return dto;
     }
 
 

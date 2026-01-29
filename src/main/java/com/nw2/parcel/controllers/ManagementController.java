@@ -27,6 +27,7 @@ public class ManagementController {
 
     private final ManagementService staffResidentService;
     private final TrashService trashService;
+    private final ManagementService managementService;
 
     //view
     @GetMapping
@@ -42,22 +43,22 @@ public class ManagementController {
 
     //add
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<Users> createResident(
+    public ResponseEntity<ManagementDetailDto> createResident(
             @RequestPart("data") ManagementAddDto req,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ) {
-        Users savedUser = staffResidentService.addResident(req, profileImage);
+        ManagementDetailDto savedUser = staffResidentService.addResident(req, profileImage);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
 
     //edit
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<Users> updateResident(
+    public ResponseEntity<ManagementDetailDto> updateResident(
             @PathVariable Integer id,
             @RequestPart("data") ManagementUpdateDto req,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ) {
-        Users updatedUser = staffResidentService.updateResident(id, req, profileImage);
+        ManagementDetailDto updatedUser = staffResidentService.updateResident(id, req, profileImage);
         return ResponseEntity.ok(updatedUser);
     }
 

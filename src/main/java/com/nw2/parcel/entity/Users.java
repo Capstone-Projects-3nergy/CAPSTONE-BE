@@ -1,5 +1,6 @@
 package com.nw2.parcel.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -65,6 +66,7 @@ public class Users {
     private LocalDateTime deletedAt;
 
     @ManyToOne(optional = true)
+    @JsonIgnore
     @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
 
