@@ -32,20 +32,20 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ADMIN endpoints
+                        // ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                        // STAFF endpoints - ใช้ hasAuthority แทน hasRole
+                        // STAFF
                         .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
-                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasAuthority("ROLE_STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("ROLE_STAFF")
                         .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("ROLE_STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("ROLE_STAFF")
                         .requestMatchers("/api/trash/**").hasAuthority("ROLE_STAFF")
 
-                        // RESIDENT endpoints
+                        // RESIDENT
                         .requestMatchers("/api/OwnerParcels/**").hasAuthority("ROLE_RESIDENT")
 
                         .anyRequest().authenticated()
