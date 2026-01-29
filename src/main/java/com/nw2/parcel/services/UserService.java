@@ -42,7 +42,6 @@ public class UserService {
             userRecord = FirebaseAuth.getInstance().createUser(createRequest);
 
         } catch (FirebaseAuthException e) {
-            // ถ้า Firebase แจ้งว่า email ซ้ำ
             if ("EMAIL_ALREADY_EXISTS".equals(e.getErrorCode())) {
                 throw new EmailAlreadyExistsException("Email is already in use.");
             }

@@ -4,7 +4,6 @@ import com.nw2.parcel.Dtos.ManagementDetailDto;
 import com.nw2.parcel.Dtos.ManagementListDto;
 import com.nw2.parcel.Dtos.ManagementAddDto;
 import com.nw2.parcel.Dtos.ManagementUpdateDto;
-import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.services.ManagementService;
 import com.nw2.parcel.services.TrashService;
 import lombok.RequiredArgsConstructor;

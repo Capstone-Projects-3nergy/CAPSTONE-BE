@@ -106,7 +106,7 @@ public class ManagementService {
         return dto;
     }
 
-    //add resident ✅ แก้ไขแล้ว
+    //add
     @Transactional
     public ManagementDetailDto addResident(ManagementAddDto req, MultipartFile profileImage) {
 
@@ -174,7 +174,7 @@ public class ManagementService {
             savedUser = usersRepository.save(savedUser);
         }
 
-        // ✅ Convert to DTO เพื่อหลีกเลี่ยง circular reference
+
         ManagementDetailDto dto = new ManagementDetailDto();
         dto.setUserId(savedUser.getUserId());
         dto.setFirstName(savedUser.getFirstName());
@@ -194,8 +194,7 @@ public class ManagementService {
         return dto;
     }
 
-
-    //update resident องรับ multipart
+    //update
     @Transactional
     public ManagementDetailDto updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
@@ -223,7 +222,6 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
-        // Convert to DTO to avoid circular reference
         ManagementDetailDto dto = new ManagementDetailDto();
         dto.setUserId(savedUser.getUserId());
         dto.setFirstName(savedUser.getFirstName());
@@ -242,7 +240,6 @@ public class ManagementService {
 
         return dto;
     }
-
 
     //move to trash
     @Transactional

@@ -546,22 +546,6 @@ public class ParcelService {
         return parcelsRepository.save(parcel);
     }
 
-    // soft delete
-//    public void moveParcelToTrash(Integer parcelId) {
-//        Parcels parcel = parcelsRepository
-//                .findByParcelIdAndIsDeletedFalse(parcelId)
-//                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
-//
-//        // ไม่ให้ลบพัสดุที่รับไปแล้ว
-//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-//            throw new IllegalStateException("Cannot delete a picked-up parcel");
-//        }
-//
-//        parcel.setIsDeleted(true);
-//        parcel.setDeletedAt(LocalDateTime.now());
-//
-//        parcelsRepository.save(parcel);
-//    }
     public void moveParcelToTrash(Integer parcelId) {
 
         Parcels parcel = parcelsRepository
