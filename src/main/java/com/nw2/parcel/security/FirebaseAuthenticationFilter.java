@@ -52,19 +52,8 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
             try {
                 FirebaseToken decoded = firebaseService.verifyIdToken(token);
 
-                // 🟦 หา user ใน DB จาก firebase_uid
                 Users userEntity = usersRepository.findByFirebaseUid(decoded.getUid())
                         .orElse(null);
-
-//                if (userEntity == null || userEntity.getStatus() != Users.Status.ACTIVE) {
-//                    response.sendError(
-//                            HttpServletResponse.SC_FORBIDDEN,
-//                            "Account not activated"
-//                    );
-//                    return;
-//                }
-
-                List<GrantedAuthority> authorities = new ArrayList<>();
 
                 if (userEntity == null) {
                     response.sendError(
@@ -74,6 +63,16 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
+                // ✅ เพิ่มการตรวจสอบ status
+                if (userEntity.getStatus() != Users.Status.ACTIVE) {
+                    response.sendError(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "Account not activated or suspended"
+                    );
+                    return;
+                }
+
+                List<GrantedAuthority> authorities = new ArrayList<>();
                 authorities.add(
                         new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
                 );
