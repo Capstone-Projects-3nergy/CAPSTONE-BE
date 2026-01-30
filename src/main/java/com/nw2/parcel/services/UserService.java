@@ -151,8 +151,10 @@ public class UserService {
 
             user.setStatus(Users.Status.INACTIVE);
             user.setUpdatedAt(LocalDateTime.now());
-
             usersRepository.save(user);
+
+            //revoke firebase token
+            FirebaseAuth.getInstance().revokeRefreshTokens(uid);
 
         } catch (FirebaseAuthException e) {
             throw new UnauthorizedException("Invalid or expired token");
