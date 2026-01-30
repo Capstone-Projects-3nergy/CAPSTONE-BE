@@ -98,31 +98,26 @@ public class UserService {
 
     public LoginResponse login(String idToken, FirebaseService firebaseService) {
         try {
+            // 1) ตรวจสอบ token กับ Firebase
             var decoded = firebaseService.verifyIdToken(idToken);
             final String uid = decoded.getUid();
             final String emailFromToken = decoded.getEmail();
 
-            // ✅ เพิ่มการตรวจสอบ email verification
             if (!decoded.isEmailVerified()) {
                 throw new UnauthorizedException("Email not verified");
             }
-
+            // 2) หา user ใน DB
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
+            u.setUpdatedAt(LocalDateTime.now());
 
-            // ✅ ตรวจสอบ status ก่อน login
-            if (u.getStatus() == Users.Status.PENDING) {
-                throw new UnauthorizedException("Please verify your email before login");
-            }
-
-            // ✅ เปลี่ยน status เป็น ACTIVE เมื่อ login สำเร็จ
             if (u.getStatus() != Users.Status.ACTIVE) {
                 u.setStatus(Users.Status.ACTIVE);
+                u.setUpdatedAt(LocalDateTime.now());
+                usersRepository.save(u);
             }
-            u.setUpdatedAt(LocalDateTime.now());
-            usersRepository.save(u);
 
-            // สร้าง response...
+            // 3) สร้าง response
             LoginResponse resp = new LoginResponse();
             resp.setUserId(u.getUserId());
             resp.setFirebaseUid(uid);
@@ -141,6 +136,7 @@ public class UserService {
             return resp;
 
         } catch (FirebaseAuthException e) {
+            // ⬅️ token ไม่ผ่าน / หมดอายุ / ผิด
             throw new UnauthorizedException("Invalid or expired token");
         }
     }
