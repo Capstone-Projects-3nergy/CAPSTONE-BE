@@ -37,8 +37,7 @@ public class UserService {
             UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest()
                     .setEmail(normalizedEmail)
                     .setPassword(req.getPassword())
-                    .setDisplayName(req.getFirstName() + " " + req.getLastName())
-                    .setEmailVerified(false); // 🔥 บังคับให้ต้อง verify
+                    .setDisplayName(req.getFirstName() + " " + req.getLastName());
 
             userRecord = FirebaseAuth.getInstance().createUser(createRequest);
 
@@ -47,15 +46,6 @@ public class UserService {
                 throw new EmailAlreadyExistsException("Email is already in use.");
             }
             throw e;
-        }
-
-        // ส่ง verification email
-        try {
-            String verificationLink = FirebaseAuth.getInstance()
-                    .generateEmailVerificationLink(normalizedEmail);
-            // TODO: ส่ง email ด้วย EmailService ของคุณ
-        } catch (FirebaseAuthException e) {
-            // log error
         }
 
         Dorm dorm = null;
@@ -73,7 +63,7 @@ public class UserService {
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setRole(Users.Role.valueOf(req.getRole().toUpperCase()));
-        user.setStatus(Users.Status.PENDING); // 🔥 เปลี่ยนเป็น PENDING
+        user.setStatus(Users.Status.ACTIVE);
         user.setPosition(req.getPosition());
         user.setRoomNumber(req.getRoomNumber());
         user.setCreatedAt(LocalDateTime.now());
@@ -86,9 +76,11 @@ public class UserService {
         try {
             usersRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
+            // กันเคส race condition ที่หลุด unique constraint DB
             throw new EmailAlreadyExistsException("Email is already in use.");
         }
 
+        // 5) ตอบกลับ
         LoginResponse resp = new LoginResponse();
         resp.setUserId(user.getUserId());
         resp.setFirebaseUid(userRecord.getUid());
@@ -100,7 +92,7 @@ public class UserService {
         resp.setDormId(dorm != null ? dorm.getDormId() : null);
         resp.setDormName(dorm != null ? dorm.getDormName() : null);
         resp.setRoomNumber(req.getRoomNumber());
-        resp.setMessage("Signup successful. Please verify your email.");
+        resp.setMessage("Signup successful");
         return resp;
     }
 
@@ -110,33 +102,27 @@ public class UserService {
             final String uid = decoded.getUid();
             final String emailFromToken = decoded.getEmail();
 
-            // 🔥 ตรวจสอบว่า verify email แล้วหรือยัง
+            // ✅ เพิ่มการตรวจสอบ email verification
             if (!decoded.isEmailVerified()) {
-                throw new UnauthorizedException("Please verify your email before login");
+                throw new UnauthorizedException("Email not verified");
             }
 
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
 
-            // 🔥 ถ้า status เป็น PENDING และ email verified แล้ว → เปลี่ยนเป็น ACTIVE
-            if (u.getStatus() == Users.Status.PENDING && decoded.isEmailVerified()) {
+            // ✅ ตรวจสอบ status ก่อน login
+            if (u.getStatus() == Users.Status.PENDING) {
+                throw new UnauthorizedException("Please verify your email before login");
+            }
+
+            // ✅ เปลี่ยน status เป็น ACTIVE เมื่อ login สำเร็จ
+            if (u.getStatus() != Users.Status.ACTIVE) {
                 u.setStatus(Users.Status.ACTIVE);
-                u.setUpdatedAt(LocalDateTime.now());
-                usersRepository.save(u);
             }
+            u.setUpdatedAt(LocalDateTime.now());
+            usersRepository.save(u);
 
-            // 🔥 ถ้า status เป็น INACTIVE → เปลี่ยนเป็น ACTIVE (user login กลับมา)
-            else if (u.getStatus() == Users.Status.INACTIVE) {
-                u.setStatus(Users.Status.ACTIVE);
-                u.setUpdatedAt(LocalDateTime.now());
-                usersRepository.save(u);
-            }
-
-            // 🔥 ห้าม login ถ้า status เป็น DELETED
-            else if (u.getStatus() == Users.Status.DELETED) {
-                throw new UnauthorizedException("Account has been deleted");
-            }
-
+            // สร้าง response...
             LoginResponse resp = new LoginResponse();
             resp.setUserId(u.getUserId());
             resp.setFirebaseUid(uid);
@@ -167,7 +153,6 @@ public class UserService {
             Users user = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-            // 🔥 เปลี่ยน status เป็น INACTIVE
             user.setStatus(Users.Status.INACTIVE);
             user.setUpdatedAt(LocalDateTime.now());
 
