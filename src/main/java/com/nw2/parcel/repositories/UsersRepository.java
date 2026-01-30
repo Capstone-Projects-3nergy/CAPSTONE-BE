@@ -19,4 +19,5 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
             List<Users.Role> roles,
             Users.Status status
     );
+    List<Users> findByStatusAndUpdatedAtBefore(Users.Status status, java.time.LocalDateTime dateTime);
 }
