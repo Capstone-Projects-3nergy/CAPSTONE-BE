@@ -14,6 +14,7 @@ import com.nw2.parcel.repositories.DormRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -141,6 +142,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public void logout(String idToken, FirebaseService firebaseService) {
         try {
             var decoded = firebaseService.verifyIdToken(idToken);
@@ -151,10 +153,8 @@ public class UserService {
 
             user.setStatus(Users.Status.INACTIVE);
             user.setUpdatedAt(LocalDateTime.now());
-            usersRepository.save(user);
 
-            //revoke firebase token
-            FirebaseAuth.getInstance().revokeRefreshTokens(uid);
+            usersRepository.save(user);
 
         } catch (FirebaseAuthException e) {
             throw new UnauthorizedException("Invalid or expired token");
