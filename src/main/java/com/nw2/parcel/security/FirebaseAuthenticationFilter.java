@@ -52,26 +52,29 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
             try {
                 FirebaseToken decoded = firebaseService.verifyIdToken(token);
 
-                // 1) หา user ใน DB จาก firebase_uid
+                // 🟦 หา user ใน DB จาก firebase_uid
                 Users userEntity = usersRepository.findByFirebaseUid(decoded.getUid())
                         .orElse(null);
 
-                // 2) ตรวจสอบว่ามี User ในระบบไหม
-                if (userEntity == null) {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "User not registered in system");
-                    return;
-                }
 
-                // 3) 🛡️ ตรวจสอบสถานะ (ถ้าโดน Auto-logout หรือ Logout ไปแล้วจะเข้าไม่ได้)
-                // ตรวจสอบทั้งเคสที่เป็น INACTIVE หรือ PENDING (ถ้าคุณต้องการให้ ACTIVE เท่านั้นที่เข้าได้)
-                if (userEntity.getStatus() != Users.Status.ACTIVE) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session expired or account inactive. Please login again.");
-                    return;
-                }
-
-                // --- ถ้าผ่านเงื่อนไขข้างบนมาได้ ถึงจะทำการเซต Authentication ---
+//                if (userEntity == null || userEntity.getStatus() != Users.Status.ACTIVE) {
+//                    response.sendError(
+//                            HttpServletResponse.SC_FORBIDDEN,
+//                            "Account not activated"
+//                    );
+//                    return;
+//                }
 
                 List<GrantedAuthority> authorities = new ArrayList<>();
+
+                if (userEntity == null) {
+                    response.sendError(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "User not registered in system"
+                    );
+                    return;
+                }
+
                 authorities.add(
                         new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
                 );
