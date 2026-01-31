@@ -97,7 +97,6 @@ protected boolean shouldNotFilter(HttpServletRequest request) {
                     return;
                 }
 
-// 🔥 เช็ค status ตรงนี้
                 if (userEntity.getStatus() != Users.Status.ACTIVE) {
                     response.sendError(
                             HttpServletResponse.SC_UNAUTHORIZED,

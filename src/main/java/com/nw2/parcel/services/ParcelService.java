@@ -594,49 +594,4 @@ public class ParcelService {
                 ))
                 .toList();
     }
-
-    // restore from trash (STAFF only)
-//    public void restoreParcel(Integer parcelId) {
-//
-//        Parcels parcel = parcelsRepository
-//                .findByParcelIdAndIsDeletedTrue(parcelId)
-//                .orElseThrow(() ->
-//                        new IllegalStateException("Parcel not found in trash")
-//                );
-//
-//        // กู้คืนแล้วควรกลับไปอยู่สถานะที่ staff จัดการได้
-//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-//            throw new IllegalStateException("Cannot restore a picked-up parcel");
-//        }
-//
-//        parcel.setIsDeleted(false);
-//        parcel.setDeletedAt(null);
-//
-//        parcelsRepository.save(parcel);
-//
-//        log.info("Parcel {} restored from trash", parcelId);
-//    }
-//    public void restoreParcel(Integer parcelId) {
-//
-//        Parcels parcel = parcelsRepository
-//                .findByParcelIdAndIsDeletedTrue(parcelId)
-//                .orElseThrow(() ->
-//                        new IllegalStateException("Parcel not found in trash")
-//                );
-//
-//        if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-//            throw new IllegalStateException("Cannot restore a picked-up parcel");
-//        }
-//
-//        parcel.setIsDeleted(false);
-//        parcel.setDeletedAt(null);
-//
-//        parcelsRepository.save(parcel);
-//
-//        // 🔥 ลบ trash record
-//        trashRepository.deleteByParcelParcelId(parcelId);
-//
-//        log.info("Parcel {} restored from trash", parcelId);
-//    }
-
 }
