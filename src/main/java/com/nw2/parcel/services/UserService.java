@@ -64,7 +64,7 @@ public class UserService {
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setRole(Users.Role.valueOf(req.getRole().toUpperCase()));
-        user.setStatus(Users.Status.ACTIVE);
+        user.setStatus(Users.Status.PENDING);
         user.setPosition(req.getPosition());
         user.setRoomNumber(req.getRoomNumber());
         user.setCreatedAt(LocalDateTime.now());
