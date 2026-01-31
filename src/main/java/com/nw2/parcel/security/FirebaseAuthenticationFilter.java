@@ -31,14 +31,27 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
         this.usersRepository = usersRepository;
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) {
+//        String path = request.getServletPath();
+//
+//        return path.startsWith("/api/dorms")
+//                || path.startsWith("/api/auth")
+//                || "OPTIONS".equalsIgnoreCase(request.getMethod());
+//    }
+@Override
+protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getServletPath();
 
-        return path.startsWith("/api/dorms")
-                || path.startsWith("/api/auth")
-                || "OPTIONS".equalsIgnoreCase(request.getMethod());
+    // allow เฉพาะ signup + login
+    if (path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
+        return true;
     }
+
+    return path.startsWith("/api/dorms")
+            || "OPTIONS".equalsIgnoreCase(request.getMethod());
+}
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -64,8 +77,17 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 //                    );
 //                    return;
 //                }
-
+//
                 List<GrantedAuthority> authorities = new ArrayList<>();
+//
+//                if (userEntity == null) {
+//                    response.sendError(
+//                            HttpServletResponse.SC_FORBIDDEN,
+//                            "User not registered in system"
+//                    );
+//                    return;
+//                }
+
 
                 if (userEntity == null) {
                     response.sendError(
@@ -74,6 +96,16 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                     );
                     return;
                 }
+
+// 🔥 เช็ค status ตรงนี้
+                if (userEntity.getStatus() != Users.Status.ACTIVE) {
+                    response.sendError(
+                            HttpServletResponse.SC_UNAUTHORIZED,
+                            "User is not logged in"
+                    );
+                    return;
+                }
+
 
                 authorities.add(
                         new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())

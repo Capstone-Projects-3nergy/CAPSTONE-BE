@@ -112,11 +112,15 @@ public class UserService {
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
             u.setUpdatedAt(LocalDateTime.now());
 
+//            if (u.getStatus() != Users.Status.ACTIVE) {
+//                u.setStatus(Users.Status.ACTIVE);
+//                u.setUpdatedAt(LocalDateTime.now());
+//                usersRepository.save(u);
+//            }
             if (u.getStatus() != Users.Status.ACTIVE) {
-                u.setStatus(Users.Status.ACTIVE);
-                u.setUpdatedAt(LocalDateTime.now());
-                usersRepository.save(u);
+                throw new UnauthorizedException("User is not active. Please login again.");
             }
+
 
             // 3) สร้าง response
             LoginResponse resp = new LoginResponse();
