@@ -99,7 +99,6 @@ public class UserService {
 
     public LoginResponse login(String idToken, FirebaseService firebaseService) {
         try {
-            // 1) ตรวจสอบ token กับ Firebase
             var decoded = firebaseService.verifyIdToken(idToken);
             final String uid = decoded.getUid();
             final String emailFromToken = decoded.getEmail();
@@ -107,44 +106,48 @@ public class UserService {
             if (!decoded.isEmailVerified()) {
                 throw new UnauthorizedException("Email not verified");
             }
-            // 2) หา user ใน DB
+
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
-            u.setUpdatedAt(LocalDateTime.now());
 
-//            if (u.getStatus() != Users.Status.ACTIVE) {
-//                u.setStatus(Users.Status.ACTIVE);
-//                u.setUpdatedAt(LocalDateTime.now());
-//                usersRepository.save(u);
-//            }
-            if (u.getStatus() != Users.Status.ACTIVE) {
-                throw new UnauthorizedException("User is not active. Please login again.");
+            // ❌ ห้าม throw ถ้าไม่ ACTIVE
+            // ✅ ให้ login แล้วเปลี่ยนเป็น ACTIVE
+            if (u.getStatus() == Users.Status.PENDING
+                    || u.getStatus() == Users.Status.INACTIVE) {
+
+                u.setStatus(Users.Status.ACTIVE);
             }
 
+            if (u.getStatus() == Users.Status.DELETED) {
+                throw new UnauthorizedException("Account has been deleted");
+            }
 
-            // 3) สร้าง response
+            u.setUpdatedAt(LocalDateTime.now());
+            usersRepository.save(u);
+
             LoginResponse resp = new LoginResponse();
             resp.setUserId(u.getUserId());
             resp.setFirebaseUid(uid);
             resp.setEmail(u.getEmail() != null ? u.getEmail() : emailFromToken);
             resp.setFirstName(u.getFirstName());
             resp.setLastName(u.getLastName());
-            resp.setRole(u.getRole() != null ? u.getRole().name() : null);
+            resp.setRole(u.getRole().name());
             resp.setPosition(u.getPosition());
 
             if (u.getDorm() != null) {
                 resp.setDormId(u.getDorm().getDormId());
                 resp.setDormName(u.getDorm().getDormName());
             }
+
             resp.setRoomNumber(u.getRoomNumber());
             resp.setMessage("Login successful");
             return resp;
 
         } catch (FirebaseAuthException e) {
-            // ⬅️ token ไม่ผ่าน / หมดอายุ / ผิด
             throw new UnauthorizedException("Invalid or expired token");
         }
     }
+
 
     @Transactional
     public void logout(String idToken, FirebaseService firebaseService) {
