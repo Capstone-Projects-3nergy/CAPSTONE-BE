@@ -6,13 +6,11 @@ import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.exception.ParcelNotFoundException;
-import com.nw2.parcel.repositories.CompanyRepository;
-import com.nw2.parcel.repositories.ParcelsRepository;
-import com.nw2.parcel.repositories.TrashRepository;
-import com.nw2.parcel.repositories.UsersRepository;
+import com.nw2.parcel.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,6 +30,8 @@ public class ParcelService {
     private final CompanyRepository companyRepository;
     private final UsersRepository usersRepository;
     private final TrashRepository trashRepository;
+    private final ParcelVerificationRepository verificationRepository;
+    private final NotificationService notificationService;
 
     // add
     public Parcels createParcel(CreateParcelDto req) {
@@ -54,7 +54,8 @@ public class ParcelService {
         parcel.setStatus(Parcels.Status.RECEIVED);   // default
         parcel.setCompany(company);
         parcel.setUser(resident);
-
+        //auto assign (เผื่อ resident เคยกรอก tracking มาก่อน)
+        autoAssignResidentIfMatched(parcel);
         return parcelsRepository.save(parcel);
     }
 
@@ -295,6 +296,7 @@ public class ParcelService {
         }
 
         Parcels updated = parcelsRepository.save(p); // @PreUpdate จะเซ็ต updatedAt ให้อัตโนมัติ
+//        notifyStatusChangeIfNeeded(updated, oldStatus, newStatus);
 
         // map เป็น ParcelDetailDto
         Integer companyId = null;
@@ -470,6 +472,8 @@ public class ParcelService {
             );
         }
 
+        Parcels.Status oldStatus = p.getStatus();
+
         p.setStatus(Parcels.Status.PICKED_UP);
 
         if (p.getPickedUpAt() == null) {
@@ -477,6 +481,12 @@ public class ParcelService {
         }
 
         Parcels updated = parcelsRepository.save(p);
+
+//        notifyStatusChangeIfNeeded(
+//                updated,
+//                oldStatus,
+//                Parcels.Status.PICKED_UP
+//        );
 
         Integer companyId = null;
         String companyName = null;
@@ -542,7 +552,8 @@ public class ParcelService {
         parcel.setCompany(company);
         parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
         parcel.setUser(null);
-
+        //จุดสำคัญ
+        autoAssignResidentIfMatched(parcel);
         return parcelsRepository.save(parcel);
     }
 
@@ -594,4 +605,49 @@ public class ParcelService {
                 ))
                 .toList();
     }
+
+    private void autoAssignResidentIfMatched(Parcels parcel) {
+        verificationRepository
+                .findByTrackingNumberAndVerifiedFalse(parcel.getTrackingNumber())
+                .ifPresent(pv -> {
+
+                    Users resident = pv.getResident();
+                    parcel.setUser(resident);//ผูก parcel กับ resident
+                    pv.setVerified(true);//mark verification ว่าใช้แล้ว
+                    verificationRepository.save(pv);
+                    notificationService.notifyResidentParcelMatched(parcel, resident);//สร้าง notification ทันที
+                });
+    }
+
+//    private void notifyStatusChangeIfNeeded(
+//            Parcels parcel,
+//            Parcels.Status oldStatus,
+//            Parcels.Status newStatus
+//    ) {
+//        if (parcel.getUser() == null) return;
+//        if (oldStatus == newStatus) return;
+//
+//        String eventKey = "PARCEL_STATUS_" + newStatus + "_" + parcel.getParcelId();
+//
+//        if (newStatus == Parcels.Status.RECEIVED) {
+//            notificationService.createIfNotExists(
+////                    eventKey,
+//                    parcel.getUser(),
+//                    parcel,
+//                    "Parcel Received",
+//                    "Your parcel " + parcel.getTrackingNumber() + " is ready for pickup."
+//            );
+//        }
+//
+//        if (newStatus == Parcels.Status.PICKED_UP) {
+//            notificationService.createIfNotExists(
+//                    eventKey,
+//                    parcel.getUser(),
+//                    parcel,
+//                    "Parcel Picked Up",
+//                    "Parcel " + parcel.getTrackingNumber() + " has been picked up."
+//            );
+//        }
+//    }
+
 }
