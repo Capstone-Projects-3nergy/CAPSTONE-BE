@@ -18,7 +18,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
@@ -31,6 +30,28 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
         this.firebaseService = firebaseService;
         this.usersRepository = usersRepository;
     }
+
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) {
+//        String path = request.getServletPath();
+//
+//        return path.startsWith("/api/dorms")
+//                || path.startsWith("/api/auth")
+//                || "OPTIONS".equalsIgnoreCase(request.getMethod());
+//    }
+@Override
+protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getServletPath();
+
+    // allow เฉพาะ signup + login
+    if (path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
+        return true;
+    }
+
+    return path.startsWith("/api/dorms")
+            || "OPTIONS".equalsIgnoreCase(request.getMethod());
+}
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -48,11 +69,46 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                 Users userEntity = usersRepository.findByFirebaseUid(decoded.getUid())
                         .orElse(null);
 
-                List<GrantedAuthority> authorities = new ArrayList<>();
 
-                if (userEntity != null && userEntity.getRole() != null) {
-                    authorities.add(new SimpleGrantedAuthority(userEntity.getRole().name()));
+//                if (userEntity == null || userEntity.getStatus() != Users.Status.ACTIVE) {
+//                    response.sendError(
+//                            HttpServletResponse.SC_FORBIDDEN,
+//                            "Account not activated"
+//                    );
+//                    return;
+//                }
+//
+                List<GrantedAuthority> authorities = new ArrayList<>();
+//
+//                if (userEntity == null) {
+//                    response.sendError(
+//                            HttpServletResponse.SC_FORBIDDEN,
+//                            "User not registered in system"
+//                    );
+//                    return;
+//                }
+
+
+                if (userEntity == null) {
+                    response.sendError(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "User not registered in system"
+                    );
+                    return;
                 }
+
+                if (userEntity.getStatus() != Users.Status.ACTIVE) {
+                    response.sendError(
+                            HttpServletResponse.SC_UNAUTHORIZED,
+                            "User is not logged in"
+                    );
+                    return;
+                }
+
+
+                authorities.add(
+                        new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())
+                );
 
                 User principal = new User(decoded.getUid(), "", authorities);
 

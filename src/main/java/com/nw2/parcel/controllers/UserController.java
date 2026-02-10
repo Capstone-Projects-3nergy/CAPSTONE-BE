@@ -2,6 +2,7 @@ package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.SignUpRequest;
 import com.nw2.parcel.Dtos.LoginResponse;
+import com.nw2.parcel.repositories.UsersRepository;
 import com.nw2.parcel.services.FirebaseService;
 import com.nw2.parcel.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class UserController {
 
     private final UserService userService;
     private final FirebaseService firebaseService;
+    private final UsersRepository usersRepository;
 
     @PostMapping("/signup")
     public LoginResponse signup(@RequestBody SignUpRequest req) throws Exception {
@@ -47,5 +49,4 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
-
 }

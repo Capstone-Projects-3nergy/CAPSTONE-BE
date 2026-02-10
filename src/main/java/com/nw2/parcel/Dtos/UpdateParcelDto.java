@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateParcelDto {
-
     private String trackingNumber;
     private String recipientName;
     private Parcels.Parceltype parcelType;

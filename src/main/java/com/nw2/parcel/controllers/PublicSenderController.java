@@ -1,12 +1,17 @@
 package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.ParcelDto;
+import com.nw2.parcel.Dtos.ResidentListDto;
 import com.nw2.parcel.Dtos.SenderCreateParcelDto;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.services.ParcelService;
+import com.nw2.parcel.services.ResidentService;
+import com.nw2.parcel.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/public/parcels")
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PublicSenderController {
     private final ParcelService parcelService;
+    private final ResidentService residentService;
 
     // คนส่งใช้ endpoint นี้
     @PostMapping
@@ -36,5 +42,10 @@ public class PublicSenderController {
                 p.getCompany() != null ? p.getCompany().getCompanyName() : null,
                 p.getUser() != null ? p.getUser().getUserId() : null   // น่าจะเป็น null ในเคส public
         );
+    }
+
+    @GetMapping("/residents")
+    public List<ResidentListDto> getResidentsForSender() {
+        return residentService.getAllResidents();
     }
 }

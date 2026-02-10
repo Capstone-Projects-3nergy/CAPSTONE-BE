@@ -28,27 +28,25 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/dorms/**","/api/public/parcels/**","/api/public/email/**")
-                        .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/companies/**", "/api/residents/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
+                        // Public endpoints
+                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // เฉพาะ ADMIN เท่านั้นที่เข้า /api/admin/**
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        // ADMIN
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                        // 🟦 /api/residents/** ให้เฉพาะ STAFF
-//                        .requestMatchers("/api/residents/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.GET, "/api/dorms/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("STAFF")
-                        .requestMatchers("/api/trash/**").hasAuthority("STAFF")
-                        .requestMatchers("/api/staff/users/**").hasAuthority("STAFF") //management
+                        // STAFF
+                        .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/parcels/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/api/parcels/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parcels/**").hasAuthority("ROLE_STAFF")
+                        .requestMatchers("/api/trash/**").hasAuthority("ROLE_STAFF")
 
-
-                                // 🟢 resident ดูและคอนเฟิร์มพัสดุของตัวเองเท่านั้น
-                        .requestMatchers("/api/OwnerParcels/**").hasAuthority("RESIDENT")
+                        // RESIDENT
+                        .requestMatchers("/api/OwnerParcels/**").hasAuthority("ROLE_RESIDENT")
 
                         .anyRequest().authenticated()
                 )

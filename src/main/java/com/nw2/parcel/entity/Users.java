@@ -1,5 +1,6 @@
 package com.nw2.parcel.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ import java.util.List;
 public class Users {
 
     public enum Role { RESIDENT, STAFF, ADMIN }
-    public enum Status { ACTIVE, INACTIVE, DELETED }
+    public enum Status { PENDING, ACTIVE, INACTIVE, DELETED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,7 +44,7 @@ public class Users {
     private Role role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     private Status status;
 
     @Column(name = "position", length = 45)
@@ -65,6 +66,7 @@ public class Users {
     private LocalDateTime deletedAt;
 
     @ManyToOne(optional = true)
+    @JsonIgnore
     @JoinColumn(name = "dorm_id", nullable = true)
     private Dorm dorm;
 

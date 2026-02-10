@@ -1,6 +1,7 @@
 package com.nw2.parcel.services;
 
 import com.nw2.parcel.Dtos.TrashListItemDto;
+import com.nw2.parcel.Dtos.TrashResidentDto;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
@@ -13,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -105,28 +105,72 @@ public class TrashService {
         log.info("Parcel {} permanently deleted", parcelId);
     }
 
+    @Transactional(readOnly = true)
+    public List<TrashResidentDto> getTrashResidents() {
+
+        return trashRepository
+                .findAllByTargetTypeOrderByDeletedAtDesc(Trash.TargetType.USER)
+                .stream()
+                .map(trash -> {
+
+                    Users u = usersRepository.findById(trash.getTargetId())
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException("User not found in trash")
+                            );
+
+                    String deletedByName =
+                            trash.getDeletedBy().getFirstName() + " " +
+                                    trash.getDeletedBy().getLastName();
+
+                    return new TrashResidentDto(
+                            u.getUserId(),
+                            u.getEmail(),
+                            u.getFirstName(),
+                            u.getLastName(),
+                            u.getPhoneNumber(),
+                            u.getLineId(),
+                            u.getRoomNumber(),
+                            null, // position
+                            u.getProfileImageUrl(),
+                            u.getRole().name(),
+                            u.getStatus().name(),
+                            trash.getDeletedAt(),
+                            deletedByName
+                    );
+                })
+                .toList();
+    }
+
     @Transactional
-    public void deleteResident(Integer residentId, Users staff) {
+    public void restoreResident(Integer residentId) {
 
-        Users resident = usersRepository
-                .findByUserIdAndRole(residentId, Users.Role.RESIDENT)
-                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+        Trash trash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId)
+                .orElseThrow(() -> new IllegalStateException("Resident not found in trash"));
 
-        // ป้องกันลบซ้ำ
-        if (resident.getStatus() == Users.Status.DELETED) {
-            throw new IllegalStateException("Resident already deleted");
-        }
+        Users resident = usersRepository.findById(residentId)
+                .orElseThrow();
 
-        resident.setStatus(Users.Status.DELETED);
-        resident.setDeletedAt(LocalDateTime.now());
-
-        Trash trash = new Trash();
-        trash.setTargetType(Trash.TargetType.USER);
-        trash.setTargetId(residentId);
-        trash.setDeletedAt(LocalDateTime.now());
-        trash.setDeletedBy(staff);
+        resident.setStatus(Users.Status.ACTIVE);
+        resident.setDeletedAt(null);
 
         usersRepository.save(resident);
-        trashRepository.save(trash);
+        trashRepository.delete(trash);
+
+        log.info("Resident {} restored from trash", residentId);
     }
+
+    @Transactional
+    public void deleteResidentPermanently(Integer residentId) {
+
+        Trash trash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.USER, residentId)
+                .orElseThrow(() -> new IllegalStateException("Resident not found in trash"));
+
+        usersRepository.deleteById(residentId);
+        trashRepository.delete(trash);
+
+        log.info("Resident {} permanently deleted", residentId);
+    }
+
 }

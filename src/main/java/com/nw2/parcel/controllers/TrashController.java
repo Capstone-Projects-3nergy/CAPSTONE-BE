@@ -2,6 +2,7 @@ package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.ParcelListItemDto;
 import com.nw2.parcel.Dtos.TrashListItemDto;
+import com.nw2.parcel.Dtos.TrashResidentDto;
 import com.nw2.parcel.services.TrashService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -44,4 +45,29 @@ public class TrashController {
                 Map.of("message", "Parcel permanently deleted")
         );
     }
+
+    // ดู resident ที่อยู่ใน trash
+    @GetMapping("/residents")
+    public List<TrashResidentDto> getTrashResidents() {
+        return trashService.getTrashResidents();
+    }
+
+    // restore resident
+    @PutMapping("/residents/{residentId}/restore")
+    public ResponseEntity<Void> restoreResident(@PathVariable Integer residentId) {
+        trashService.restoreResident(residentId);
+        return ResponseEntity.ok().build();
+    }
+
+    // delete resident permanently
+    @DeleteMapping("/residents/{residentId}")
+    public ResponseEntity<Map<String, String>> deleteResidentPermanently(
+            @PathVariable Integer residentId
+    ) {
+        trashService.deleteResidentPermanently(residentId);
+        return ResponseEntity.ok(
+                Map.of("message", "Resident permanently deleted")
+        );
+    }
+
 }
