@@ -607,15 +607,26 @@ public class ParcelService {
     }
 
     private void autoAssignResidentIfMatched(Parcels parcel) {
+
+        String normalizedTracking = parcel.getTrackingNumber()
+                .trim()
+                .toUpperCase();
+
+        parcel.setTrackingNumber(normalizedTracking);
+
         verificationRepository
-                .findByTrackingNumberAndVerifiedFalse(parcel.getTrackingNumber())
+                .findByTrackingNumberIgnoreCaseAndVerifiedFalse(normalizedTracking)
                 .ifPresent(pv -> {
 
                     Users resident = pv.getResident();
-                    parcel.setUser(resident);//ผูก parcel กับ resident
-                    pv.setVerified(true);//mark verification ว่าใช้แล้ว
+
+                    parcel.setUser(resident);
+                    pv.setVerified(true);
+
                     verificationRepository.save(pv);
-                    notificationService.notifyResidentParcelMatched(parcel, resident);//สร้าง notification ทันที
+
+                    notificationService
+                            .notifyResidentParcelMatched(parcel, resident);
                 });
     }
 

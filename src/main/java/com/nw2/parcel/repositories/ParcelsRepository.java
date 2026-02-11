@@ -18,4 +18,5 @@ public interface ParcelsRepository extends JpaRepository<Parcels, Integer> {
     Optional<Parcels> findByParcelIdAndUserUserIdAndIsDeletedFalse(Integer parcelId, Integer userId);
     Optional<Parcels> findByParcelIdAndUserUserId(Integer parcelId, Integer userId);
     Optional<Parcels> findByParcelIdAndIsDeletedTrue(Integer parcelId);
+    Optional<Parcels> findByTrackingNumberIgnoreCase(String trackingNumber);
 }
