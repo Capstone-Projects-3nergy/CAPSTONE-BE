@@ -25,7 +25,9 @@ public class UserService {
 
     private final UsersRepository usersRepository;
     private final DormRepository dormRepository;
+    private final NotificationService notificationService;
 
+    @Transactional
     public LoginResponse signUp(SignUpRequest req) throws Exception {
         String normalizedEmail = req.getEmail().trim().toLowerCase();
 
@@ -76,6 +78,12 @@ public class UserService {
 
         try {
             usersRepository.save(user);
+            notificationService.createMultiChannelNotification(
+                    user,
+                    "Welcome to Dormitory System",
+                    "Welcome " + user.getFirstName() +
+                            "! Your account has been successfully created."
+            );
         } catch (DataIntegrityViolationException ex) {
             // กันเคส race condition ที่หลุด unique constraint DB
             throw new EmailAlreadyExistsException("Email is already in use.");

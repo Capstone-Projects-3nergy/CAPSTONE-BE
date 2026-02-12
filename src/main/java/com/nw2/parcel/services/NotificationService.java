@@ -69,12 +69,59 @@ public class NotificationService {
     }
 
     // ===============================
+// Multi Channel Notification (SYSTEM + EMAIL)
+// ===============================
+    @Transactional
+    public void createMultiChannelNotification(
+            Users user,
+            String title,
+            String message
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // ===============================
+        // SYSTEM (show on web)
+        // ===============================
+        Notification systemNoti = new Notification();
+        systemNoti.setNotiTitle(title);
+        systemNoti.setNotiMessage(message);
+        systemNoti.setNotificationType(Notification.Type.SYSTEM);
+        systemNoti.setStatus(Notification.Status.SENT);
+        systemNoti.setUser(user);
+        systemNoti.setCreatedAt(now);
+        systemNoti.setUpdatedAt(now);
+        systemNoti.setSentAt(now);
+
+        notificationRepository.save(systemNoti);
+
+        // ===============================
+        // EMAIL (send only)
+        // ===============================
+        Notification emailNoti = new Notification();
+        emailNoti.setNotiTitle(title);
+        emailNoti.setNotiMessage(message);
+        emailNoti.setNotificationType(Notification.Type.EMAIL);
+        emailNoti.setStatus(Notification.Status.PENDING);
+        emailNoti.setUser(user);
+        emailNoti.setCreatedAt(now);
+        emailNoti.setUpdatedAt(now);
+
+        notificationRepository.save(emailNoti);
+
+        sendEmailAndUpdateStatus(emailNoti, user.getEmail());
+    }
+
+
+    // ===============================
     // 📥 Get User Notifications
     // ===============================
     public List<NotificationDto> getNotificationsByUser(Integer userId) {
 
         return notificationRepository
-                .findByUserUserIdOrderByCreatedAtDesc(userId)
+                .findByUserUserIdAndNotificationTypeOrderByCreatedAtDesc(
+                        userId,
+                        Notification.Type.SYSTEM
+                )
                 .stream()
                 .map(n -> new NotificationDto(
                         n.getNotificationId(),
@@ -144,7 +191,7 @@ public class NotificationService {
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle("Parcel Arrival Notification");
         emailNoti.setNotiMessage(
-                "Dear " + resident.getFirstName() +
+                resident.getFirstName() +
                         ", your parcel (" + parcel.getTrackingNumber() +
                         ") has arrived at the dormitory."
         );

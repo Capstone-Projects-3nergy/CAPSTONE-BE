@@ -10,4 +10,9 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<Notification, Integer> {
 //    boolean existsByEventKey(String eventKey);
     List<Notification> findByUserUserIdOrderByCreatedAtDesc(Integer userId);
+    List<Notification>
+    findByUserUserIdAndNotificationTypeOrderByCreatedAtDesc(
+            Integer userId,
+            Notification.Type type
+    );
 }
