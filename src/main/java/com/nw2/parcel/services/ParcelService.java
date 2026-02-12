@@ -34,30 +34,59 @@ public class ParcelService {
     private final NotificationService notificationService;
 
     // add
+//    public Parcels createParcel(CreateParcelDto req) {
+//        Company company = companyRepository.findById(req.getCompanyId())
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
+//                );
+//
+//        Users resident = usersRepository
+//                .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException("Resident not found with id: " + req.getUserId())
+//                );
+//
+//        Parcels parcel = new Parcels();
+//        parcel.setTrackingNumber(req.getTrackingNumber());
+//        parcel.setRecipientName(req.getRecipientName());
+//        parcel.setParcelType(req.getParcelType());
+//        parcel.setSenderName(req.getSenderName());
+//        parcel.setStatus(Parcels.Status.RECEIVED);   // default
+//        parcel.setCompany(company);
+//        parcel.setUser(resident);
+//        //auto assign (เผื่อ resident เคยกรอก tracking มาก่อน)
+//        autoAssignResidentIfMatched(parcel);
+//        return parcelsRepository.save(parcel);
+//    }
     public Parcels createParcel(CreateParcelDto req) {
+
         Company company = companyRepository.findById(req.getCompanyId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
-                );
+                .orElseThrow(() -> new IllegalArgumentException("Company not found"));
 
         Users resident = usersRepository
                 .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Resident not found with id: " + req.getUserId())
-                );
+                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
 
         Parcels parcel = new Parcels();
         parcel.setTrackingNumber(req.getTrackingNumber());
         parcel.setRecipientName(req.getRecipientName());
         parcel.setParcelType(req.getParcelType());
         parcel.setSenderName(req.getSenderName());
-        parcel.setStatus(Parcels.Status.RECEIVED);   // default
+        parcel.setStatus(Parcels.Status.RECEIVED);
         parcel.setCompany(company);
         parcel.setUser(resident);
-        //auto assign (เผื่อ resident เคยกรอก tracking มาก่อน)
-        autoAssignResidentIfMatched(parcel);
-        return parcelsRepository.save(parcel);
+
+        Users matchedResident = autoAssignResidentIfMatched(parcel);
+
+        Parcels savedParcel = parcelsRepository.save(parcel); // 🔥 save ก่อน
+
+        if (matchedResident != null) {
+            notificationService.notifyResidentParcelMatched(savedParcel, matchedResident);
+        }
+
+        return savedParcel;
     }
+
 
     // view
     public List<ParcelListItemDto> getAllParcelsForStaff() {
@@ -606,7 +635,7 @@ public class ParcelService {
                 .toList();
     }
 
-    private void autoAssignResidentIfMatched(Parcels parcel) {
+    private Users autoAssignResidentIfMatched(Parcels parcel) {
 
         String normalizedTracking = parcel.getTrackingNumber()
                 .trim()
@@ -614,20 +643,16 @@ public class ParcelService {
 
         parcel.setTrackingNumber(normalizedTracking);
 
-        verificationRepository
+        return verificationRepository
                 .findByTrackingNumberIgnoreCaseAndVerifiedFalse(normalizedTracking)
-                .ifPresent(pv -> {
-
+                .map(pv -> {
                     Users resident = pv.getResident();
-
                     parcel.setUser(resident);
                     pv.setVerified(true);
-
                     verificationRepository.save(pv);
-
-                    notificationService
-                            .notifyResidentParcelMatched(parcel, resident);
-                });
+                    return resident;
+                })
+                .orElse(null);
     }
 
 //    private void notifyStatusChangeIfNeeded(
