@@ -49,4 +49,15 @@ public class NotificationController {
         Users user = getCurrentUser(authentication);
         notificationService.markAsRead(id, user.getUserId());
     }
+
+    @PostMapping("/welcome")
+    public void createWelcomeNotification(Authentication authentication) {
+        Users user = getCurrentUser(authentication);
+
+        notificationService.createSystemNotification(
+                user,
+                "Welcome",
+                "Welcome " + user.getFirstName() + "! Your account has been created."
+        );
+    }
 }
