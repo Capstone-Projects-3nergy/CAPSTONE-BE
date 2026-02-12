@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Notification {
 
-    public enum Status { PENDING, SENT, FAILED }
+    public enum Status { PENDING, SENT, FAILED, READ }
     public enum Type   { EMAIL, LINE }
 
     @Id

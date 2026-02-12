@@ -74,11 +74,14 @@ public class Users {
     private List<Parcels> parcels;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Notification> notifications;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<StaffDorm> staffDorms;
 
     @OneToMany(mappedBy = "deletedBy")
+    @JsonIgnore
     private List<Trash> deletedTrashList;
 }
