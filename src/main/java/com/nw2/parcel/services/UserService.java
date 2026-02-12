@@ -8,6 +8,8 @@ import com.nw2.parcel.Dtos.LoginResponse;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.entity.Dorm;
 import com.nw2.parcel.exception.EmailAlreadyExistsException;
+import com.nw2.parcel.exception.ExternalServiceException;
+import com.nw2.parcel.exception.ResourceNotFoundException;
 import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.UsersRepository;
 import com.nw2.parcel.repositories.DormRepository;
@@ -48,7 +50,8 @@ public class UserService {
             if ("EMAIL_ALREADY_EXISTS".equals(e.getErrorCode())) {
                 throw new EmailAlreadyExistsException("Email is already in use.");
             }
-            throw e;
+            throw new ExternalServiceException("Firebase error", e);
+
         }
 
         Dorm dorm = null;
@@ -57,7 +60,7 @@ public class UserService {
                 throw new IllegalArgumentException("dormId is required for RESIDENT.");
             }
             dorm = dormRepository.findById(req.getDormId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dorm not found: " + req.getDormId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Dorm not found: " + req.getDormId()));
         }
 
         Users user = new Users();

@@ -5,7 +5,10 @@ import com.nw2.parcel.entity.Company;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.exception.ConflictException;
 import com.nw2.parcel.exception.ParcelNotFoundException;
+import com.nw2.parcel.exception.ResourceNotFoundException;
+import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -33,39 +36,14 @@ public class ParcelService {
     private final ParcelVerificationRepository verificationRepository;
     private final NotificationService notificationService;
 
-    // add
-//    public Parcels createParcel(CreateParcelDto req) {
-//        Company company = companyRepository.findById(req.getCompanyId())
-//                .orElseThrow(() ->
-//                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
-//                );
-//
-//        Users resident = usersRepository
-//                .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
-//                .orElseThrow(() ->
-//                        new IllegalArgumentException("Resident not found with id: " + req.getUserId())
-//                );
-//
-//        Parcels parcel = new Parcels();
-//        parcel.setTrackingNumber(req.getTrackingNumber());
-//        parcel.setRecipientName(req.getRecipientName());
-//        parcel.setParcelType(req.getParcelType());
-//        parcel.setSenderName(req.getSenderName());
-//        parcel.setStatus(Parcels.Status.RECEIVED);   // default
-//        parcel.setCompany(company);
-//        parcel.setUser(resident);
-//        //auto assign (เผื่อ resident เคยกรอก tracking มาก่อน)
-//        autoAssignResidentIfMatched(parcel);
-//        return parcelsRepository.save(parcel);
-//    }
     public Parcels createParcel(CreateParcelDto req) {
 
         Company company = companyRepository.findById(req.getCompanyId())
-                .orElseThrow(() -> new IllegalArgumentException("Company not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Company not found"));
 
         Users resident = usersRepository
                 .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
-                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resident not found"));
 
         Parcels parcel = new Parcels();
         parcel.setTrackingNumber(req.getTrackingNumber());
@@ -209,7 +187,7 @@ public class ParcelService {
 
             Company company = companyRepository.findById(req.getCompanyId())
                     .orElseThrow(() ->
-                            new IllegalArgumentException("Company not found: " + req.getCompanyId())
+                            new ResourceNotFoundException("Company not found: " + req.getCompanyId())
                     );
             p.setCompany(company);
         }
@@ -376,7 +354,7 @@ public class ParcelService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
-            throw new IllegalStateException("No authenticated user");
+            throw new UnauthorizedException("No authenticated user");
         }
 
         // principal ที่เราเซ็ตใน FirebaseAuthenticationFilter = org.springframework.security.core.userdetails.User
@@ -386,7 +364,7 @@ public class ParcelService {
         String firebaseUid = principal.getUsername(); // = decoded.getUid()
 
         Users u = usersRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new IllegalArgumentException("User not found in system"));
+                .orElseThrow(() -> new UnauthorizedException("User not found in system"));
 
         if (u.getRole() != Users.Role.RESIDENT) {
             throw new IllegalArgumentException("Current user is not a RESIDENT");
@@ -498,7 +476,7 @@ public class ParcelService {
 
         // resident กด confirm ได้เฉพาะตอนสถานะ RECEIVED
         if (p.getStatus() != Parcels.Status.RECEIVED) {
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Parcel cannot be confirmed in current status: " + p.getStatus()
             );
         }
@@ -568,24 +546,6 @@ public class ParcelService {
     }
 
     public Parcels createParcelFromPublicForm(SenderCreateParcelDto req) {
-
-//        // 1) หา company จาก id ที่คนส่งเลือก
-//        Company company = companyRepository.findById(req.getCompanyId())
-//                .orElseThrow(() ->
-//                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
-//                );
-//
-//        Parcels parcel = new Parcels();
-//        parcel.setTrackingNumber(req.getTrackingNumber());
-//        parcel.setRecipientName(req.getRecipientName());
-//        parcel.setParcelType(req.getParcelType());
-//        parcel.setSenderName(req.getSenderName());
-//        parcel.setCompany(company);
-//        parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
-//        parcel.setUser(null);
-//        //จุดสำคัญ
-//        autoAssignResidentIfMatched(parcel);
-//        return parcelsRepository.save(parcel);
         Company company = companyRepository.findById(req.getCompanyId())
                 .orElseThrow(() ->
                         new IllegalArgumentException("Company not found: " + req.getCompanyId())
@@ -618,7 +578,7 @@ public class ParcelService {
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         if (parcel.getStatus() == Parcels.Status.PICKED_UP) {
-            throw new IllegalStateException("Cannot delete a picked-up parcel");
+            throw new ConflictException("Cannot delete a picked-up parcel");
         }
 
         // 1) soft delete parcel
@@ -630,7 +590,7 @@ public class ParcelService {
         String firebaseUid = auth.getName();
 
         Users staff = usersRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new IllegalStateException("User not found"));
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
 
         // 3) สร้าง Trash record
         Trash trash = new Trash();

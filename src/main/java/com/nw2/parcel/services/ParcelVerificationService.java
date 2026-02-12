@@ -3,6 +3,7 @@ package com.nw2.parcel.services;
 import com.nw2.parcel.Dtos.VerifyParcelDto;
 import com.nw2.parcel.entity.ParcelVerification;
 import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.ParcelVerificationRepository;
 import com.nw2.parcel.repositories.ParcelsRepository;
 import com.nw2.parcel.repositories.UsersRepository;
@@ -26,7 +27,7 @@ public class ParcelVerificationService {
         String firebaseUid = auth.getName();
 
         Users resident = usersRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
 
         // ✅ normalize tracking number
         String normalizedTracking = req.getTrackingNumber()

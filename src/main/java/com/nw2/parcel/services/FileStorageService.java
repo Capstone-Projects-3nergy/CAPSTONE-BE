@@ -72,6 +72,7 @@ package com.nw2.parcel.services;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.nw2.parcel.exception.ExternalServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -104,7 +105,7 @@ public class FileStorageService {
             return uploadResult.get("secure_url").toString();
 
         } catch (Exception e) {
-            throw new RuntimeException("Upload profile image failed", e);
+            throw new ExternalServiceException("Upload profile image failed", e);
         }
     }
 

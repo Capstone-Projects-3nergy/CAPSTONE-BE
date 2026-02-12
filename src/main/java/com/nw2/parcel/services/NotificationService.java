@@ -4,6 +4,8 @@ import com.nw2.parcel.Dtos.NotificationDto;
 import com.nw2.parcel.entity.Notification;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.exception.ResourceNotFoundException;
+import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -146,11 +148,11 @@ public class NotificationService {
 
         Notification noti = notificationRepository.findById(notificationId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Notification not found: " + notificationId)
+                        new ResourceNotFoundException("Notification not found: " + notificationId)
                 );
 
         if (!noti.getUser().getUserId().equals(userId)) {
-            throw new IllegalArgumentException("You cannot modify this notification");
+            throw new UnauthorizedException("You cannot modify this notification");
         }
 
         if (!Boolean.TRUE.equals(noti.getIsRead())) {
@@ -211,18 +213,26 @@ public class NotificationService {
     private void sendEmailAndUpdateStatus(Notification emailNoti, String email) {
 
         try {
+            System.out.println("TRY SENDING EMAIL TO: " + email);
+
             emailService.send(
                     email,
                     emailNoti.getNotiTitle(),
                     emailNoti.getNotiMessage()
             );
 
+            System.out.println("EMAIL SENT SUCCESS");
+
             emailNoti.setStatus(Notification.Status.SENT);
             emailNoti.setSentAt(LocalDateTime.now());
 
         } catch (Exception e) {
 
+            System.out.println("EMAIL FAILED");
+            e.printStackTrace();
+
             emailNoti.setStatus(Notification.Status.FAILED);
+
         }
 
         emailNoti.setUpdatedAt(LocalDateTime.now());
@@ -230,7 +240,6 @@ public class NotificationService {
     }
 
 }
-
 
 //    public void createIfNotExists(
 //            String eventKey,

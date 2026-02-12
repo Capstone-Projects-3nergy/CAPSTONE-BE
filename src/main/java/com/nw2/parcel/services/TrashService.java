@@ -5,6 +5,7 @@ import com.nw2.parcel.Dtos.TrashResidentDto;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.exception.ResourceNotFoundException;
 import com.nw2.parcel.repositories.ParcelsRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
@@ -76,7 +77,7 @@ public class TrashService {
 
         Trash trash = trashRepository
                 .findByTargetTypeAndTargetId(Trash.TargetType.PARCEL, parcelId)
-                .orElseThrow(() -> new IllegalStateException("Parcel not found in trash"));
+                .orElseThrow(() -> new ResourceNotFoundException("Parcel not found in trash"));
 
         Parcels parcel = parcelsRepository.findById(parcelId)
                 .orElseThrow();
@@ -97,7 +98,7 @@ public class TrashService {
 
         Trash trash = trashRepository
                 .findByTargetTypeAndTargetId(Trash.TargetType.PARCEL, parcelId)
-                .orElseThrow(() -> new IllegalStateException("Parcel not found in trash"));
+                .orElseThrow(() -> new ResourceNotFoundException("Parcel not found in trash"));
 
         parcelsRepository.deleteById(parcelId);
         trashRepository.delete(trash);
@@ -115,7 +116,7 @@ public class TrashService {
 
                     Users u = usersRepository.findById(trash.getTargetId())
                             .orElseThrow(() ->
-                                    new IllegalArgumentException("User not found in trash")
+                                    new ResourceNotFoundException("User not found in trash")
                             );
 
                     String deletedByName =
