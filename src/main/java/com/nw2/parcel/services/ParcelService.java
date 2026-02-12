@@ -81,7 +81,9 @@ public class ParcelService {
         Parcels savedParcel = parcelsRepository.save(parcel); // 🔥 save ก่อน
 
         if (matchedResident != null) {
-            notificationService.notifyResidentParcelMatched(savedParcel, matchedResident);
+//            notificationService.notifyResidentParcelMatched(savedParcel, matchedResident);
+            notificationService.notifyParcelMultiChannel(savedParcel, matchedResident);
+
         }
 
         return savedParcel;
@@ -567,7 +569,23 @@ public class ParcelService {
 
     public Parcels createParcelFromPublicForm(SenderCreateParcelDto req) {
 
-        // 1) หา company จาก id ที่คนส่งเลือก
+//        // 1) หา company จาก id ที่คนส่งเลือก
+//        Company company = companyRepository.findById(req.getCompanyId())
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
+//                );
+//
+//        Parcels parcel = new Parcels();
+//        parcel.setTrackingNumber(req.getTrackingNumber());
+//        parcel.setRecipientName(req.getRecipientName());
+//        parcel.setParcelType(req.getParcelType());
+//        parcel.setSenderName(req.getSenderName());
+//        parcel.setCompany(company);
+//        parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
+//        parcel.setUser(null);
+//        //จุดสำคัญ
+//        autoAssignResidentIfMatched(parcel);
+//        return parcelsRepository.save(parcel);
         Company company = companyRepository.findById(req.getCompanyId())
                 .orElseThrow(() ->
                         new IllegalArgumentException("Company not found: " + req.getCompanyId())
@@ -581,9 +599,16 @@ public class ParcelService {
         parcel.setCompany(company);
         parcel.setStatus(Parcels.Status.WAITING_FOR_STAFF);
         parcel.setUser(null);
-        //จุดสำคัญ
-        autoAssignResidentIfMatched(parcel);
-        return parcelsRepository.save(parcel);
+
+        Users matchedResident = autoAssignResidentIfMatched(parcel);
+
+        Parcels saved = parcelsRepository.save(parcel);
+
+        if (matchedResident != null) {
+            notificationService.notifyParcelMultiChannel(saved, matchedResident);
+        }
+
+        return saved;
     }
 
     public void moveParcelToTrash(Integer parcelId) {

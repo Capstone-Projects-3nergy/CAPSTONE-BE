@@ -17,7 +17,8 @@ public class NotificationDto {
     private Notification.Type type;
     private LocalDateTime createdAt;
     private LocalDateTime sentAt;
-
+    private Boolean isRead;
+    private LocalDateTime readAt;
     private Integer parcelId;
     private String trackingNumber;
 }
