@@ -54,7 +54,7 @@ public class ParcelVerificationService {
                     repo.save(pv);
 
                     notificationService
-                            .notifyResidentParcelMatched(parcel, resident);
+                            .notifyParcelMultiChannel(parcel, resident);
                 });
     }
 }

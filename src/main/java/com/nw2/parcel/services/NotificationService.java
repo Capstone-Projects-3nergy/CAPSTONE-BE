@@ -21,9 +21,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
 
-    // ===============================
     // Parcel Notification
-    // ===============================
     public void notifyResidentParcelMatched(Parcels parcel, Users resident) {
 
         Notification noti = new Notification();
@@ -46,9 +44,7 @@ public class NotificationService {
         notificationRepository.save(noti);
     }
 
-    // ===============================
-    // 🔔 Generic System Notification
-    // ===============================
+    //Generic System Notification
     public void createSystemNotification(
             Users user,
             String title,
@@ -70,9 +66,7 @@ public class NotificationService {
         notificationRepository.save(noti);
     }
 
-    // ===============================
-// Multi Channel Notification (SYSTEM + EMAIL)
-// ===============================
+    // Multi Channel Notification (SYSTEM + EMAIL)
     @Transactional
     public void createMultiChannelNotification(
             Users user,
@@ -81,9 +75,7 @@ public class NotificationService {
     ) {
         LocalDateTime now = LocalDateTime.now();
 
-        // ===============================
         // SYSTEM (show on web)
-        // ===============================
         Notification systemNoti = new Notification();
         systemNoti.setNotiTitle(title);
         systemNoti.setNotiMessage(message);
@@ -96,9 +88,7 @@ public class NotificationService {
 
         notificationRepository.save(systemNoti);
 
-        // ===============================
         // EMAIL (send only)
-        // ===============================
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle(title);
         emailNoti.setNotiMessage(message);
@@ -113,10 +103,7 @@ public class NotificationService {
         sendEmailAndUpdateStatus(emailNoti, user.getEmail());
     }
 
-
-    // ===============================
-    // 📥 Get User Notifications
-    // ===============================
+    //Get User Notifications
     public List<NotificationDto> getNotificationsByUser(Integer userId) {
 
         return notificationRepository
@@ -141,9 +128,7 @@ public class NotificationService {
                 .toList();
     }
 
-    // ===============================
     // Mark As Read
-    // ===============================
     public void markAsRead(Integer notificationId, Integer userId) {
 
         Notification noti = notificationRepository.findById(notificationId)
@@ -167,9 +152,7 @@ public class NotificationService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ===============================
         // SYSTEM (in-app)
-        // ===============================
         Notification systemNoti = new Notification();
         systemNoti.setNotiTitle("New Parcel Arrived");
         systemNoti.setNotiMessage(
@@ -187,9 +170,7 @@ public class NotificationService {
 
         notificationRepository.save(systemNoti);
 
-        // ===============================
-        // 📧 EMAIL
-        // ===============================
+        //EMAIL
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle("Parcel Arrival Notification");
         emailNoti.setNotiMessage(
@@ -206,7 +187,6 @@ public class NotificationService {
 
         notificationRepository.save(emailNoti);
 
-        // 🔥 ส่ง email จริง
         sendEmailAndUpdateStatus(emailNoti, resident.getEmail());
     }
 
@@ -240,28 +220,3 @@ public class NotificationService {
     }
 
 }
-
-//    public void createIfNotExists(
-//            String eventKey,
-//            Users user,
-//            Parcels parcel,
-//            String title,
-//            String message
-//    ) {
-//        if (notificationRepository.existsByEventKey(eventKey)) {
-//            return;
-//        }
-//
-//        Notification noti = new Notification();
-////        noti.setEventKey(eventKey);
-//        noti.setNotiTitle(title);
-//        noti.setNotiMessage(message);
-//        noti.setUser(user);
-//        noti.setParcel(parcel);
-//        noti.setStatus(Notification.Status.PENDING);
-//
-//        noti.setCreatedAt(LocalDateTime.now());
-//        noti.setUpdatedAt(LocalDateTime.now());
-//
-//        notificationRepository.save(noti);
-//    }
