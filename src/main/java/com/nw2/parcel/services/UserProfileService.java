@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserProfileService {
 
     private final UsersRepository usersRepository;
-    private final FileStorageService fileStorageService; // ไว้เก็บรูป
+    private final FileStorageService fileStorageService;
 
     public UserProfileResponse updateProfile(
             String firebaseUid,
@@ -25,13 +25,11 @@ public class UserProfileService {
         Users user = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-        //update common fields
         user.setFirstName(req.getFirstName());
         user.setLastName(req.getLastName());
         user.setPhoneNumber(req.getPhoneNumber());
         user.setLineId(req.getLineId());
 
-        //role specific
         if (user.getRole() == Users.Role.RESIDENT) {
             user.setRoomNumber(req.getRoomNumber());
         }
@@ -43,12 +41,10 @@ public class UserProfileService {
         //profile image
         if (profileImage != null && !profileImage.isEmpty()) {
 
-            // ลบรูปเก่า (ถ้ามี)
             if (user.getProfileImageUrl() != null) {
                 fileStorageService.deleteFileByUrl(user.getProfileImageUrl());
             }
 
-            // upload รูปใหม่
             String imageUrl = fileStorageService.uploadProfileImage(
                     profileImage,
                     user.getUserId()

@@ -82,11 +82,10 @@ public class UserService {
         try {
             usersRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            // กันเคส race condition ที่หลุด unique constraint DB
+            // กัน race condition ที่หลุด unique constraint DB
             throw new EmailAlreadyExistsException("Email is already in use.");
         }
 
-        // 5) ตอบกลับ
         LoginResponse resp = new LoginResponse();
         resp.setUserId(user.getUserId());
         resp.setFirebaseUid(userRecord.getUid());
@@ -124,7 +123,6 @@ public class UserService {
                     u.getStatus() == Users.Status.PENDING
                             && !Boolean.TRUE.equals(u.getIsWelcomeSent());
 
-            // activate account
             if (u.getStatus() == Users.Status.PENDING
                     || u.getStatus() == Users.Status.INACTIVE) {
                 u.setStatus(Users.Status.ACTIVE);
@@ -132,7 +130,6 @@ public class UserService {
 
             u.setUpdatedAt(LocalDateTime.now());
 
-            //set flag before save
             if (shouldSendWelcome) {
                 u.setIsWelcomeSent(true);
             }

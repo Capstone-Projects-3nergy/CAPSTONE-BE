@@ -25,7 +25,6 @@ public class EmailService {
         }
     }
 
-    // ถ้ายังอยากเก็บไว้
     public void sendResetPassword(String email, String link) {
         send(email, "Reset your password", "Click here: " + link);
     }

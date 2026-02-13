@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = {
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
 @RestController
 @RequestMapping("/api/auth")

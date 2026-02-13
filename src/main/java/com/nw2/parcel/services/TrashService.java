@@ -27,7 +27,6 @@ public class TrashService {
 
     private static final Logger log = LoggerFactory.getLogger(TrashService.class);
 
-    // GET TRASH
     @Transactional(readOnly = true)
     public List<TrashListItemDto> getTrashParcels() {
 
@@ -71,7 +70,6 @@ public class TrashService {
                 .toList();
     }
 
-    // RESTORE
     @Transactional
     public void restoreParcel(Integer parcelId) {
 

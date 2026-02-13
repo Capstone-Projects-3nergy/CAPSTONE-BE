@@ -10,6 +10,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://cp25nw2.sit.kmutt.ac.th",
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
+})
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
@@ -49,15 +56,4 @@ public class NotificationController {
         Users user = getCurrentUser(authentication);
         notificationService.markAsRead(id, user.getUserId());
     }
-
-//    @PostMapping("/welcome")
-//    public void createWelcomeNotification(Authentication authentication) {
-//        Users user = getCurrentUser(authentication);
-//
-//        notificationService.createSystemNotification(
-//                user,
-//                "Welcome",
-//                "Welcome " + user.getFirstName() + "! Your account has been created."
-//        );
-//    }
 }

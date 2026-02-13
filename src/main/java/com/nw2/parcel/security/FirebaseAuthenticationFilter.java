@@ -43,15 +43,13 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getServletPath();
 
-    // allow เฉพาะ signup + login
     if (path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
         return true;
     }
 
     return path.startsWith("/api/dorms")
             || "OPTIONS".equalsIgnoreCase(request.getMethod());
-}
-
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -69,25 +67,7 @@ protected boolean shouldNotFilter(HttpServletRequest request) {
                 Users userEntity = usersRepository.findByFirebaseUid(decoded.getUid())
                         .orElse(null);
 
-
-//                if (userEntity == null || userEntity.getStatus() != Users.Status.ACTIVE) {
-//                    response.sendError(
-//                            HttpServletResponse.SC_FORBIDDEN,
-//                            "Account not activated"
-//                    );
-//                    return;
-//                }
-//
                 List<GrantedAuthority> authorities = new ArrayList<>();
-//
-//                if (userEntity == null) {
-//                    response.sendError(
-//                            HttpServletResponse.SC_FORBIDDEN,
-//                            "User not registered in system"
-//                    );
-//                    return;
-//                }
-
 
                 if (userEntity == null) {
                     response.sendError(
@@ -104,7 +84,6 @@ protected boolean shouldNotFilter(HttpServletRequest request) {
                     );
                     return;
                 }
-
 
                 authorities.add(
                         new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name())

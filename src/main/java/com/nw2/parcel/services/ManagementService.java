@@ -37,27 +37,6 @@ public class ManagementService {
     private final EmailService emailService;
     private final FirebaseAuthService firebaseAuthService;
 
-    //list resident
-//    public List<ManagementListDto> getAllResidents() {
-//        return usersRepository
-//                .findByRoleInAndStatusNot(
-//                        List.of(Users.Role.RESIDENT, Users.Role.STAFF),
-//                        Users.Status.DELETED
-//                )
-//                .stream()
-//                .map(user -> new ManagementListDto(
-//                        user.getUserId(),
-//                        user.getFirstName() + " " + user.getLastName(),
-//                        user.getEmail(),
-//                        user.getRoomNumber(),
-//                        user.getProfileImageUrl(),
-//                        user.getRole().name(),
-//                        user.getDorm() != null ? user.getDorm().getDormName() : null,
-//                        user.getStatus().name(),
-//                        user.getUpdatedAt()
-//                ))
-//                .toList();
-//    }
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
                 .findByRoleInAndStatusNot(
@@ -248,7 +227,7 @@ public class ManagementService {
     //move to trash
     @Transactional
     public void softDeleteResident(Integer userId) {
-        // 1) หา user ที่จะถูกลบ
+
         Users user = usersRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -262,20 +241,17 @@ public class ManagementService {
             throw new ConflictException("User already in trash");
         }
 
-        // 2) หา staff ที่ login อยู่
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String firebaseUid = auth.getName();
 
         Users staff = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
 
-        // 3) soft delete user
         user.setStatus(Users.Status.DELETED);
         user.setDeletedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         usersRepository.save(user);
 
-        // 4) insert trash
         Trash trash = new Trash();
         trash.setTargetType(Trash.TargetType.USER);
         trash.setTargetId(userId);

@@ -29,7 +29,6 @@ public class ParcelVerificationService {
         Users resident = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-        // ✅ normalize tracking number
         String normalizedTracking = req.getTrackingNumber()
                 .trim()
                 .toUpperCase();
@@ -42,7 +41,6 @@ public class ParcelVerificationService {
 
         repo.save(pv);
 
-        // 🔥 ถ้า parcel มีอยู่แล้ว → assign ทันที
         parcelsRepository
                 .findByTrackingNumberIgnoreCase(normalizedTracking)
                 .ifPresent(parcel -> {

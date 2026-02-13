@@ -9,15 +9,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/parcels")
 @CrossOrigin(origins = {
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
-
-//staff manage
+@RestController
+@RequestMapping("/api/parcels")
 @RequiredArgsConstructor
 public class ParcelController {
 

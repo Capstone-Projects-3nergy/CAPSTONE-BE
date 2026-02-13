@@ -7,8 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface ParcelVerificationRepository
-        extends JpaRepository<ParcelVerification, Integer> {
+public interface ParcelVerificationRepository extends JpaRepository<ParcelVerification, Integer> {
     Optional<ParcelVerification> findByTrackingNumberIgnoreCaseAndVerifiedFalse(String trackingNumber);
     Optional<ParcelVerification> findByTrackingNumberAndVerifiedFalse(String trackingNumber);
 }

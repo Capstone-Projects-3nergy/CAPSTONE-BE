@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor     // ⬅️ เพิ่มบรรทัดนี้
+@NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
     private Integer userId;

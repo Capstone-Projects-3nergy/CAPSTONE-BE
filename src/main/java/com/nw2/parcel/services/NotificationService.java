@@ -32,8 +32,8 @@ public class NotificationService {
                         + " has arrived at the dormitory."
         );
 
-        noti.setStatus(Notification.Status.SENT); // ✅ เปลี่ยนจาก PENDING
-        noti.setNotificationType(Notification.Type.SYSTEM); // ✅ ไม่ null
+        noti.setStatus(Notification.Status.SENT);
+        noti.setNotificationType(Notification.Type.SYSTEM);
         noti.setParcel(parcel);
         noti.setUser(resident);
 
@@ -56,7 +56,7 @@ public class NotificationService {
 
         noti.setStatus(Notification.Status.SENT);
         noti.setNotificationType(Notification.Type.SYSTEM);
-        noti.setParcel(null); // สำคัญ
+        noti.setParcel(null);
         noti.setUser(user);
 
         noti.setCreatedAt(LocalDateTime.now());

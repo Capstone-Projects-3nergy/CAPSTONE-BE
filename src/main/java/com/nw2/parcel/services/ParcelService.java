@@ -59,9 +59,7 @@ public class ParcelService {
         Parcels savedParcel = parcelsRepository.save(parcel); // 🔥 save ก่อน
 
         if (matchedResident != null) {
-//            notificationService.notifyResidentParcelMatched(savedParcel, matchedResident);
             notificationService.notifyParcelMultiChannel(savedParcel, matchedResident);
-
         }
 
         return savedParcel;
@@ -105,7 +103,7 @@ public class ParcelService {
 
     // details
     public ParcelDetailDto getParcelDetail(Integer parcelId) {
-        // ✅ ใช้ค้นจาก field parcelId + เช็คว่าไม่ถูกลบ
+
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
@@ -153,14 +151,13 @@ public class ParcelService {
         );
     }
 
-    // ✏️ edit parcel + status สำหรับ STAFF
+    //edit parcel + status สำหรับ STAFF
     public ParcelDetailDto updateParcelForStaff(Integer parcelId, UpdateParcelDto req) {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         boolean assignedNewResident = false;
 
-        // ---------- ฟิลด์ทั่วไป ----------
         if (req.getTrackingNumber() != null) {
             p.setTrackingNumber(req.getTrackingNumber());
         }
@@ -192,7 +189,6 @@ public class ParcelService {
             p.setCompany(company);
         }
 
-        // ✅ ผูก parcel กับ resident ที่ staff เลือก
         if (req.getUserId() != null) {
             if (p.getUser() == null || !p.getUser().getUserId().equals(req.getUserId())) {
                 Users resident = usersRepository
@@ -205,7 +201,6 @@ public class ParcelService {
             }
         }
 
-        // ---------- สถานะ ----------
         Parcels.Status newStatus = req.getStatus();
 
         if (assignedNewResident && p.getStatus() == Parcels.Status.WAITING_FOR_STAFF) {
@@ -304,10 +299,8 @@ public class ParcelService {
             p.setPickedUpAt(null);
         }
 
-        Parcels updated = parcelsRepository.save(p); // @PreUpdate จะเซ็ต updatedAt ให้อัตโนมัติ
-//        notifyStatusChangeIfNeeded(updated, oldStatus, newStatus);
+        Parcels updated = parcelsRepository.save(p);
 
-        // map เป็น ParcelDetailDto
         Integer companyId = null;
         String companyName = null;
         if (updated.getCompany() != null) {
@@ -357,11 +350,10 @@ public class ParcelService {
             throw new UnauthorizedException("No authenticated user");
         }
 
-        // principal ที่เราเซ็ตใน FirebaseAuthenticationFilter = org.springframework.security.core.userdetails.User
         org.springframework.security.core.userdetails.User principal =
                 (org.springframework.security.core.userdetails.User) auth.getPrincipal();
 
-        String firebaseUid = principal.getUsername(); // = decoded.getUid()
+        String firebaseUid = principal.getUsername();
 
         Users u = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UnauthorizedException("User not found in system"));
@@ -415,7 +407,6 @@ public class ParcelService {
                 .toList();
     }
 
-
     // VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
     public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
@@ -466,7 +457,6 @@ public class ParcelService {
         );
     }
 
-    // CONFIRM-RECEIVED-PARCEL
     public ParcelDetailDto confirmParcelReceivedByResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
 
@@ -474,7 +464,6 @@ public class ParcelService {
                 .findByParcelIdAndUserUserIdAndIsDeletedFalse(parcelId, currentResident.getUserId())
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        // resident กด confirm ได้เฉพาะตอนสถานะ RECEIVED
         if (p.getStatus() != Parcels.Status.RECEIVED) {
             throw new ConflictException(
                     "Parcel cannot be confirmed in current status: " + p.getStatus()
@@ -490,12 +479,6 @@ public class ParcelService {
         }
 
         Parcels updated = parcelsRepository.save(p);
-
-//        notifyStatusChangeIfNeeded(
-//                updated,
-//                oldStatus,
-//                Parcels.Status.PICKED_UP
-//        );
 
         Integer companyId = null;
         String companyName = null;
@@ -581,25 +564,21 @@ public class ParcelService {
             throw new ConflictException("Cannot delete a picked-up parcel");
         }
 
-        // 1) soft delete parcel
         parcel.setIsDeleted(true);
         parcel.setDeletedAt(LocalDateTime.now());
 
-        // 2) หา user ที่ login อยู่ (STAFF)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String firebaseUid = auth.getName();
 
         Users staff = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-        // 3) สร้าง Trash record
         Trash trash = new Trash();
         trash.setTargetType(Trash.TargetType.PARCEL);
         trash.setTargetId(parcelId);
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
 
-        // 4) save ทั้งสอง
         parcelsRepository.save(parcel);
         trashRepository.save(trash);
     }
@@ -639,36 +618,5 @@ public class ParcelService {
                 })
                 .orElse(null);
     }
-
-//    private void notifyStatusChangeIfNeeded(
-//            Parcels parcel,
-//            Parcels.Status oldStatus,
-//            Parcels.Status newStatus
-//    ) {
-//        if (parcel.getUser() == null) return;
-//        if (oldStatus == newStatus) return;
-//
-//        String eventKey = "PARCEL_STATUS_" + newStatus + "_" + parcel.getParcelId();
-//
-//        if (newStatus == Parcels.Status.RECEIVED) {
-//            notificationService.createIfNotExists(
-////                    eventKey,
-//                    parcel.getUser(),
-//                    parcel,
-//                    "Parcel Received",
-//                    "Your parcel " + parcel.getTrackingNumber() + " is ready for pickup."
-//            );
-//        }
-//
-//        if (newStatus == Parcels.Status.PICKED_UP) {
-//            notificationService.createIfNotExists(
-//                    eventKey,
-//                    parcel.getUser(),
-//                    parcel,
-//                    "Parcel Picked Up",
-//                    "Parcel " + parcel.getTrackingNumber() + " has been picked up."
-//            );
-//        }
-//    }
 
 }

@@ -66,9 +66,6 @@ public class Parcels {
     @JsonIgnore
     private List<Notification> notifications;
 
-//    @OneToOne(mappedBy = "parcel", orphanRemoval = true)
-//    private Trash trash;
-
     @PrePersist
     void prePersist() {
         if (receivedAt == null) receivedAt = LocalDateTime.now();
