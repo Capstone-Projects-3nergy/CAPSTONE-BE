@@ -135,12 +135,12 @@ public class ManagementService {
                     """
                     Your account has been created by staff.
         
-                    1) Set your password:
+                    1) Verify your email:
                     %s
         
-                    2) Verify your email:
+                    2) Set your password:
                     %s
-                    """.formatted(resetLink, verifyLink)
+                    """.formatted(verifyLink, resetLink)
             );
 
         } catch (FirebaseAuthException e) {

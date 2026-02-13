@@ -115,13 +115,10 @@ public class UserService {
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
 
-            boolean isFirstLogin = false;
+            boolean isFirstLogin = (u.getStatus() == Users.Status.PENDING);
 
-            // ให้ login แล้วเปลี่ยนเป็น ACTIVE
             if (u.getStatus() == Users.Status.PENDING
                     || u.getStatus() == Users.Status.INACTIVE) {
-
-                isFirstLogin = true;
                 u.setStatus(Users.Status.ACTIVE);
             }
 
