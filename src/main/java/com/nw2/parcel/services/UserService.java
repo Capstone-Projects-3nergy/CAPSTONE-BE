@@ -102,6 +102,7 @@ public class UserService {
         return resp;
     }
 
+    @Transactional
     public LoginResponse login(String idToken, FirebaseService firebaseService) {
         try {
             var decoded = firebaseService.verifyIdToken(idToken);
@@ -115,21 +116,30 @@ public class UserService {
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
 
-            boolean isFirstLogin = (u.getStatus() == Users.Status.PENDING);
+            if (u.getStatus() == Users.Status.DELETED) {
+                throw new UnauthorizedException("Account has been deleted");
+            }
 
+            boolean shouldSendWelcome =
+                    u.getStatus() == Users.Status.PENDING
+                            && !Boolean.TRUE.equals(u.getIsWelcomeSent());
+
+            // activate account
             if (u.getStatus() == Users.Status.PENDING
                     || u.getStatus() == Users.Status.INACTIVE) {
                 u.setStatus(Users.Status.ACTIVE);
             }
 
-            if (u.getStatus() == Users.Status.DELETED) {
-                throw new UnauthorizedException("Account has been deleted");
+            u.setUpdatedAt(LocalDateTime.now());
+
+            //set flag before save
+            if (shouldSendWelcome) {
+                u.setIsWelcomeSent(true);
             }
 
-            u.setUpdatedAt(LocalDateTime.now());
             usersRepository.save(u);
 
-            if (isFirstLogin) {
+            if (shouldSendWelcome) {
                 notificationService.createMultiChannelNotification(
                         u,
                         "Welcome to Tractify",
@@ -154,13 +164,13 @@ public class UserService {
 
             resp.setRoomNumber(u.getRoomNumber());
             resp.setMessage("Login successful");
+
             return resp;
 
         } catch (FirebaseAuthException e) {
             throw new UnauthorizedException("Invalid or expired token");
         }
     }
-
 
     @Transactional
     public void logout(String idToken, FirebaseService firebaseService) {

@@ -47,6 +47,9 @@ public class Users {
     @Column(name = "status", nullable = false)
     private Status status;
 
+    @Column(name = "is_welcome_sent", nullable = false)
+    private Boolean isWelcomeSent = false;
+
     @Column(name = "position", length = 45)
     private String position;
 
