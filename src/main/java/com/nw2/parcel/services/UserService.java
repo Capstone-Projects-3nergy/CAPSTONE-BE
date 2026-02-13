@@ -81,12 +81,6 @@ public class UserService {
 
         try {
             usersRepository.save(user);
-            notificationService.createMultiChannelNotification(
-                    user,
-                    "Welcome to Dormitory System",
-                    "Welcome " + user.getFirstName() +
-                            "! Your account has been successfully created."
-            );
         } catch (DataIntegrityViolationException ex) {
             // กันเคส race condition ที่หลุด unique constraint DB
             throw new EmailAlreadyExistsException("Email is already in use.");
@@ -121,11 +115,12 @@ public class UserService {
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
 
-            // ❌ ห้าม throw ถ้าไม่ ACTIVE
-            // ✅ ให้ login แล้วเปลี่ยนเป็น ACTIVE
+            boolean isFirstLogin = false;
+
+            // ให้ login แล้วเปลี่ยนเป็น ACTIVE
             if (u.getStatus() == Users.Status.PENDING
                     || u.getStatus() == Users.Status.INACTIVE) {
-
+                isFirstLogin = true;
                 u.setStatus(Users.Status.ACTIVE);
             }
 
@@ -135,6 +130,15 @@ public class UserService {
 
             u.setUpdatedAt(LocalDateTime.now());
             usersRepository.save(u);
+
+            if (isFirstLogin) {
+                notificationService.createMultiChannelNotification(
+                        u,
+                        "Welcome to Tractify",
+                        "Welcome " + u.getFirstName() +
+                                "! Your account has been successfully activated."
+                );
+            }
 
             LoginResponse resp = new LoginResponse();
             resp.setUserId(u.getUserId());
