@@ -12,19 +12,20 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@RestController
-@RequestMapping("/api/trash")
-@RequiredArgsConstructor
 @CrossOrigin(origins = {
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
+@RestController
+@RequestMapping("/api/trash")
+@RequiredArgsConstructor
 public class TrashController {
 
     private final TrashService trashService;
 
-    // ดูของที่อยู่ใน trash
     @GetMapping
     public List<TrashListItemDto> getTrashParcels() {
         return trashService.getTrashParcels();
@@ -46,20 +47,17 @@ public class TrashController {
         );
     }
 
-    // ดู resident ที่อยู่ใน trash
     @GetMapping("/residents")
     public List<TrashResidentDto> getTrashResidents() {
         return trashService.getTrashResidents();
     }
 
-    // restore resident
     @PutMapping("/residents/{residentId}/restore")
     public ResponseEntity<Void> restoreResident(@PathVariable Integer residentId) {
         trashService.restoreResident(residentId);
         return ResponseEntity.ok().build();
     }
 
-    // delete resident permanently
     @DeleteMapping("/residents/{residentId}")
     public ResponseEntity<Map<String, String>> deleteResidentPermanently(
             @PathVariable Integer residentId

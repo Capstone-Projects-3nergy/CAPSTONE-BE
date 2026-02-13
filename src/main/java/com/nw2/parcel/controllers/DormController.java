@@ -7,13 +7,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @CrossOrigin(origins = {
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
 @RestController
-@RequestMapping("/api/dorms")   // ⬅ เปลี่ยนเป็น /api/dorms
+@RequestMapping("/api/dorms")
 @RequiredArgsConstructor
 public class DormController {
 
@@ -24,13 +27,13 @@ public class DormController {
         return dormRepository.findAll();
     }
 
-    @GetMapping("/{id}") // ⬅️ เปลี่ยนเป็นดึงด้วย id
+    @GetMapping("/{id}")
     public Dorm getDormById(@PathVariable Integer id) {
         return dormRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dorm not found: " + id));
     }
 
-    @GetMapping("/list")  // GET /api/dorms/list
+    @GetMapping("/list")
     public List<DormListDto> listDormsForSelect() {
         return dormRepository.findAllAsListDto();
     }

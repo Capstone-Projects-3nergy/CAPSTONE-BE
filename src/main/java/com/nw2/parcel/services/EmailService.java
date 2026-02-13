@@ -1,5 +1,6 @@
 package com.nw2.parcel.services;
 
+import com.nw2.parcel.exception.ExternalServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,10 +18,13 @@ public class EmailService {
         message.setSubject(subject);
         message.setText(content);
 
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new ExternalServiceException("Email sending failed", e);
+        }
     }
 
-    // ถ้ายังอยากเก็บไว้
     public void sendResetPassword(String email, String link) {
         send(email, "Reset your password", "Click here: " + link);
     }

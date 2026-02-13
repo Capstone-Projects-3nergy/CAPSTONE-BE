@@ -6,13 +6,17 @@ import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://cp25nw2.sit.kmutt.ac.th",
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
+})
 @RestController
 @RequestMapping("/api/public/email")
 @RequiredArgsConstructor

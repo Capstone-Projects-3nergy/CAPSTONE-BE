@@ -72,6 +72,7 @@ package com.nw2.parcel.services;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.nw2.parcel.exception.ExternalServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -84,9 +85,7 @@ public class FileStorageService {
 
     private final Cloudinary cloudinary;
 
-    /**
-     * Upload profile image to Cloudinary
-     */
+    // Upload profile image to Cloudinary
     public String uploadProfileImage(MultipartFile file, Integer userId) {
         try {
             validateImage(file);
@@ -104,7 +103,7 @@ public class FileStorageService {
             return uploadResult.get("secure_url").toString();
 
         } catch (Exception e) {
-            throw new RuntimeException("Upload profile image failed", e);
+            throw new ExternalServiceException("Upload profile image failed", e);
         }
     }
 
@@ -126,9 +125,7 @@ public class FileStorageService {
             throw new RuntimeException("Upload file failed", e);
         }
     }
-    /**
-     * Delete image by URL
-     */
+    //Delete image by URL
     public void deleteFileByUrl(String imageUrl) {
         try {
             if (imageUrl == null) return;
@@ -155,9 +152,7 @@ public class FileStorageService {
         }
     }
 
-    /**
-     * Extract Cloudinary public_id from URL
-     */
+    //Extract Cloudinary public_id from URL
     private String extractPublicId(String url) {
         // example:
         // https://res.cloudinary.com/{cloud}/image/upload/v123/profile-images/user_1/avatar.jpg

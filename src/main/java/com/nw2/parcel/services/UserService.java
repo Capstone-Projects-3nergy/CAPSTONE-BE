@@ -8,6 +8,8 @@ import com.nw2.parcel.Dtos.LoginResponse;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.entity.Dorm;
 import com.nw2.parcel.exception.EmailAlreadyExistsException;
+import com.nw2.parcel.exception.ExternalServiceException;
+import com.nw2.parcel.exception.ResourceNotFoundException;
 import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.UsersRepository;
 import com.nw2.parcel.repositories.DormRepository;
@@ -25,7 +27,9 @@ public class UserService {
 
     private final UsersRepository usersRepository;
     private final DormRepository dormRepository;
+    private final NotificationService notificationService;
 
+    @Transactional
     public LoginResponse signUp(SignUpRequest req) throws Exception {
         String normalizedEmail = req.getEmail().trim().toLowerCase();
 
@@ -46,7 +50,8 @@ public class UserService {
             if ("EMAIL_ALREADY_EXISTS".equals(e.getErrorCode())) {
                 throw new EmailAlreadyExistsException("Email is already in use.");
             }
-            throw e;
+            throw new ExternalServiceException("Firebase error", e);
+
         }
 
         Dorm dorm = null;
@@ -55,7 +60,7 @@ public class UserService {
                 throw new IllegalArgumentException("dormId is required for RESIDENT.");
             }
             dorm = dormRepository.findById(req.getDormId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dorm not found: " + req.getDormId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Dorm not found: " + req.getDormId()));
         }
 
         Users user = new Users();
@@ -77,11 +82,10 @@ public class UserService {
         try {
             usersRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            // กันเคส race condition ที่หลุด unique constraint DB
+            // กัน race condition ที่หลุด unique constraint DB
             throw new EmailAlreadyExistsException("Email is already in use.");
         }
 
-        // 5) ตอบกลับ
         LoginResponse resp = new LoginResponse();
         resp.setUserId(user.getUserId());
         resp.setFirebaseUid(userRecord.getUid());
@@ -97,6 +101,7 @@ public class UserService {
         return resp;
     }
 
+    @Transactional
     public LoginResponse login(String idToken, FirebaseService firebaseService) {
         try {
             var decoded = firebaseService.verifyIdToken(idToken);
@@ -110,20 +115,35 @@ public class UserService {
             Users u = usersRepository.findByFirebaseUid(uid)
                     .orElseThrow(() -> new UnauthorizedException("Please register before login"));
 
-            // ❌ ห้าม throw ถ้าไม่ ACTIVE
-            // ✅ ให้ login แล้วเปลี่ยนเป็น ACTIVE
-            if (u.getStatus() == Users.Status.PENDING
-                    || u.getStatus() == Users.Status.INACTIVE) {
-
-                u.setStatus(Users.Status.ACTIVE);
-            }
-
             if (u.getStatus() == Users.Status.DELETED) {
                 throw new UnauthorizedException("Account has been deleted");
             }
 
+            boolean shouldSendWelcome =
+                    u.getStatus() == Users.Status.PENDING
+                            && !Boolean.TRUE.equals(u.getIsWelcomeSent());
+
+            if (u.getStatus() == Users.Status.PENDING
+                    || u.getStatus() == Users.Status.INACTIVE) {
+                u.setStatus(Users.Status.ACTIVE);
+            }
+
             u.setUpdatedAt(LocalDateTime.now());
+
+            if (shouldSendWelcome) {
+                u.setIsWelcomeSent(true);
+            }
+
             usersRepository.save(u);
+
+            if (shouldSendWelcome) {
+                notificationService.createMultiChannelNotification(
+                        u,
+                        "Welcome to Tractify",
+                        "Welcome " + u.getFirstName() +
+                                "! Your account has been successfully activated."
+                );
+            }
 
             LoginResponse resp = new LoginResponse();
             resp.setUserId(u.getUserId());
@@ -141,13 +161,13 @@ public class UserService {
 
             resp.setRoomNumber(u.getRoomNumber());
             resp.setMessage("Login successful");
+
             return resp;
 
         } catch (FirebaseAuthException e) {
             throw new UnauthorizedException("Invalid or expired token");
         }
     }
-
 
     @Transactional
     public void logout(String idToken, FirebaseService firebaseService) {

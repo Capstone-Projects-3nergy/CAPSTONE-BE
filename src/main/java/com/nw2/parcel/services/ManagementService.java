@@ -9,6 +9,10 @@ import com.nw2.parcel.Dtos.ManagementAddDto;
 import com.nw2.parcel.Dtos.ManagementUpdateDto;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.exception.ConflictException;
+import com.nw2.parcel.exception.EmailAlreadyExistsException;
+import com.nw2.parcel.exception.ExternalServiceException;
+import com.nw2.parcel.exception.ResourceNotFoundException;
 import com.nw2.parcel.repositories.DormRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
@@ -33,27 +37,6 @@ public class ManagementService {
     private final EmailService emailService;
     private final FirebaseAuthService firebaseAuthService;
 
-    //list resident
-//    public List<ManagementListDto> getAllResidents() {
-//        return usersRepository
-//                .findByRoleInAndStatusNot(
-//                        List.of(Users.Role.RESIDENT, Users.Role.STAFF),
-//                        Users.Status.DELETED
-//                )
-//                .stream()
-//                .map(user -> new ManagementListDto(
-//                        user.getUserId(),
-//                        user.getFirstName() + " " + user.getLastName(),
-//                        user.getEmail(),
-//                        user.getRoomNumber(),
-//                        user.getProfileImageUrl(),
-//                        user.getRole().name(),
-//                        user.getDorm() != null ? user.getDorm().getDormName() : null,
-//                        user.getStatus().name(),
-//                        user.getUpdatedAt()
-//                ))
-//                .toList();
-//    }
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
                 .findByRoleInAndStatusNot(
@@ -85,7 +68,7 @@ public class ManagementService {
     //detail
     public ManagementDetailDto getResidentDetail(Integer id) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
-                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resident not found"));
 
         ManagementDetailDto dto = new ManagementDetailDto();
         dto.setUserId(user.getUserId());
@@ -111,7 +94,7 @@ public class ManagementService {
     public ManagementDetailDto addResident(ManagementAddDto req, MultipartFile profileImage) {
 
         if (usersRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         //สร้าง Firebase user
@@ -131,16 +114,16 @@ public class ManagementService {
                     """
                     Your account has been created by staff.
         
-                    1) Set your password:
+                    1) Verify your email:
                     %s
         
-                    2) Verify your email:
+                    2) Set your password:
                     %s
-                    """.formatted(resetLink, verifyLink)
+                    """.formatted(verifyLink, resetLink)
             );
 
         } catch (FirebaseAuthException e) {
-            throw new IllegalStateException("Cannot create Firebase user", e);
+            throw new ExternalServiceException("Cannot create Firebase user", e);
         }
 
         //สร้าง user ใน DB
@@ -159,7 +142,7 @@ public class ManagementService {
 
         if (req.getDormId() != null) {
             user.setDorm(dormRepository.findById(req.getDormId())
-                    .orElseThrow(() -> new IllegalArgumentException("Dorm not found")));
+                    .orElseThrow(() -> new ResourceNotFoundException("Dorm not found")));
         }
 
         Users savedUser = usersRepository.save(user);
@@ -244,34 +227,31 @@ public class ManagementService {
     //move to trash
     @Transactional
     public void softDeleteResident(Integer userId) {
-        // 1) หา user ที่จะถูกลบ
+
         Users user = usersRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getStatus() == Users.Status.DELETED) {
-            throw new IllegalStateException("User already deleted");
+            throw new ConflictException("User already deleted");
         }
 
         if (trashRepository
                 .findByTargetTypeAndTargetId(Trash.TargetType.USER, userId)
                 .isPresent()) {
-            throw new IllegalStateException("User already in trash");
+            throw new ConflictException("User already in trash");
         }
 
-        // 2) หา staff ที่ login อยู่
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String firebaseUid = auth.getName();
 
         Users staff = usersRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new IllegalStateException("Staff not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
 
-        // 3) soft delete user
         user.setStatus(Users.Status.DELETED);
         user.setDeletedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         usersRepository.save(user);
 
-        // 4) insert trash
         Trash trash = new Trash();
         trash.setTargetType(Trash.TargetType.USER);
         trash.setTargetId(userId);

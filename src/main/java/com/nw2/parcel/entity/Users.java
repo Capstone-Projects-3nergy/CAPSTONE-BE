@@ -47,6 +47,9 @@ public class Users {
     @Column(name = "status", nullable = false)
     private Status status;
 
+    @Column(name = "is_welcome_sent", nullable = false)
+    private Boolean isWelcomeSent = false;
+
     @Column(name = "position", length = 45)
     private String position;
 
@@ -74,11 +77,14 @@ public class Users {
     private List<Parcels> parcels;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Notification> notifications;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<StaffDorm> staffDorms;
 
     @OneToMany(mappedBy = "deletedBy")
+    @JsonIgnore
     private List<Trash> deletedTrashList;
 }

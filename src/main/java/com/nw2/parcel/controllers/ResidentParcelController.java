@@ -8,31 +8,30 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/OwnerParcels")
 @CrossOrigin(origins = {
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
-        "https://bscit.sit.kmutt.ac.th"
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
+@RestController
+@RequestMapping("/api/OwnerParcels")
 @RequiredArgsConstructor
 public class ResidentParcelController {
 
     private final ParcelService parcelService;
 
-    //(extra) list ของ resident เอง
     @GetMapping
     public List<ParcelListItemDto> getMyParcels() {
         return parcelService.getParcelsForCurrentResident();
     }
 
-    //VIEW-PARCEL-DETAIL (resident)
     @GetMapping("/{id}")
     public ParcelDetailDto getMyParcelDetail(@PathVariable Integer id) {
         return parcelService.getParcelDetailForResident(id);
     }
 
-    //CONFIRM-RECEIVED-PARCEL (resident กด confirm รับพัสดุแล้ว)
     @PostMapping("/{id}/confirm")
     public ParcelDetailDto confirmMyParcel(@PathVariable Integer id) {
         return parcelService.confirmParcelReceivedByResident(id);

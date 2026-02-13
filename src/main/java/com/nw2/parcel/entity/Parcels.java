@@ -1,6 +1,7 @@
 // com.nw2.parcel.entity.Parcels
 package com.nw2.parcel.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -62,10 +63,8 @@ public class Parcels {
     private Users user;
 
     @OneToMany(mappedBy = "parcel", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Notification> notifications;
-
-//    @OneToOne(mappedBy = "parcel", orphanRemoval = true)
-//    private Trash trash;
 
     @PrePersist
     void prePersist() {

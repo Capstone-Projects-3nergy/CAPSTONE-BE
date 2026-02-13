@@ -3,7 +3,9 @@ package com.nw2.parcel.services;
 import com.nw2.parcel.Dtos.VerifyParcelDto;
 import com.nw2.parcel.entity.ParcelVerification;
 import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.ParcelVerificationRepository;
+import com.nw2.parcel.repositories.ParcelsRepository;
 import com.nw2.parcel.repositories.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,8 @@ public class ParcelVerificationService {
 
     private final ParcelVerificationRepository repo;
     private final UsersRepository usersRepository;
+    private final ParcelsRepository parcelsRepository;
+    private final NotificationService notificationService;
 
     public void verifyParcel(VerifyParcelDto req) {
 
@@ -23,14 +27,33 @@ public class ParcelVerificationService {
         String firebaseUid = auth.getName();
 
         Users resident = usersRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        String normalizedTracking = req.getTrackingNumber()
+                .trim()
+                .toUpperCase();
 
         ParcelVerification pv = new ParcelVerification();
-        pv.setTrackingNumber(req.getTrackingNumber());
+        pv.setTrackingNumber(normalizedTracking);
         pv.setResidentName(req.getResidentName());
         pv.setResident(resident);
+        pv.setVerified(false);
 
         repo.save(pv);
+
+        parcelsRepository
+                .findByTrackingNumberIgnoreCase(normalizedTracking)
+                .ifPresent(parcel -> {
+
+                    parcel.setUser(resident);
+                    pv.setVerified(true);
+
+                    parcelsRepository.save(parcel);
+                    repo.save(pv);
+
+                    notificationService
+                            .notifyParcelMultiChannel(parcel, resident);
+                });
     }
 }
 

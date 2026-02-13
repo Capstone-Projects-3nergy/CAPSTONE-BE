@@ -14,13 +14,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/staff/users")
 @CrossOrigin(origins = {
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
-        "https://cp25nw2.sit.kmutt.ac.th"
+        "https://cp25nw2.sit.kmutt.ac.th",
+        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
+        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
+@RestController
+@RequestMapping("/api/staff/users")
 @RequiredArgsConstructor
 public class ManagementController {
 
@@ -60,7 +62,6 @@ public class ManagementController {
         ManagementDetailDto updatedUser = staffResidentService.updateResident(id, req, profileImage);
         return ResponseEntity.ok(updatedUser);
     }
-
 
     //delete
     @DeleteMapping("/{id}")
