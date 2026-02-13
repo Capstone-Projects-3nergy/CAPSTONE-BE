@@ -120,6 +120,7 @@ public class UserService {
             // ให้ login แล้วเปลี่ยนเป็น ACTIVE
             if (u.getStatus() == Users.Status.PENDING
                     || u.getStatus() == Users.Status.INACTIVE) {
+
                 isFirstLogin = true;
                 u.setStatus(Users.Status.ACTIVE);
             }
