@@ -19,8 +19,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: tractifycapstone@gmail.com
-    password: vmbstkwvngsadtxj
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -66,10 +66,6 @@ firebase:
   config:
     path: classpath:firebase/firebase-adminsdk.json
 
-cloudinary:
-  cloud-name: dfyouxpnu
-  api-key: 942824938494116
-  api-secret: EUVITbtwuWoJwLrj9
 # =========================================================
 # 🔹 CONTAINER PROFILE (ใช้ตอนรันใน Docker / VM)
 # =========================================================
