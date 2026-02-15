@@ -16,8 +16,8 @@ import java.util.Map;
         "http://localhost:5173",
         "http://cp25nw2.sit.kmutt.ac.th",
         "https://cp25nw2.sit.kmutt.ac.th",
-        "http://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2",
-        "https://cp25nw2.sit.kmutt.ac.th/capstone25/cp25nw2"
+        "http://cp25nw2.sit.kmutt.ac.th",
+        "https://cp25nw2.sit.kmutt.ac.th"
 })
 @RestController
 @RequestMapping("/api/trash")

@@ -53,8 +53,11 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
+
+        ex.printStackTrace(); // 👈 เพิ่มบรรทัดนี้
+
         return buildResponse(
-                new RuntimeException("Unexpected server error"),
+                new RuntimeException(ex.getMessage()),
                 request,
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
