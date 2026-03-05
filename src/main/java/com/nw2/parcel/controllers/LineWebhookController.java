@@ -40,14 +40,14 @@ public class LineWebhookController {
 
         try {
 
-            // 🔐 1️⃣ Verify Signature
+            // 🔐 1️⃣ Verify Signature (ป้องกัน request ปลอม)
             if (!verifySignature(rawBody, signature)) {
                 return ResponseEntity
                         .status(HttpStatus.FORBIDDEN)
                         .body("Invalid signature");
             }
 
-            // ✅ 2️⃣ Parse JSON หลัง verify แล้วเท่านั้น
+            // ✅ 2️⃣ parse JSON หลัง verify
             Map<String, Object> body =
                     objectMapper.readValue(rawBody, Map.class);
 
@@ -62,14 +62,24 @@ public class LineWebhookController {
 
                 String type = (String) event.get("type");
 
-                // 🔴 กรณีผู้ใช้กด Unfollow bot
+                Map<String, Object> source =
+                        (Map<String, Object>) event.get("source");
+
+                String lineUserId =
+                        (String) source.get("userId");
+
+                // 🟢 ผู้ใช้ Add Friend
+                if ("follow".equals(type)) {
+
+                    usersRepository.findByLineUserId(lineUserId)
+                            .ifPresent(user -> {
+                                user.setUpdatedAt(LocalDateTime.now());
+                                usersRepository.save(user);
+                            });
+                }
+
+                // 🔴 ผู้ใช้กด Unfollow bot
                 if ("unfollow".equals(type)) {
-
-                    Map<String, Object> source =
-                            (Map<String, Object>) event.get("source");
-
-                    String lineUserId =
-                            (String) source.get("userId");
 
                     usersRepository.findByLineUserId(lineUserId)
                             .ifPresent(user -> {
@@ -90,7 +100,7 @@ public class LineWebhookController {
         }
     }
 
-    // 🔐 Signature Verification Method
+    // 🔐 ตรวจสอบว่า request มาจาก LINE จริงไหม
     private boolean verifySignature(String body, String signature) {
         try {
 

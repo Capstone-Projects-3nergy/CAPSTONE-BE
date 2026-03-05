@@ -48,7 +48,11 @@ line:
   login:
     channel-id: ${LINE_LOGIN_CHANNEL_ID}
     channel-secret: ${LINE_LOGIN_CHANNEL_SECRET}
-    redirect-uri: https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/api/line/callback
+#    redirect-uri: https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/api/line/callback
+    redirect-uri: https://uneffectively-noncompulsory-temika.ngrok-free.dev/api/line/callback
+
+app:
+  frontend-url: http://localhost:5173
 
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
