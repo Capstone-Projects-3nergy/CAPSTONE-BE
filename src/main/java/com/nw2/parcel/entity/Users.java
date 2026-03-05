@@ -68,6 +68,12 @@ public class Users {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "line_user_id")
+    private String lineUserId;
+
+    @Column(name = "line_connected_at")
+    private LocalDateTime lineConnectedAt;
+
     @ManyToOne(optional = true)
     @JsonIgnore
     @JoinColumn(name = "dorm_id", nullable = true)
@@ -87,4 +93,5 @@ public class Users {
     @OneToMany(mappedBy = "deletedBy")
     @JsonIgnore
     private List<Trash> deletedTrashList;
+
 }

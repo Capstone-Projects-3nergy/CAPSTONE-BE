@@ -8,6 +8,7 @@ import com.nw2.parcel.exception.ResourceNotFoundException;
 import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,8 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
+    private final LineService lineService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // Parcel Notification
     public void notifyResidentParcelMatched(Parcels parcel, Users resident) {
@@ -41,7 +44,29 @@ public class NotificationService {
         noti.setUpdatedAt(LocalDateTime.now());
         noti.setSentAt(LocalDateTime.now());
 
-        notificationRepository.save(noti);
+//        notificationRepository.save(noti);
+        //เพิ่มเข้ามาตอนทำ WebSocket
+        Notification saved = notificationRepository.save(noti);
+
+        NotificationDto dto = new NotificationDto(
+                saved.getNotificationId(),
+                saved.getNotiTitle(),
+                saved.getNotiMessage(),
+                saved.getStatus(),
+                saved.getNotificationType(),
+                saved.getCreatedAt(),
+                saved.getSentAt(),
+                saved.getIsRead(),
+                saved.getReadAt(),
+                saved.getParcel() != null ? saved.getParcel().getParcelId() : null,
+                saved.getParcel() != null ? saved.getParcel().getTrackingNumber() : null
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                resident.getFirebaseUid(),   // ต้องตรงกับ principal name
+                "/queue/notifications",
+                dto
+        );
     }
 
     //Generic System Notification
@@ -152,7 +177,7 @@ public class NotificationService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // SYSTEM (in-app)
+        // ---------------- SYSTEM ----------------
         Notification systemNoti = new Notification();
         systemNoti.setNotiTitle("New Parcel Arrived");
         systemNoti.setNotiMessage(
@@ -169,8 +194,29 @@ public class NotificationService {
         systemNoti.setSentAt(now);
 
         notificationRepository.save(systemNoti);
+        //เพิ่มเข้ามาตอนทำ WebSocket
+        Notification saved = notificationRepository.save(systemNoti);
 
-        //EMAIL
+        NotificationDto dto = new NotificationDto(
+                saved.getNotificationId(),
+                saved.getNotiTitle(),
+                saved.getNotiMessage(),
+                saved.getStatus(),
+                saved.getNotificationType(),
+                saved.getCreatedAt(),
+                saved.getSentAt(),
+                saved.getIsRead(),
+                saved.getReadAt(),
+                saved.getParcel() != null ? saved.getParcel().getParcelId() : null,
+                saved.getParcel() != null ? saved.getParcel().getTrackingNumber() : null
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                resident.getFirebaseUid(),
+                "/queue/notifications",
+                dto
+        );
+        // ---------------- EMAIL ----------------
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle("Parcel Arrival Notification");
         emailNoti.setNotiMessage(
@@ -188,6 +234,26 @@ public class NotificationService {
         notificationRepository.save(emailNoti);
 
         sendEmailAndUpdateStatus(emailNoti, resident.getEmail());
+
+        // ---------------- LINE ----------------
+        Notification lineNoti = new Notification();
+        lineNoti.setNotiTitle("New Parcel Arrived");
+        lineNoti.setNotiMessage("Parcel arrived.");
+        lineNoti.setStatus(Notification.Status.PENDING);
+        lineNoti.setNotificationType(Notification.Type.LINE);
+        lineNoti.setParcel(parcel);
+        lineNoti.setUser(resident);
+        lineNoti.setCreatedAt(now);
+        lineNoti.setUpdatedAt(now);
+
+        notificationRepository.save(lineNoti);
+
+        var textMessage = lineService.buildTextMessage(
+                "📦 Your parcel (" + parcel.getTrackingNumber() +
+                        ") has arrived at the dormitory."
+        );
+
+        sendLineAndUpdateStatus(lineNoti, resident, textMessage);
     }
 
     private void sendEmailAndUpdateStatus(Notification emailNoti, String email) {
@@ -217,6 +283,48 @@ public class NotificationService {
 
         emailNoti.setUpdatedAt(LocalDateTime.now());
         notificationRepository.save(emailNoti);
+    }
+
+    private void sendLineAndUpdateStatus(Notification lineNoti, Users user, Object messageBody) {
+
+        try {
+            if (user.getLineUserId() == null) {
+                lineNoti.setStatus(Notification.Status.FAILED);
+            } else {
+
+                lineService.pushMessage(user.getLineUserId(), messageBody);
+
+                lineNoti.setStatus(Notification.Status.SENT);
+                lineNoti.setSentAt(LocalDateTime.now());
+            }
+
+        } catch (Exception e) {
+            lineNoti.setStatus(Notification.Status.FAILED);
+        }
+
+        lineNoti.setUpdatedAt(LocalDateTime.now());
+        notificationRepository.save(lineNoti);
+    }
+
+    public void notifyAnnouncement(Users user, String title, String message) {
+
+        createSystemNotification(user, title, message);
+
+        if (user.getLineUserId() != null) {
+
+            Notification lineNoti = new Notification();
+            lineNoti.setNotiTitle(title);
+            lineNoti.setNotiMessage(message);
+            lineNoti.setStatus(Notification.Status.PENDING);
+            lineNoti.setNotificationType(Notification.Type.LINE);
+            lineNoti.setUser(user);
+
+            notificationRepository.save(lineNoti);
+
+            var text = lineService.buildTextMessage("📢 " + title + "\n" + message);
+
+            sendLineAndUpdateStatus(lineNoti, user, text);
+        }
     }
 
 }
