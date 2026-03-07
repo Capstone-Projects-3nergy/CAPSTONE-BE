@@ -34,7 +34,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/companies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/dorms/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/webhook", "/api/line/**").permitAll()
+                        .requestMatchers("/api/line/**", "/**/api/line/**").permitAll()
+                        .requestMatchers("/webhook", "/**/webhook").permitAll()
 
                         // ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
