@@ -41,6 +41,18 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
 
+line:
+  channel:
+    access-token: ${LINE_CHANNEL_ACCESS_TOKEN}
+    secret: ${LINE_CHANNEL_SECRET}
+  login:
+    channel-id: ${LINE_LOGIN_CHANNEL_ID}
+    channel-secret: ${LINE_LOGIN_CHANNEL_SECRET}
+    redirect-uri: https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/api/line/callback
+#    redirect-uri: https://uneffectively-noncompulsory-temika.ngrok-free.dev/api/line/callback
+
+app:
+  frontend-url: https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2
 
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
@@ -66,6 +78,12 @@ firebase:
   config:
     path: classpath:firebase/firebase-adminsdk.json
 
+line:
+  login:
+    redirect-uri: https://uneffectively-noncompulsory-temika.ngrok-free.dev/api/line/callback
+
+app:
+  frontend-url: http://localhost:5173
 # =========================================================
 # 🔹 CONTAINER PROFILE (ใช้ตอนรันใน Docker / VM)
 # =========================================================
