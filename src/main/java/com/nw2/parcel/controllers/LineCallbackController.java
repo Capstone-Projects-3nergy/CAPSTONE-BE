@@ -1,10 +1,8 @@
 package com.nw2.parcel.controllers;
 
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.repositories.UsersRepository;
-import com.nw2.parcel.services.FirebaseService;
+import com.nw2.parcel.services.LineStateStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -36,23 +34,27 @@ public class LineCallbackController {
     private String frontendUrl;
 
     private final UsersRepository usersRepository;
-    private final FirebaseService firebaseService;
+    private final LineStateStore stateStore;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     @GetMapping("/callback")
-    public ResponseEntity<String> callback(
+    public ResponseEntity<?> callback(
             @RequestParam String code,
             @RequestParam String state
     ) {
 
         try {
 
-            // 1️⃣ verify Firebase token
-            FirebaseToken decodedToken = firebaseService.verifyIdToken(state);
-            String firebaseUid = decodedToken.getUid();
+            // lookup firebase uid from state
+            String firebaseUid = stateStore.get(state);
 
-            // 2️⃣ แลก code เป็น LINE access token
+            if (firebaseUid == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Invalid state");
+            }
+
+            // exchange code for access token
             String tokenUrl = "https://api.line.me/oauth2/v2.1/token";
 
             HttpHeaders headers = new HttpHeaders();
@@ -71,12 +73,11 @@ public class LineCallbackController {
 
             String accessToken = (String) response.getBody().get("access_token");
 
-            // 3️⃣ ดึง LINE profile
+            // get LINE profile
             HttpHeaders profileHeaders = new HttpHeaders();
             profileHeaders.setBearerAuth(accessToken);
 
-            HttpEntity<String> profileReq =
-                    new HttpEntity<>(profileHeaders);
+            HttpEntity<String> profileReq = new HttpEntity<>(profileHeaders);
 
             ResponseEntity<Map> profileRes =
                     restTemplate.exchange(
@@ -86,18 +87,17 @@ public class LineCallbackController {
                             Map.class
                     );
 
-            String lineUserId =
-                    (String) profileRes.getBody().get("userId");
+            String lineUserId = (String) profileRes.getBody().get("userId");
 
-            // 🔐 check ว่า LINE ถูกใช้แล้วหรือยัง
+            // check if LINE already linked
             usersRepository.findByLineUserId(lineUserId)
                     .ifPresent(existingUser -> {
                         if (!existingUser.getFirebaseUid().equals(firebaseUid)) {
-                            throw new RuntimeException("This LINE account is already linked to another user.");
+                            throw new RuntimeException("LINE already linked to another user");
                         }
                     });
 
-            // 4️⃣ ผูก LINE กับ user
+            // link LINE account
             Users user = usersRepository.findByFirebaseUid(firebaseUid)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -106,16 +106,14 @@ public class LineCallbackController {
 
             usersRepository.save(user);
 
-            // 5️⃣ redirect กลับ frontend
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", frontendUrl + "/profile?line=success")
                     .build();
 
-        } catch (FirebaseAuthException e) {
+        } catch (Exception e) {
 
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid Firebase token");
-
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
         }
     }
 }
