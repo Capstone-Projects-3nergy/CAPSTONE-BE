@@ -2,7 +2,8 @@ package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.repositories.UsersRepository;
-import com.nw2.parcel.services.LineStateStore;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -30,11 +31,13 @@ public class LineCallbackController {
     @Value("${line.login.redirect-uri}")
     private String redirectUri;
 
+    @Value("${line.login.state-secret}")
+    private String stateSecret;
+
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
     private final UsersRepository usersRepository;
-    private final LineStateStore stateStore;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -46,13 +49,13 @@ public class LineCallbackController {
 
         try {
 
-            // lookup firebase uid from state
-            String firebaseUid = stateStore.get(state);
+            // decode JWT state
+            Claims claims = Jwts.parser()
+                    .setSigningKey(stateSecret.getBytes())
+                    .parseClaimsJws(state)
+                    .getBody();
 
-            if (firebaseUid == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Invalid state");
-            }
+            String firebaseUid = claims.getSubject();
 
             // exchange code for access token
             String tokenUrl = "https://api.line.me/oauth2/v2.1/token";
@@ -71,7 +74,13 @@ public class LineCallbackController {
             ResponseEntity<Map> response =
                     restTemplate.postForEntity(tokenUrl, request, Map.class);
 
-            String accessToken = (String) response.getBody().get("access_token");
+            Map tokenBody = response.getBody();
+
+            if (tokenBody == null || tokenBody.get("access_token") == null) {
+                throw new RuntimeException("LINE token exchange failed");
+            }
+
+            String accessToken = (String) tokenBody.get("access_token");
 
             // get LINE profile
             HttpHeaders profileHeaders = new HttpHeaders();
@@ -87,9 +96,15 @@ public class LineCallbackController {
                             Map.class
                     );
 
-            String lineUserId = (String) profileRes.getBody().get("userId");
+            Map profileBody = profileRes.getBody();
 
-            // check if LINE already linked
+            if (profileBody == null) {
+                throw new RuntimeException("LINE profile fetch failed");
+            }
+
+            String lineUserId = (String) profileBody.get("userId");
+
+            // check if already linked
             usersRepository.findByLineUserId(lineUserId)
                     .ifPresent(existingUser -> {
                         if (!existingUser.getFirebaseUid().equals(firebaseUid)) {
@@ -97,7 +112,7 @@ public class LineCallbackController {
                         }
                     });
 
-            // link LINE account
+            // link account
             Users user = usersRepository.findByFirebaseUid(firebaseUid)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 

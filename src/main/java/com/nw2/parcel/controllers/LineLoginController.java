@@ -3,7 +3,8 @@ package com.nw2.parcel.controllers;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.nw2.parcel.services.FirebaseService;
-import com.nw2.parcel.services.LineStateStore;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
+import java.util.Date;
 
 @CrossOrigin(origins = {
         "http://localhost:5173",
@@ -28,8 +29,10 @@ public class LineLoginController {
     @Value("${line.login.redirect-uri}")
     private String redirectUri;
 
+    @Value("${line.login.state-secret}")
+    private String stateSecret;
+
     private final FirebaseService firebaseService;
-    private final LineStateStore stateStore;
 
     @GetMapping("/connect")
     public ResponseEntity<String> connect(@RequestParam String firebaseToken) throws FirebaseAuthException {
@@ -38,11 +41,12 @@ public class LineLoginController {
         FirebaseToken decoded = firebaseService.verifyIdToken(firebaseToken);
         String firebaseUid = decoded.getUid();
 
-        // generate short state
-        String state = UUID.randomUUID().toString();
-
-        // store mapping
-        stateStore.put(state, firebaseUid);
+        // create JWT state (expire in 5 minutes)
+        String state = Jwts.builder()
+                .setSubject(firebaseUid)
+                .setExpiration(new Date(System.currentTimeMillis() + 5 * 60 * 1000))
+                .signWith(SignatureAlgorithm.HS256, stateSecret.getBytes())
+                .compact();
 
         String url = "https://access.line.me/oauth2/v2.1/authorize"
                 + "?response_type=code"

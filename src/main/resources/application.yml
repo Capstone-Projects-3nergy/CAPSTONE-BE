@@ -49,6 +49,7 @@ line:
     channel-id: ${LINE_LOGIN_CHANNEL_ID}
     channel-secret: ${LINE_LOGIN_CHANNEL_SECRET}
     redirect-uri: https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/api/line/callback
+    state-secret: ${LINE_STATE_SECRET}
 #    redirect-uri: https://uneffectively-noncompulsory-temika.ngrok-free.dev/api/line/callback
 
 app:
