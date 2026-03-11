@@ -249,8 +249,7 @@ public class NotificationService {
         };
 
         String viewUrl =
-                "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcels/"
-                        + parcel.getParcelId();
+                "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2";
 
         var bubble = lineService.buildParcelFlex(
                 parcel.getTrackingNumber(),
