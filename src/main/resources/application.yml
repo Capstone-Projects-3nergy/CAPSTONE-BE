@@ -106,4 +106,3 @@ spring:
 
 # Firebase จะใช้ Application Default Credentials (ADC)
 # ซึ่งมาจาก env GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase.json
-
