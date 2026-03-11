@@ -79,15 +79,15 @@ public class LineService {
                                         "type", "text",
                                         "text", "Tracking: " + trackingNumber,
                                         "size", "sm",
-                                        "color", "#555555"
+                                        "color", "#555555",
+                                        "weight", "bold"
                                 ),
 
                                 Map.of(
                                         "type", "text",
                                         "text", "Status: " + status,
                                         "size", "sm",
-                                        "color", "#2E7D32",
-                                        "weight", "bold"
+                                        "color", "#2E7D32"
                                 ),
 
                                 Map.of(
