@@ -248,12 +248,25 @@ public class NotificationService {
 
         notificationRepository.save(lineNoti);
 
-        var textMessage = lineService.buildTextMessage(
-                "📦 Your parcel (" + parcel.getTrackingNumber() +
-                        ") has arrived at the dormitory."
+//        var textMessage = lineService.buildTextMessage(
+//                "📦 Your parcel (" + parcel.getTrackingNumber() +
+//                        ") has arrived at the dormitory."
+//        );
+//
+//        sendLineAndUpdateStatus(lineNoti, resident, textMessage);
+        String viewUrl =
+                "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcels/"
+                        + parcel.getParcelId();
+
+        var bubble = lineService.buildParcelFlex(
+                parcel.getTrackingNumber(),
+                viewUrl
         );
 
-        sendLineAndUpdateStatus(lineNoti, resident, textMessage);
+        var flexMessage = lineService.buildFlexMessage(bubble);
+
+        sendLineAndUpdateStatus(lineNoti, resident, flexMessage);
+
     }
 
     private void sendEmailAndUpdateStatus(Notification emailNoti, String email) {

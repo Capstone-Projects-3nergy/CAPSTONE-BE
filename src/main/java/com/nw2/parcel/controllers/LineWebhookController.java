@@ -21,7 +21,7 @@ import java.util.Map;
         "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2"
 })
 @RestController
-@RequestMapping("/webhook")
+@RequestMapping("/api/webhook")
 @RequiredArgsConstructor
 public class LineWebhookController {
 
