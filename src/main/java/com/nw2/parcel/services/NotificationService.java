@@ -44,8 +44,6 @@ public class NotificationService {
         noti.setUpdatedAt(LocalDateTime.now());
         noti.setSentAt(LocalDateTime.now());
 
-//        notificationRepository.save(noti);
-        //เพิ่มเข้ามาตอนทำ WebSocket
         Notification saved = notificationRepository.save(noti);
 
         NotificationDto dto = new NotificationDto(
@@ -63,13 +61,13 @@ public class NotificationService {
         );
 
         messagingTemplate.convertAndSendToUser(
-                resident.getFirebaseUid(),   // ต้องตรงกับ principal name
+                resident.getFirebaseUid(),
                 "/queue/notifications",
                 dto
         );
     }
 
-    //Generic System Notification
+    // Generic System Notification
     public void createSystemNotification(
             Users user,
             String title,
@@ -81,7 +79,6 @@ public class NotificationService {
 
         noti.setStatus(Notification.Status.SENT);
         noti.setNotificationType(Notification.Type.SYSTEM);
-        noti.setParcel(null);
         noti.setUser(user);
 
         noti.setCreatedAt(LocalDateTime.now());
@@ -100,7 +97,6 @@ public class NotificationService {
     ) {
         LocalDateTime now = LocalDateTime.now();
 
-        // SYSTEM (show on web)
         Notification systemNoti = new Notification();
         systemNoti.setNotiTitle(title);
         systemNoti.setNotiMessage(message);
@@ -113,7 +109,6 @@ public class NotificationService {
 
         notificationRepository.save(systemNoti);
 
-        // EMAIL (send only)
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle(title);
         emailNoti.setNotiMessage(message);
@@ -128,7 +123,7 @@ public class NotificationService {
         sendEmailAndUpdateStatus(emailNoti, user.getEmail());
     }
 
-    //Get User Notifications
+    // Get User Notifications
     public List<NotificationDto> getNotificationsByUser(Integer userId) {
 
         return notificationRepository
@@ -193,8 +188,6 @@ public class NotificationService {
         systemNoti.setUpdatedAt(now);
         systemNoti.setSentAt(now);
 
-        notificationRepository.save(systemNoti);
-        //เพิ่มเข้ามาตอนทำ WebSocket
         Notification saved = notificationRepository.save(systemNoti);
 
         NotificationDto dto = new NotificationDto(
@@ -216,6 +209,7 @@ public class NotificationService {
                 "/queue/notifications",
                 dto
         );
+
         // ---------------- EMAIL ----------------
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle("Parcel Arrival Notification");
@@ -248,47 +242,40 @@ public class NotificationService {
 
         notificationRepository.save(lineNoti);
 
-//        var textMessage = lineService.buildTextMessage(
-//                "📦 Your parcel (" + parcel.getTrackingNumber() +
-//                        ") has arrived at the dormitory."
-//        );
-//
-//        sendLineAndUpdateStatus(lineNoti, resident, textMessage);
+        String statusText = switch (parcel.getStatus()) {
+            case RECEIVED -> "Ready for Pickup";
+            case PICKED_UP -> "Picked Up";
+            default -> "Processing";
+        };
+
         String viewUrl =
                 "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcels/"
                         + parcel.getParcelId();
 
         var bubble = lineService.buildParcelFlex(
                 parcel.getTrackingNumber(),
+                statusText,
                 viewUrl
         );
 
         var flexMessage = lineService.buildFlexMessage(bubble);
 
         sendLineAndUpdateStatus(lineNoti, resident, flexMessage);
-
     }
 
     private void sendEmailAndUpdateStatus(Notification emailNoti, String email) {
 
         try {
-            System.out.println("TRY SENDING EMAIL TO: " + email);
-
             emailService.send(
                     email,
                     emailNoti.getNotiTitle(),
                     emailNoti.getNotiMessage()
             );
 
-            System.out.println("EMAIL SENT SUCCESS");
-
             emailNoti.setStatus(Notification.Status.SENT);
             emailNoti.setSentAt(LocalDateTime.now());
 
         } catch (Exception e) {
-
-            System.out.println("EMAIL FAILED");
-            e.printStackTrace();
 
             emailNoti.setStatus(Notification.Status.FAILED);
 
@@ -339,5 +326,4 @@ public class NotificationService {
             sendLineAndUpdateStatus(lineNoti, user, text);
         }
     }
-
 }

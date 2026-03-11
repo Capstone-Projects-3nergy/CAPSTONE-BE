@@ -55,27 +55,17 @@ public class LineService {
 
     public Map<String, Object> buildParcelFlex(
             String trackingNumber,
+            String status,
             String viewUrl
     ) {
 
         return Map.of(
                 "type", "bubble",
 
-                "hero", Map.of(
-                        "type", "image",
-                        "url", "https://img5.pic.in.th/file/secure-sv1/tractify.png",
-                        "size", "full",
-                        "aspectRatio", "20:13",
-                        "aspectMode", "cover",
-                        "action", Map.of(
-                                "type", "uri",
-                                "uri", viewUrl
-                        )
-                ),
-
                 "body", Map.of(
                         "type", "box",
                         "layout", "vertical",
+                        "spacing", "md",
                         "contents", new Object[]{
 
                                 Map.of(
@@ -88,9 +78,16 @@ public class LineService {
                                 Map.of(
                                         "type", "text",
                                         "text", "Tracking: " + trackingNumber,
-                                        "margin", "md",
                                         "size", "sm",
-                                        "color", "#666666"
+                                        "color", "#555555"
+                                ),
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", "Status: " + status,
+                                        "size", "sm",
+                                        "color", "#2E7D32",
+                                        "weight", "bold"
                                 ),
 
                                 Map.of(
@@ -98,8 +95,8 @@ public class LineService {
                                         "text",
                                         "Your parcel has arrived at the dormitory and is ready for pickup.",
                                         "wrap", true,
-                                        "margin", "md",
-                                        "size", "sm"
+                                        "size", "sm",
+                                        "margin", "md"
                                 )
                         }
                 ),
