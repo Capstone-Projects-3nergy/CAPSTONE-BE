@@ -2,6 +2,7 @@ package com.nw2.parcel.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "trash")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Trash {
 
     @Id
@@ -32,6 +36,7 @@ public class Trash {
 
     public enum TargetType {
         PARCEL,
-        USER
+        USER,
+        ANNOUNCEMENT
     }
 }

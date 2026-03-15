@@ -1,6 +1,7 @@
 package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.ParcelListItemDto;
+import com.nw2.parcel.Dtos.TrashAnnouncementDto;
 import com.nw2.parcel.Dtos.TrashListItemDto;
 import com.nw2.parcel.Dtos.TrashResidentDto;
 import com.nw2.parcel.services.TrashService;
@@ -62,6 +63,33 @@ public class TrashController {
         trashService.deleteResidentPermanently(residentId);
         return ResponseEntity.ok(
                 Map.of("message", "Resident permanently deleted")
+        );
+    }
+
+    @GetMapping("/announcements")
+    public List<TrashAnnouncementDto> getTrashAnnouncements() {
+        return trashService.getTrashAnnouncements();
+    }
+
+    @PutMapping("/announcements/{announcementId}/restore")
+    public ResponseEntity<Void> restoreAnnouncement(
+            @PathVariable Integer announcementId
+    ) {
+
+        trashService.restoreAnnouncement(announcementId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/announcements/{announcementId}")
+    public ResponseEntity<Map<String, String>> deleteAnnouncementPermanently(
+            @PathVariable Integer announcementId
+    ) {
+
+        trashService.deleteAnnouncementPermanently(announcementId);
+
+        return ResponseEntity.ok(
+                Map.of("message", "Announcement permanently deleted")
         );
     }
 
