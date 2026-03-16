@@ -1,5 +1,6 @@
 package com.nw2.parcel.services;
 
+import com.nw2.parcel.Dtos.AnnouncementCategoryDto;
 import com.nw2.parcel.Dtos.AnnouncementDto;
 import com.nw2.parcel.Dtos.CreateAnnouncementDto;
 import com.nw2.parcel.Dtos.UpdateAnnouncementDto;
@@ -225,5 +226,18 @@ public class AnnouncementService {
                 .publishAt(a.getPublishAt())
                 .viewCount(a.getViewCount())
                 .build();
+    }
+
+    // LIST CATEGORIES
+    public List<AnnouncementCategoryDto> getAllCategories() {
+
+        return categoryRepository
+                .findAll()
+                .stream()
+                .map(c -> new AnnouncementCategoryDto(
+                        c.getCategoryId(),
+                        c.getCategoryName()
+                ))
+                .toList();
     }
 }

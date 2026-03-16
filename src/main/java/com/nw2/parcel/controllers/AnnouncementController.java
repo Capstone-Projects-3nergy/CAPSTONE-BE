@@ -1,5 +1,6 @@
 package com.nw2.parcel.controllers;
 
+import com.nw2.parcel.Dtos.AnnouncementCategoryDto;
 import com.nw2.parcel.Dtos.AnnouncementDto;
 import com.nw2.parcel.Dtos.CreateAnnouncementDto;
 import com.nw2.parcel.Dtos.UpdateAnnouncementDto;
@@ -94,4 +95,9 @@ public class AnnouncementController {
         announcementService.recordView(id, user);
     }
 
+    //list category
+    @GetMapping("/categories")
+    public List<AnnouncementCategoryDto> getCategories() {
+        return announcementService.getAllCategories();
+    }
 }
