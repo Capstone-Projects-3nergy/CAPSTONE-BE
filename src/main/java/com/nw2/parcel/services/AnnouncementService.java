@@ -46,6 +46,10 @@ public class AnnouncementService {
             throw new ResourceNotFoundException("Announcement not found");
         }
 
+        if (ann.getStatus() != Announcement.Status.PUBLISHED) {
+            throw new ResourceNotFoundException("Announcement not found");
+        }
+
         return map(ann);
     }
 
@@ -56,30 +60,27 @@ public class AnnouncementService {
     ) {
 
         AnnouncementCategory category =
-                categoryRepository.findById(req.getCategoryId()).orElse(null);
+                categoryRepository.findById(req.getCategoryId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Category not found"));
 
         LocalDateTime now = LocalDateTime.now();
 
         Announcement.Status status;
         LocalDateTime publishTime;
 
-        // --- Determine publish mode ---
-
         if (Boolean.TRUE.equals(req.getPublishNow())) {
 
-            // Publish immediately
             status = Announcement.Status.PUBLISHED;
             publishTime = now;
 
         } else if (req.getPublishAt() != null && req.getPublishAt().isAfter(now)) {
 
-            // Schedule publish
             status = Announcement.Status.DRAFT;
             publishTime = req.getPublishAt();
 
         } else {
 
-            // Save draft
             status = Announcement.Status.DRAFT;
             publishTime = null;
         }
@@ -103,8 +104,7 @@ public class AnnouncementService {
 
         Announcement saved = announcementRepository.save(announcement);
 
-        // --- Send Notification ONLY when published immediately ---
-
+        // SEND NOTIFICATION
         if (status == Announcement.Status.PUBLISHED &&
                 Boolean.TRUE.equals(saved.getSendNotification())) {
 
@@ -200,7 +200,9 @@ public class AnnouncementService {
 
             viewRepository.save(view);
 
-            ann.setViewCount(ann.getViewCount() + 1);
+            Integer current = ann.getViewCount() == null ? 0 : ann.getViewCount();
+            ann.setViewCount(current + 1);
+
             announcementRepository.save(ann);
         }
     }
