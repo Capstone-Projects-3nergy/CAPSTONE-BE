@@ -20,4 +20,5 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Inte
             Announcement.Status status,
             LocalDateTime time
     );
+    List<Announcement> findByDeletedAtIsNullOrderByCreatedAtDesc();
 }

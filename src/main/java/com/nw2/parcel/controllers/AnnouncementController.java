@@ -100,4 +100,10 @@ public class AnnouncementController {
     public List<AnnouncementCategoryDto> getCategories() {
         return announcementService.getAllCategories();
     }
+
+    // LIST ALL FOR STAFF
+    @GetMapping("/staff")
+    public List<AnnouncementDto> getAllForStaff() {
+        return announcementService.getAllForStaff();
+    }
 }

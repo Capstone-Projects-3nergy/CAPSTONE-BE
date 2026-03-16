@@ -225,6 +225,7 @@ public class AnnouncementService {
                 .priority(a.getPriority())
                 .publishAt(a.getPublishAt())
                 .viewCount(a.getViewCount())
+                .status(a.getStatus().name())
                 .build();
     }
 
@@ -238,6 +239,16 @@ public class AnnouncementService {
                         c.getCategoryId(),
                         c.getCategoryName()
                 ))
+                .toList();
+    }
+
+    // LIST ALL (STAFF VIEW)
+    public List<AnnouncementDto> getAllForStaff() {
+
+        return announcementRepository
+                .findByDeletedAtIsNullOrderByCreatedAtDesc()
+                .stream()
+                .map(this::map)
                 .toList();
     }
 }

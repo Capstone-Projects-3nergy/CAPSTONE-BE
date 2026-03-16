@@ -18,4 +18,5 @@ public class AnnouncementDto {
     private Integer priority;
     private LocalDateTime publishAt;
     private Integer viewCount;
+    private String status;
 }
