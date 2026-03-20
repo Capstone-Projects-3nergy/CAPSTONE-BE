@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -27,25 +28,22 @@ public class AnnouncementController {
     private final UsersRepository usersRepository;
 
     private Users getCurrentUser(Authentication authentication) {
-
         String firebaseUid = authentication.getName();
-
         return usersRepository
                 .findByFirebaseUid(firebaseUid)
                 .orElseThrow();
     }
 
-    // CREATE
-    @PostMapping
+    // ✅ CREATE (รองรับ upload รูป)
+    @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
     public AnnouncementDto create(
-            @RequestBody CreateAnnouncementDto req,
+            @RequestPart("data") CreateAnnouncementDto req,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             Authentication auth
     ) {
-
         Users staff = getCurrentUser(auth);
-
-        return announcementService.createAnnouncement(req, staff);
+        return announcementService.createAnnouncement(req, staff, image);
     }
 
     // LIST
@@ -60,13 +58,14 @@ public class AnnouncementController {
         return announcementService.getById(id);
     }
 
-    // UPDATE
-    @PutMapping("/{id}")
+    // ✅ UPDATE (รองรับเปลี่ยนรูป)
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public AnnouncementDto update(
             @PathVariable Integer id,
-            @RequestBody UpdateAnnouncementDto req
+            @RequestPart("data") UpdateAnnouncementDto req,
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
-        return announcementService.updateAnnouncement(id, req);
+        return announcementService.updateAnnouncement(id, req, image);
     }
 
     // MOVE TO TRASH
@@ -76,9 +75,7 @@ public class AnnouncementController {
             @PathVariable Integer id,
             Authentication auth
     ) {
-
         Users staff = getCurrentUser(auth);
-
         announcementService.moveToTrash(id, staff);
     }
 
@@ -89,19 +86,17 @@ public class AnnouncementController {
             @PathVariable Integer id,
             Authentication auth
     ) {
-
         Users user = getCurrentUser(auth);
-
         announcementService.recordView(id, user);
     }
 
-    //list category
+    // list category
     @GetMapping("/categories")
     public List<AnnouncementCategoryDto> getCategories() {
         return announcementService.getAllCategories();
     }
 
-    // LIST ALL FOR STAFF
+    // STAFF VIEW
     @GetMapping("/staff")
     public List<AnnouncementDto> getAllForStaff() {
         return announcementService.getAllForStaff();
