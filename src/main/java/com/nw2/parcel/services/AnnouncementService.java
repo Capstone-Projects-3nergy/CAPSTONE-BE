@@ -199,9 +199,15 @@ public class AnnouncementService {
         if (Boolean.TRUE.equals(req.getPublishNow())) {
             ann.setStatus(Announcement.Status.PUBLISHED);
             ann.setPublishAt(now);
+
         } else if (req.getPublishAt() != null && req.getPublishAt().isAfter(now)) {
             ann.setStatus(Announcement.Status.DRAFT);
             ann.setPublishAt(req.getPublishAt());
+
+        } else {
+            //fallback สำคัญมาก
+            ann.setStatus(Announcement.Status.DRAFT);
+            ann.setPublishAt(null);
         }
 
         // ✅ pin logic
