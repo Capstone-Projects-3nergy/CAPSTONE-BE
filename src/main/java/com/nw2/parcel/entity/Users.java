@@ -68,7 +68,7 @@ public class Users {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "line_user_id")
+    @Column(name = "line_user_id", unique = true)
     private String lineUserId;
 
     @Column(name = "line_connected_at")

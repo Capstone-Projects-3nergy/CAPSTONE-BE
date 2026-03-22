@@ -11,7 +11,7 @@ public class UserProfileResponse {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String lineId;
+    private Boolean isLineLinked;
     private String roomNumber;
     private String position;
     private String profileImageUrl;

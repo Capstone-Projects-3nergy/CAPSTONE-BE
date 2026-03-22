@@ -299,4 +299,17 @@ public class AnnouncementService {
                 .map(this::map)
                 .toList();
     }
+
+    public AnnouncementDto getByIdForStaff(Integer id) {
+
+        Announcement ann = announcementRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+
+        if (ann.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Announcement not found");
+        }
+
+        return map(ann);
+    }
 }

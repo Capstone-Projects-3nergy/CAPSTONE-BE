@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
@@ -65,7 +67,7 @@ public class UserProfileService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .phoneNumber(user.getPhoneNumber())
-                .lineId(user.getLineId())
+                .isLineLinked(user.getLineUserId() != null)
                 .roomNumber(user.getRoomNumber())
                 .position(user.getPosition())
                 .profileImageUrl(user.getProfileImageUrl())
@@ -80,6 +82,34 @@ public class UserProfileService {
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
         return mapToResponse(user);
+    }
+
+    public void connectLine(String firebaseUid, String lineUserId) {
+
+        Users currentUser = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        // 🔒 เช็คว่ามีคนใช้ line นี้แล้วมั้ย
+        usersRepository.findByLineUserId(lineUserId).ifPresent(existing -> {
+            if (!existing.getUserId().equals(currentUser.getUserId())) {
+                throw new IllegalStateException("This LINE account is already linked to another user");
+            }
+        });
+
+        currentUser.setLineUserId(lineUserId);
+        currentUser.setLineConnectedAt(LocalDateTime.now());
+
+        usersRepository.save(currentUser);
+    }
+
+    public void disconnectLine(String firebaseUid) {
+        Users user = usersRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        user.setLineUserId(null);
+        user.setLineConnectedAt(null);
+
+        usersRepository.save(user);
     }
 }
 

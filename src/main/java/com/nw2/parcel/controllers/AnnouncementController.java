@@ -101,4 +101,10 @@ public class AnnouncementController {
     public List<AnnouncementDto> getAllForStaff() {
         return announcementService.getAllForStaff();
     }
+
+    //staff edit draft
+    @GetMapping("/staff/{id}")
+    public AnnouncementDto getOneForStaff(@PathVariable Integer id) {
+        return announcementService.getByIdForStaff(id);
+    }
 }
