@@ -14,4 +14,5 @@ public class UpdateAnnouncementDto {
     private Integer priority;
     private Boolean sendNotification;
     private LocalDateTime publishAt;
+    private Boolean publishNow;
 }

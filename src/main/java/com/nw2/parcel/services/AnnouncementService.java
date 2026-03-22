@@ -186,8 +186,23 @@ public class AnnouncementService {
         if (req.getContent() != null)
             ann.setContent(req.getContent());
 
-        if (req.getPublishAt() != null)
+        // update category
+        if (req.getCategoryId() != null) {
+            AnnouncementCategory category = categoryRepository.findById(req.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+            ann.setCategory(category);
+        }
+
+        // update status
+        LocalDateTime now = LocalDateTime.now();
+
+        if (Boolean.TRUE.equals(req.getPublishNow())) {
+            ann.setStatus(Announcement.Status.PUBLISHED);
+            ann.setPublishAt(now);
+        } else if (req.getPublishAt() != null && req.getPublishAt().isAfter(now)) {
+            ann.setStatus(Announcement.Status.DRAFT);
             ann.setPublishAt(req.getPublishAt());
+        }
 
         // ✅ pin logic
         handlePinLogic(ann, req.getPinned());
