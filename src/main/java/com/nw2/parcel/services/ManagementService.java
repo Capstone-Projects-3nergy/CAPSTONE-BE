@@ -37,31 +37,6 @@ public class ManagementService {
     private final EmailService emailService;
     private final FirebaseAuthService firebaseAuthService;
 
-    // ─── Helper: Map User → ManagementDetailDto ─────────────────────────────────
-
-    private ManagementDetailDto toDetailDto(Users user) {
-        ManagementDetailDto dto = new ManagementDetailDto();
-        dto.setUserId(user.getUserId());
-        dto.setFirstName(user.getFirstName());
-        dto.setLastName(user.getLastName());
-        dto.setEmail(user.getEmail());
-        dto.setRoomNumber(user.getRoomNumber());
-        dto.setPhoneNumber(user.getPhoneNumber());
-        dto.setLineId(user.getLineId());
-        dto.setProfileImageUrl(user.getProfileImageUrl());
-        dto.setRole(user.getRole().name());
-        dto.setStatus(user.getStatus().name());
-
-        if (user.getDorm() != null) {
-            dto.setDormId(user.getDorm().getDormId());
-            dto.setDormName(user.getDorm().getDormName());
-        }
-
-        return dto;
-    }
-
-    // ─── List ────────────────────────────────────────────────────────────────────
-
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
                 .findByRoleInAndStatusNot(
@@ -90,17 +65,32 @@ public class ManagementService {
                 .toList();
     }
 
-    // ─── Detail ──────────────────────────────────────────────────────────────────
-
+    //detail
     public ManagementDetailDto getResidentDetail(Integer id) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("Resident not found"));
 
-        return toDetailDto(user);
+        ManagementDetailDto dto = new ManagementDetailDto();
+        dto.setUserId(user.getUserId());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setEmail(user.getEmail());
+        dto.setRoomNumber(user.getRoomNumber());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setLineId(user.getLineId());
+        dto.setProfileImageUrl(user.getProfileImageUrl());
+        dto.setRole(user.getRole().name());
+        dto.setStatus(user.getStatus().name());
+
+        if (user.getDorm() != null) {
+            dto.setDormId(user.getDorm().getDormId());
+            dto.setDormName(user.getDorm().getDormName());
+        }
+
+        return dto;
     }
 
-    // ─── Add ─────────────────────────────────────────────────────────────────────
-
+    //add
     @Transactional
     public ManagementDetailDto addResident(ManagementAddDto req, MultipartFile profileImage) {
 
@@ -108,6 +98,7 @@ public class ManagementService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
+        //สร้าง Firebase user
         UserRecord firebaseUser;
         try {
             firebaseUser = firebaseAuthService.createUser(req.getEmail());
@@ -136,6 +127,7 @@ public class ManagementService {
             throw new ExternalServiceException("Cannot create Firebase user", e);
         }
 
+        //สร้าง user ใน DB
         Users user = new Users();
         user.setFirebaseUid(firebaseUser.getUid());
         user.setFirstName(req.getFirstName());
@@ -156,17 +148,38 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
+        // รูป
         if (profileImage != null && !profileImage.isEmpty()) {
-            String imageUrl = fileStorageService.uploadProfileImage(profileImage, savedUser.getUserId());
+            String imageUrl = fileStorageService.uploadProfileImage(
+                    profileImage,
+                    savedUser.getUserId()
+            );
             savedUser.setProfileImageUrl(imageUrl);
             savedUser = usersRepository.save(savedUser);
         }
 
-        return toDetailDto(savedUser);
+
+        ManagementDetailDto dto = new ManagementDetailDto();
+        dto.setUserId(savedUser.getUserId());
+        dto.setFirstName(savedUser.getFirstName());
+        dto.setLastName(savedUser.getLastName());
+        dto.setEmail(savedUser.getEmail());
+        dto.setRoomNumber(savedUser.getRoomNumber());
+        dto.setPhoneNumber(savedUser.getPhoneNumber());
+        dto.setLineId(savedUser.getLineId());
+        dto.setProfileImageUrl(savedUser.getProfileImageUrl());
+        dto.setRole(savedUser.getRole().name());
+        dto.setStatus(user.getStatus().name());
+
+        if (savedUser.getDorm() != null) {
+            dto.setDormId(savedUser.getDorm().getDormId());
+            dto.setDormName(savedUser.getDorm().getDormName());
+        }
+
+        return dto;
     }
 
-    // ─── Update ──────────────────────────────────────────────────────────────────
-
+    //update
     @Transactional
     public ManagementDetailDto updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
@@ -194,11 +207,27 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
-        return toDetailDto(savedUser);
+        ManagementDetailDto dto = new ManagementDetailDto();
+        dto.setUserId(savedUser.getUserId());
+        dto.setFirstName(savedUser.getFirstName());
+        dto.setLastName(savedUser.getLastName());
+        dto.setEmail(savedUser.getEmail());
+        dto.setRoomNumber(savedUser.getRoomNumber());
+        dto.setPhoneNumber(savedUser.getPhoneNumber());
+        dto.setLineId(savedUser.getLineId());
+        dto.setProfileImageUrl(savedUser.getProfileImageUrl());
+        dto.setRole(savedUser.getRole().name());
+        dto.setStatus(user.getStatus().name());
+
+        if (savedUser.getDorm() != null) {
+            dto.setDormId(savedUser.getDorm().getDormId());
+            dto.setDormName(savedUser.getDorm().getDormName());
+        }
+
+        return dto;
     }
 
-    // ─── Soft Delete ─────────────────────────────────────────────────────────────
-
+    //move to trash
     @Transactional
     public void softDeleteResident(Integer userId) {
 
