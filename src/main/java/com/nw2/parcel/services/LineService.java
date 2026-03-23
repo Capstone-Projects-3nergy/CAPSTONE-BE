@@ -120,4 +120,51 @@ public class LineService {
                 )
         );
     }
+
+    public Map<String, Object> buildOverdueFlex(
+            String trackingNumber,
+            String days
+    ) {
+        return Map.of(
+                "type", "bubble",
+
+                "body", Map.of(
+                        "type", "box",
+                        "layout", "vertical",
+                        "contents", new Object[]{
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", "⚠️ Parcel Overdue",
+                                        "weight", "bold",
+                                        "size", "xl",
+                                        "color", "#D32F2F"
+                                ),
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", "Tracking: " + trackingNumber,
+                                        "size", "sm",
+                                        "margin", "md"
+                                ),
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", "Overdue: " + days + " days",
+                                        "size", "sm",
+                                        "color", "#D32F2F"
+                                ),
+
+                                Map.of(
+                                        "type", "text",
+                                        "text",
+                                        "Please pick up your parcel as soon as possible.",
+                                        "wrap", true,
+                                        "size", "sm",
+                                        "margin", "md"
+                                )
+                        }
+                )
+        );
+    }
 }

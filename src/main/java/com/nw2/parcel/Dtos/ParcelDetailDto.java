@@ -27,5 +27,7 @@ public class ParcelDetailDto {
     private String residentName;
     private String roomNumber;
     private String email;
+    private Boolean isOverdue;
+    private Long overdueDays;
 }
 

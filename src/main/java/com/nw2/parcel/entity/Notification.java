@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class Notification {
 
     public enum Status { PENDING, SENT, FAILED }
-    public enum Type   { EMAIL, LINE, SYSTEM }
+    public enum Type   { EMAIL, LINE, SYSTEM, OVERDUE_SYSTEM, OVERDUE_LINE}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

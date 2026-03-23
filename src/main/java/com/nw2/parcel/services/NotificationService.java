@@ -325,4 +325,44 @@ public class NotificationService {
             sendLineAndUpdateStatus(lineNoti, user, text);
         }
     }
+
+    public void notifyParcelOverdue(Parcels parcel, Users user) {
+
+        String message = "⏰ Parcel " + parcel.getTrackingNumber()
+                + " is overdue for pickup (more than 3 days).";
+
+        // ---------------- SYSTEM ----------------
+        Notification systemNoti = new Notification();
+        systemNoti.setNotiTitle("Parcel Overdue");
+        systemNoti.setNotiMessage(message);
+        systemNoti.setStatus(Notification.Status.SENT);
+        systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM); // 🔥 สำคัญ
+        systemNoti.setParcel(parcel);
+        systemNoti.setUser(user);
+
+        notificationRepository.save(systemNoti);
+
+        // ---------------- LINE ----------------
+        if (user.getLineUserId() != null) {
+
+            Notification lineNoti = new Notification();
+            lineNoti.setNotiTitle("Parcel Overdue");
+            lineNoti.setNotiMessage(message);
+            lineNoti.setStatus(Notification.Status.PENDING);
+            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE); // 🔥
+            lineNoti.setParcel(parcel);
+            lineNoti.setUser(user);
+
+            notificationRepository.save(lineNoti);
+
+            var flex = lineService.buildOverdueFlex(
+                    parcel.getTrackingNumber(),
+                    "3+"
+            );
+
+            var msg = lineService.buildFlexMessage(flex);
+
+            sendLineAndUpdateStatus(lineNoti, user, msg);
+        }
+    }
 }

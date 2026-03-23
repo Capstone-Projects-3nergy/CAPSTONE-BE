@@ -2,9 +2,11 @@ package com.nw2.parcel.controllers;
 
 import com.nw2.parcel.Dtos.*;
 import com.nw2.parcel.entity.Parcels;
+import com.nw2.parcel.services.OverdueService;
 import com.nw2.parcel.services.ParcelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +22,7 @@ public class ParcelController {
 
     private final ParcelService parcelService;
     private final ParcelService parcelMetaService;
+    private final OverdueService overdueService;
 
     //add
     @PostMapping("/add")
@@ -71,5 +74,13 @@ public class ParcelController {
     @GetMapping("/types")
     public List<String> getParcelTypes() {
         return parcelMetaService.getParcelTypes();
+    }
+
+    @PostMapping("/{id}/remind-overdue")
+    public ResponseEntity<?> remindOverdue(@PathVariable Integer id) {
+
+        overdueService.remindByParcelId(id);
+
+        return ResponseEntity.ok("Reminder processed");
     }
 }

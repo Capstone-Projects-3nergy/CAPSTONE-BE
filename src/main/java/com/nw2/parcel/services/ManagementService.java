@@ -37,6 +37,31 @@ public class ManagementService {
     private final EmailService emailService;
     private final FirebaseAuthService firebaseAuthService;
 
+    // ─── Helper: Map User → ManagementDetailDto ─────────────────────────────────
+
+    private ManagementDetailDto toDetailDto(Users user) {
+        ManagementDetailDto dto = new ManagementDetailDto();
+        dto.setUserId(user.getUserId());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setEmail(user.getEmail());
+        dto.setRoomNumber(user.getRoomNumber());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setLineId(user.getLineId());
+        dto.setProfileImageUrl(user.getProfileImageUrl());
+        dto.setRole(user.getRole().name());
+        dto.setStatus(user.getStatus().name());
+
+        if (user.getDorm() != null) {
+            dto.setDormId(user.getDorm().getDormId());
+            dto.setDormName(user.getDorm().getDormName());
+        }
+
+        return dto;
+    }
+
+    // ─── List ────────────────────────────────────────────────────────────────────
+
     public List<ManagementListDto> getAllResidents() {
         return usersRepository
                 .findByRoleInAndStatusNot(
@@ -65,31 +90,17 @@ public class ManagementService {
                 .toList();
     }
 
-    //detail
+    // ─── Detail ──────────────────────────────────────────────────────────────────
+
     public ManagementDetailDto getResidentDetail(Integer id) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("Resident not found"));
 
-        ManagementDetailDto dto = new ManagementDetailDto();
-        dto.setUserId(user.getUserId());
-        dto.setFirstName(user.getFirstName());
-        dto.setLastName(user.getLastName());
-        dto.setEmail(user.getEmail());
-        dto.setRoomNumber(user.getRoomNumber());
-        dto.setPhoneNumber(user.getPhoneNumber());
-        dto.setLineId(user.getLineId());
-        dto.setProfileImageUrl(user.getProfileImageUrl());
-        dto.setRole(user.getRole().name());
-
-        if (user.getDorm() != null) {
-            dto.setDormId(user.getDorm().getDormId());
-            dto.setDormName(user.getDorm().getDormName());
-        }
-
-        return dto;
+        return toDetailDto(user);
     }
 
-    //add
+    // ─── Add ─────────────────────────────────────────────────────────────────────
+
     @Transactional
     public ManagementDetailDto addResident(ManagementAddDto req, MultipartFile profileImage) {
 
@@ -97,7 +108,6 @@ public class ManagementService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        //สร้าง Firebase user
         UserRecord firebaseUser;
         try {
             firebaseUser = firebaseAuthService.createUser(req.getEmail());
@@ -126,7 +136,6 @@ public class ManagementService {
             throw new ExternalServiceException("Cannot create Firebase user", e);
         }
 
-        //สร้าง user ใน DB
         Users user = new Users();
         user.setFirebaseUid(firebaseUser.getUid());
         user.setFirstName(req.getFirstName());
@@ -147,37 +156,17 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
-        // รูป
         if (profileImage != null && !profileImage.isEmpty()) {
-            String imageUrl = fileStorageService.uploadProfileImage(
-                    profileImage,
-                    savedUser.getUserId()
-            );
+            String imageUrl = fileStorageService.uploadProfileImage(profileImage, savedUser.getUserId());
             savedUser.setProfileImageUrl(imageUrl);
             savedUser = usersRepository.save(savedUser);
         }
 
-
-        ManagementDetailDto dto = new ManagementDetailDto();
-        dto.setUserId(savedUser.getUserId());
-        dto.setFirstName(savedUser.getFirstName());
-        dto.setLastName(savedUser.getLastName());
-        dto.setEmail(savedUser.getEmail());
-        dto.setRoomNumber(savedUser.getRoomNumber());
-        dto.setPhoneNumber(savedUser.getPhoneNumber());
-        dto.setLineId(savedUser.getLineId());
-        dto.setProfileImageUrl(savedUser.getProfileImageUrl());
-        dto.setRole(savedUser.getRole().name());
-
-        if (savedUser.getDorm() != null) {
-            dto.setDormId(savedUser.getDorm().getDormId());
-            dto.setDormName(savedUser.getDorm().getDormName());
-        }
-
-        return dto;
+        return toDetailDto(savedUser);
     }
 
-    //update
+    // ─── Update ──────────────────────────────────────────────────────────────────
+
     @Transactional
     public ManagementDetailDto updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
@@ -205,26 +194,11 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
-        ManagementDetailDto dto = new ManagementDetailDto();
-        dto.setUserId(savedUser.getUserId());
-        dto.setFirstName(savedUser.getFirstName());
-        dto.setLastName(savedUser.getLastName());
-        dto.setEmail(savedUser.getEmail());
-        dto.setRoomNumber(savedUser.getRoomNumber());
-        dto.setPhoneNumber(savedUser.getPhoneNumber());
-        dto.setLineId(savedUser.getLineId());
-        dto.setProfileImageUrl(savedUser.getProfileImageUrl());
-        dto.setRole(savedUser.getRole().name());
-
-        if (savedUser.getDorm() != null) {
-            dto.setDormId(savedUser.getDorm().getDormId());
-            dto.setDormName(savedUser.getDorm().getDormName());
-        }
-
-        return dto;
+        return toDetailDto(savedUser);
     }
 
-    //move to trash
+    // ─── Soft Delete ─────────────────────────────────────────────────────────────
+
     @Transactional
     public void softDeleteResident(Integer userId) {
 
@@ -258,5 +232,46 @@ public class ManagementService {
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
         trashRepository.save(trash);
+    }
+
+    // ─── Resend Verification Email ───────────────────────────────────────────────
+
+    public void resendVerificationEmail(Integer userId) {
+
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getStatus() != Users.Status.PENDING) {
+            throw new ConflictException(
+                    "Can only resend verification to PENDING users (current status: " + user.getStatus() + ")"
+            );
+        }
+
+        try {
+            String resetLink = FirebaseAuth.getInstance()
+                    .generatePasswordResetLink(user.getEmail());
+
+            String verifyLink = FirebaseAuth.getInstance()
+                    .generateEmailVerificationLink(user.getEmail());
+
+            emailService.send(
+                    user.getEmail(),
+                    "Reminder: Activate your account",
+                    """
+                    This is a reminder to activate your account.
+        
+                    1) Verify your email:
+                    %s
+        
+                    2) Set your password:
+                    %s
+        
+                    If you have already completed these steps, please ignore this email.
+                    """.formatted(verifyLink, resetLink)
+            );
+
+        } catch (FirebaseAuthException e) {
+            throw new ExternalServiceException("Failed to generate activation links", e);
+        }
     }
 }

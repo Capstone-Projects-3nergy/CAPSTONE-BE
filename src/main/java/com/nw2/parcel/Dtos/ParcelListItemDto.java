@@ -19,4 +19,6 @@ public class ParcelListItemDto {
     private Parcels.Status status;
     private LocalDateTime receivedAt;
     private LocalDateTime updatedAt;
+    private Boolean isOverdue;
+    private Long overdueDays;
 }
