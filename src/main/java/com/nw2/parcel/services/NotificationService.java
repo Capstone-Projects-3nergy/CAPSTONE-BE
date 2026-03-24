@@ -12,7 +12,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -323,9 +325,12 @@ public class NotificationService {
 
             notificationRepository.save(lineNoti);
 
-            var text = lineService.buildTextMessage("📢 " + title + "\n" + message);
+            var bubble = lineService.buildAnnouncementFlex(title, message);
+            var flex = lineService.buildFlexMessage(bubble);
 
-            sendLineAndUpdateStatus(lineNoti, user, text);
+            sendLineAndUpdateStatus(lineNoti, user, flex);
+
+//            sendLineAndUpdateStatus(lineNoti, user, text);
         }
     }
 
@@ -358,10 +363,28 @@ public class NotificationService {
 
             notificationRepository.save(lineNoti);
 
-            String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2";
+            long days = Math.max(0,
+                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+            );
+
+            // ยังไม่ถึง 3 วัน → ไม่ต้องส่ง
+            if (days < 3) return;
+
+            // กันยิงซ้ำ
+            boolean alreadySent = notificationRepository
+                    .existsByParcelParcelIdAndNotificationType(
+                            parcel.getParcelId(),
+                            Notification.Type.OVERDUE_LINE
+                    );
+
+            if (alreadySent) return;
+
+            String viewUrl =
+                    "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+
             var flex = lineService.buildOverdueFlex(
                     parcel.getTrackingNumber(),
-                    "3+",
+                    String.valueOf(days),
                     viewUrl
             );
 

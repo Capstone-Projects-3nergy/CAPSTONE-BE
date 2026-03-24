@@ -36,4 +36,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
             Integer userId,
             List<Notification.Type> types
     );
+
+    boolean existsByParcelParcelIdAndNotificationType(Integer parcelId, Notification.Type type);
 }

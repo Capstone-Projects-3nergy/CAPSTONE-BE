@@ -191,4 +191,47 @@ public class LineService {
                 )
         );
     }
+
+    public Map<String, Object> buildAnnouncementFlex(
+            String title,
+            String message
+    ) {
+        return Map.of(
+                "type", "bubble",
+
+                "body", Map.of(
+                        "type", "box",
+                        "layout", "vertical",
+                        "spacing", "md",
+                        "contents", new Object[]{
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", "📢 Announcement",
+                                        "weight", "bold",
+                                        "size", "xl",
+                                        "color", "#1976d2"
+                                ),
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", title,
+                                        "weight", "bold",
+                                        "size", "md",
+                                        "wrap", true,
+                                        "margin", "md"
+                                ),
+
+                                Map.of(
+                                        "type", "text",
+                                        "text", message,
+                                        "size", "sm",
+                                        "wrap", true,
+                                        "margin", "md",
+                                        "color", "#555555"
+                                )
+                        }
+                )
+        );
+    }
 }
