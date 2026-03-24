@@ -123,7 +123,8 @@ public class LineService {
 
     public Map<String, Object> buildOverdueFlex(
             String trackingNumber,
-            String days
+            String days,
+            String viewUrl
     ) {
         return Map.of(
                 "type", "bubble",
@@ -131,6 +132,7 @@ public class LineService {
                 "body", Map.of(
                         "type", "box",
                         "layout", "vertical",
+                        "spacing", "md",
                         "contents", new Object[]{
 
                                 Map.of(
@@ -145,7 +147,8 @@ public class LineService {
                                         "type", "text",
                                         "text", "Tracking: " + trackingNumber,
                                         "size", "sm",
-                                        "margin", "md"
+                                        "color", "#555555",
+                                        "weight", "bold"
                                 ),
 
                                 Map.of(
@@ -162,6 +165,25 @@ public class LineService {
                                         "wrap", true,
                                         "size", "sm",
                                         "margin", "md"
+                                )
+                        }
+                ),
+
+                "footer", Map.of(
+                        "type", "box",
+                        "layout", "vertical",
+                        "contents", new Object[]{
+
+                                Map.of(
+                                        "type", "button",
+                                        "style", "primary",
+                                        "height", "sm",
+                                        "color", "#D32F2F",
+                                        "action", Map.of(
+                                                "type", "uri",
+                                                "label", "View Parcel",
+                                                "uri", viewUrl
+                                        )
                                 )
                         }
                 )

@@ -355,9 +355,11 @@ public class NotificationService {
 
             notificationRepository.save(lineNoti);
 
+            String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2";
             var flex = lineService.buildOverdueFlex(
                     parcel.getTrackingNumber(),
-                    "3+"
+                    "3+",
+                    viewUrl
             );
 
             var msg = lineService.buildFlexMessage(flex);
