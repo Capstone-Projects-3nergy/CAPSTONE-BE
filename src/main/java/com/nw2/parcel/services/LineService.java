@@ -137,10 +137,10 @@ public class LineService {
 
                                 Map.of(
                                         "type", "text",
-                                        "text", "⚠️ Parcel Overdue",
+                                        "text", "Parcel Overdue ⚠️",
                                         "weight", "bold",
                                         "size", "xl",
-                                        "color", "#D32F2F"
+                                        "color", "#d32f2f"
                                 ),
 
                                 Map.of(
@@ -148,14 +148,16 @@ public class LineService {
                                         "text", "Tracking: " + trackingNumber,
                                         "size", "sm",
                                         "color", "#555555",
-                                        "weight", "bold"
+                                        "weight", "bold",
+                                        "wrap", true
                                 ),
 
                                 Map.of(
                                         "type", "text",
                                         "text", "Overdue: " + days + " days",
                                         "size", "sm",
-                                        "color", "#D32F2F"
+                                        "color", "#d32f2f",
+                                        "wrap", true
                                 ),
 
                                 Map.of(
