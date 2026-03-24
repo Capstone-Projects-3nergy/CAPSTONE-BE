@@ -32,4 +32,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
             Integer parcelId,
             List<Notification.Type> types
     );
+    List<Notification> findByUserUserIdAndNotificationTypeInOrderByCreatedAtDesc(
+            Integer userId,
+            List<Notification.Type> types
+    );
 }

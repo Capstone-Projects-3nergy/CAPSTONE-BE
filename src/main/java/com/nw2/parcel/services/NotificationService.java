@@ -127,9 +127,12 @@ public class NotificationService {
     public List<NotificationDto> getNotificationsByUser(Integer userId) {
 
         return notificationRepository
-                .findByUserUserIdAndNotificationTypeOrderByCreatedAtDesc(
+                .findByUserUserIdAndNotificationTypeInOrderByCreatedAtDesc(
                         userId,
-                        Notification.Type.SYSTEM
+                        List.of(
+                                Notification.Type.SYSTEM,
+                                Notification.Type.OVERDUE_SYSTEM
+                        )
                 )
                 .stream()
                 .map(n -> new NotificationDto(
@@ -336,7 +339,7 @@ public class NotificationService {
         systemNoti.setNotiTitle("Parcel Overdue");
         systemNoti.setNotiMessage(message);
         systemNoti.setStatus(Notification.Status.SENT);
-        systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM); // 🔥 สำคัญ
+        systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
         systemNoti.setParcel(parcel);
         systemNoti.setUser(user);
 
@@ -349,7 +352,7 @@ public class NotificationService {
             lineNoti.setNotiTitle("Parcel Overdue");
             lineNoti.setNotiMessage(message);
             lineNoti.setStatus(Notification.Status.PENDING);
-            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE); // 🔥
+            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
             lineNoti.setParcel(parcel);
             lineNoti.setUser(user);
 
