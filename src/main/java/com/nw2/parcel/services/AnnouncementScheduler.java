@@ -19,35 +19,44 @@ public class AnnouncementScheduler {
     private final UsersRepository usersRepository;
     private final NotificationService notificationService;
 
-    // run every minute
     @Scheduled(fixedRate = 60000)
     public void publishScheduledAnnouncements() {
 
+        LocalDateTime now = LocalDateTime.now();
+
         List<Announcement> announcements =
-                announcementRepository.findByStatusAndPublishAtBefore(
+                announcementRepository.findByStatusAndDeletedAtIsNullAndPublishAtBefore(
                         Announcement.Status.DRAFT,
-                        LocalDateTime.now()
+                        now
                 );
 
         for (Announcement ann : announcements) {
 
-            ann.setStatus(Announcement.Status.PUBLISHED);
+            try {
+                // 🔥 กันยิงซ้ำระดับ DB (สำคัญ)
+                if (ann.getStatus() != Announcement.Status.DRAFT) continue;
 
-            announcementRepository.save(ann);
+                ann.setStatus(Announcement.Status.PUBLISHED);
+                Announcement saved = announcementRepository.save(ann);
 
-            if (Boolean.TRUE.equals(ann.getSendNotification())) {
+                if (Boolean.TRUE.equals(saved.getSendNotification())) {
 
-                List<Users> residents =
-                        usersRepository.findByRole(Users.Role.RESIDENT);
+                    List<Users> residents =
+                            usersRepository.findByRole(Users.Role.RESIDENT);
 
-                for (Users user : residents) {
-
-                    notificationService.notifyAnnouncement(
-                            user,
-                            ann.getTitle(),
-                            ann.getSubtitle()
-                    );
+                    for (Users user : residents) {
+                        notificationService.notifyAnnouncement(
+                                user,
+                                saved.getTitle(),
+                                saved.getSubtitle()
+                        );
+                    }
                 }
+
+            } catch (Exception e) {
+                // ❗ log error ไว้ debug
+                System.err.println("Failed to publish announcement ID: " + ann.getAnnouncementId());
+                e.printStackTrace();
             }
         }
     }

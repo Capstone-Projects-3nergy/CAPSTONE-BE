@@ -37,7 +37,6 @@ public class AnnouncementService {
 
             long pinnedCount = announcementRepository.countByIsPinnedTrue();
 
-            // ถ้าเต็ม → เอาตัวล่างสุดออก
             if (pinnedCount >= MAX_PINNED) {
 
                 List<Announcement> pinnedList =
@@ -49,7 +48,6 @@ public class AnnouncementService {
                 announcementRepository.save(lowest);
             }
 
-            // หา priority สูงสุด
             Integer maxPriority = announcementRepository
                     .findByIsPinnedTrueOrderByPriorityAsc()
                     .stream()
@@ -63,6 +61,21 @@ public class AnnouncementService {
         } else {
             ann.setIsPinned(false);
             ann.setPriority(0);
+        }
+    }
+
+    // ========================= NOTIFICATION HELPER =========================
+    private void sendAnnouncementNotification(Announcement ann) {
+
+        List<Users> residents =
+                usersRepository.findByRole(Users.Role.RESIDENT);
+
+        for (Users user : residents) {
+            notificationService.notifyAnnouncement(
+                    user,
+                    ann.getTitle(),
+                    ann.getSubtitle()
+            );
         }
     }
 
@@ -121,7 +134,6 @@ public class AnnouncementService {
             publishTime = null;
         }
 
-        // upload รูป
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             imageUrl = fileStorageService.store(image);
@@ -142,25 +154,15 @@ public class AnnouncementService {
                 .createdAt(now)
                 .build();
 
-        // ✅ ใช้ pin logic
         handlePinLogic(announcement, req.getPinned());
 
         Announcement saved = announcementRepository.save(announcement);
 
-        // SEND NOTIFICATION
+        // ✅ ยิงตอน create (publish ทันที)
         if (status == Announcement.Status.PUBLISHED &&
                 Boolean.TRUE.equals(saved.getSendNotification())) {
 
-            List<Users> residents =
-                    usersRepository.findByRole(Users.Role.RESIDENT);
-
-            for (Users user : residents) {
-                notificationService.notifyAnnouncement(
-                        user,
-                        saved.getTitle(),
-                        saved.getSubtitle()
-                );
-            }
+            sendAnnouncementNotification(saved);
         }
 
         return map(saved);
@@ -177,6 +179,9 @@ public class AnnouncementService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
 
+        // 🔥 เก็บ status เดิม
+        Announcement.Status oldStatus = ann.getStatus();
+
         if (req.getTitle() != null)
             ann.setTitle(req.getTitle());
 
@@ -186,14 +191,12 @@ public class AnnouncementService {
         if (req.getContent() != null)
             ann.setContent(req.getContent());
 
-        // update category
         if (req.getCategoryId() != null) {
             AnnouncementCategory category = categoryRepository.findById(req.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
             ann.setCategory(category);
         }
 
-        // update status
         LocalDateTime now = LocalDateTime.now();
 
         if (Boolean.TRUE.equals(req.getPublishNow())) {
@@ -205,15 +208,12 @@ public class AnnouncementService {
             ann.setPublishAt(req.getPublishAt());
 
         } else {
-            //fallback สำคัญมาก
             ann.setStatus(Announcement.Status.DRAFT);
             ann.setPublishAt(null);
         }
 
-        // ✅ pin logic
         handlePinLogic(ann, req.getPinned());
 
-        // update รูป
         if (image != null && !image.isEmpty()) {
 
             if (ann.getCoverImageUrl() != null) {
@@ -224,9 +224,19 @@ public class AnnouncementService {
             ann.setCoverImageUrl(newImageUrl);
         }
 
-        ann.setUpdatedAt(LocalDateTime.now());
+        ann.setUpdatedAt(now);
 
-        return map(announcementRepository.save(ann));
+        Announcement saved = announcementRepository.save(ann);
+
+        // 🔥 FIX: draft → published (manual publish)
+        if (oldStatus != Announcement.Status.PUBLISHED &&
+                saved.getStatus() == Announcement.Status.PUBLISHED &&
+                Boolean.TRUE.equals(saved.getSendNotification())) {
+
+            sendAnnouncementNotification(saved);
+        }
+
+        return map(saved);
     }
 
     // ========================= DELETE =========================

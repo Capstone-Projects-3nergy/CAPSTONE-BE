@@ -23,4 +23,8 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Inte
     List<Announcement> findByDeletedAtIsNullOrderByCreatedAtDesc();
     long countByIsPinnedTrue();
     List<Announcement> findByIsPinnedTrueOrderByPriorityAsc();
+    List<Announcement> findByStatusAndDeletedAtIsNullAndPublishAtBefore(
+            Announcement.Status status,
+            LocalDateTime time
+    );
 }
