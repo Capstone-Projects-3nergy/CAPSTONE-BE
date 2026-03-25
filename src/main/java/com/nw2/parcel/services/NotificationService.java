@@ -329,8 +329,6 @@ public class NotificationService {
             var flex = lineService.buildFlexMessage(bubble);
 
             sendLineAndUpdateStatus(lineNoti, user, flex);
-
-//            sendLineAndUpdateStatus(lineNoti, user, text);
         }
     }
 
@@ -356,7 +354,7 @@ public class NotificationService {
             Notification lineNoti = new Notification();
             lineNoti.setNotiTitle("Parcel Overdue");
             lineNoti.setNotiMessage(message);
-            lineNoti.setStatus(Notification.Status.PENDING);
+            lineNoti.setStatus(Notification.Status.SENT);
             lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
             lineNoti.setParcel(parcel);
             lineNoti.setUser(user);
