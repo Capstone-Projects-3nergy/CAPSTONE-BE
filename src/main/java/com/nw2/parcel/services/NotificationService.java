@@ -332,22 +332,22 @@ public class NotificationService {
         }
     }
 
-//    public void notifyParcelOverdue(Parcels parcel, Users user) {
-//
-//        String message = "⏰ Parcel " + parcel.getTrackingNumber()
-//                + " is overdue for pickup (more than 3 days).";
-//
-//        // ---------------- SYSTEM ----------------
-//        Notification systemNoti = new Notification();
-//        systemNoti.setNotiTitle("Parcel Overdue");
-//        systemNoti.setNotiMessage(message);
-//        systemNoti.setStatus(Notification.Status.SENT);
-//        systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
-//        systemNoti.setParcel(parcel);
-//        systemNoti.setUser(user);
-//
-//        notificationRepository.save(systemNoti);
-//
+    public void notifyParcelOverdue(Parcels parcel, Users user) {
+
+        String message = "⏰ Parcel " + parcel.getTrackingNumber()
+                + " is overdue for pickup (more than 3 days).";
+
+        // ---------------- SYSTEM ----------------
+        Notification systemNoti = new Notification();
+        systemNoti.setNotiTitle("Parcel Overdue");
+        systemNoti.setNotiMessage(message);
+        systemNoti.setStatus(Notification.Status.SENT);
+        systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
+        systemNoti.setParcel(parcel);
+        systemNoti.setUser(user);
+
+        notificationRepository.save(systemNoti);
+
 //        // ---------------- LINE ----------------
 //        if (user.getLineUserId() != null) {
 //
@@ -389,68 +389,107 @@ public class NotificationService {
 //            var msg = lineService.buildFlexMessage(flex);
 //
 //            sendLineAndUpdateStatus(lineNoti, user, msg);
-//        }
-//    }
+        // ---------------- LINE ----------------
+        if (user.getLineUserId() == null) return; // ✅ ไม่มี LINE → จบแค่นี้
+
+        // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
+        boolean alreadySent = notificationRepository
+                .existsByParcelParcelIdAndNotificationType(
+                        parcel.getParcelId(),
+                        Notification.Type.OVERDUE_LINE
+                );
+
+        if (alreadySent) return;
+
+        // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
+        long days = Math.max(0,
+                Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+        );
+
+        Notification lineNoti = new Notification();
+        lineNoti.setNotiTitle("Parcel Overdue");
+        lineNoti.setNotiMessage(message);
+        lineNoti.setStatus(Notification.Status.PENDING);
+        lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
+        lineNoti.setParcel(parcel);
+        lineNoti.setUser(user);
+        lineNoti.setCreatedAt(LocalDateTime.now());
+        lineNoti.setUpdatedAt(LocalDateTime.now());
+
+        notificationRepository.save(lineNoti);
+
+        String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+
+        var flex = lineService.buildOverdueFlex(
+                parcel.getTrackingNumber(),
+                String.valueOf(days),
+                viewUrl
+        );
+
+        var msg = lineService.buildFlexMessage(flex);
+
+        sendLineAndUpdateStatus(lineNoti, user, msg);
+        }
 
     //dev day < 3
-public void notifyParcelOverdue(Parcels parcel, Users user) {
-
-    String message = "⏰ Parcel " + parcel.getTrackingNumber()
-            + " is overdue for pickup (more than 3 days).";
-
-    // ---------------- SYSTEM ----------------
-    Notification systemNoti = new Notification();
-    systemNoti.setNotiTitle("Parcel Overdue");
-    systemNoti.setNotiMessage(message);
-    systemNoti.setStatus(Notification.Status.SENT);
-    systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
-    systemNoti.setParcel(parcel);
-    systemNoti.setUser(user);
-    systemNoti.setCreatedAt(LocalDateTime.now());
-    systemNoti.setUpdatedAt(LocalDateTime.now());
-    systemNoti.setSentAt(LocalDateTime.now());
-
-    notificationRepository.save(systemNoti);
-
-    // ---------------- LINE ----------------
-    if (user.getLineUserId() == null) return; // ✅ ไม่มี LINE → จบแค่นี้
-
-    // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
-    boolean alreadySent = notificationRepository
-            .existsByParcelParcelIdAndNotificationType(
-                    parcel.getParcelId(),
-                    Notification.Type.OVERDUE_LINE
-            );
-
-    if (alreadySent) return;
-
-    // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
-    long days = Math.max(0,
-            Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
-    );
-
-    Notification lineNoti = new Notification();
-    lineNoti.setNotiTitle("Parcel Overdue");
-    lineNoti.setNotiMessage(message);
-    lineNoti.setStatus(Notification.Status.PENDING);
-    lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
-    lineNoti.setParcel(parcel);
-    lineNoti.setUser(user);
-    lineNoti.setCreatedAt(LocalDateTime.now());
-    lineNoti.setUpdatedAt(LocalDateTime.now());
-
-    notificationRepository.save(lineNoti);
-
-    String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
-
-    var flex = lineService.buildOverdueFlex(
-            parcel.getTrackingNumber(),
-            String.valueOf(days),
-            viewUrl
-    );
-
-    var msg = lineService.buildFlexMessage(flex);
-
-    sendLineAndUpdateStatus(lineNoti, user, msg);
-}
+    //public void notifyParcelOverdue(Parcels parcel, Users user) {
+    //
+    //    String message = "⏰ Parcel " + parcel.getTrackingNumber()
+    //            + " is overdue for pickup (more than 3 days).";
+    //
+    //    // ---------------- SYSTEM ----------------
+    //    Notification systemNoti = new Notification();
+    //    systemNoti.setNotiTitle("Parcel Overdue");
+    //    systemNoti.setNotiMessage(message);
+    //    systemNoti.setStatus(Notification.Status.SENT);
+    //    systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
+    //    systemNoti.setParcel(parcel);
+    //    systemNoti.setUser(user);
+    //    systemNoti.setCreatedAt(LocalDateTime.now());
+    //    systemNoti.setUpdatedAt(LocalDateTime.now());
+    //    systemNoti.setSentAt(LocalDateTime.now());
+    //
+    //    notificationRepository.save(systemNoti);
+    //
+    //    // ---------------- LINE ----------------
+    //    if (user.getLineUserId() == null) return; // ✅ ไม่มี LINE → จบแค่นี้
+    //
+    //    // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
+    //    boolean alreadySent = notificationRepository
+    //            .existsByParcelParcelIdAndNotificationType(
+    //                    parcel.getParcelId(),
+    //                    Notification.Type.OVERDUE_LINE
+    //            );
+    //
+    //    if (alreadySent) return;
+    //
+    //    // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
+    //    long days = Math.max(0,
+    //            Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+    //    );
+    //
+    //    Notification lineNoti = new Notification();
+    //    lineNoti.setNotiTitle("Parcel Overdue");
+    //    lineNoti.setNotiMessage(message);
+    //    lineNoti.setStatus(Notification.Status.PENDING);
+    //    lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
+    //    lineNoti.setParcel(parcel);
+    //    lineNoti.setUser(user);
+    //    lineNoti.setCreatedAt(LocalDateTime.now());
+    //    lineNoti.setUpdatedAt(LocalDateTime.now());
+    //
+    //    notificationRepository.save(lineNoti);
+    //
+    //    String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+    //
+    //    var flex = lineService.buildOverdueFlex(
+    //            parcel.getTrackingNumber(),
+    //            String.valueOf(days),
+    //            viewUrl
+    //    );
+    //
+    //    var msg = lineService.buildFlexMessage(flex);
+    //
+    //    sendLineAndUpdateStatus(lineNoti, user, msg);
+    //}
 }
