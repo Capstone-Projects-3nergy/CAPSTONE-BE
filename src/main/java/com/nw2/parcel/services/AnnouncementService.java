@@ -174,52 +174,56 @@ public class AnnouncementService {
             UpdateAnnouncementDto req,
             MultipartFile image
     ) {
-
         Announcement ann = announcementRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
 
-        // 🔥 เก็บ status เดิม
+        // ✅ เก็บ status เดิมไว้ก่อน
         Announcement.Status oldStatus = ann.getStatus();
 
         if (req.getTitle() != null)
             ann.setTitle(req.getTitle());
-
         if (req.getSubtitle() != null)
             ann.setSubtitle(req.getSubtitle());
-
         if (req.getContent() != null)
             ann.setContent(req.getContent());
-
         if (req.getCategoryId() != null) {
             AnnouncementCategory category = categoryRepository.findById(req.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
             ann.setCategory(category);
         }
 
+        // ✅ อัปเดต sendNotification ถ้า request ส่งมา
+        if (req.getSendNotification() != null) {
+            ann.setSendNotification(req.getSendNotification());
+        }
+
         LocalDateTime now = LocalDateTime.now();
 
+        // ✅ กำหนด status ใหม่ให้ชัดเจน
+        Announcement.Status newStatus;
+
         if (Boolean.TRUE.equals(req.getPublishNow())) {
-            ann.setStatus(Announcement.Status.PUBLISHED);
+            newStatus = Announcement.Status.PUBLISHED;
+            ann.setStatus(newStatus);
             ann.setPublishAt(now);
 
         } else if (req.getPublishAt() != null && req.getPublishAt().isAfter(now)) {
-            ann.setStatus(Announcement.Status.DRAFT);
+            newStatus = Announcement.Status.DRAFT;
+            ann.setStatus(newStatus);
             ann.setPublishAt(req.getPublishAt());
 
         } else {
-            ann.setStatus(Announcement.Status.DRAFT);
-            ann.setPublishAt(null);
+            // ✅ FIX: ถ้าไม่ได้ระบุ publishNow หรือ publishAt → คงสถานะเดิมไว้
+            newStatus = ann.getStatus();
         }
 
         handlePinLogic(ann, req.getPinned());
 
         if (image != null && !image.isEmpty()) {
-
             if (ann.getCoverImageUrl() != null) {
                 fileStorageService.deleteFileByUrl(ann.getCoverImageUrl());
             }
-
             String newImageUrl = fileStorageService.store(image);
             ann.setCoverImageUrl(newImageUrl);
         }
@@ -228,11 +232,11 @@ public class AnnouncementService {
 
         Announcement saved = announcementRepository.save(ann);
 
-        // 🔥 FIX: draft → published (manual publish)
-        if (oldStatus != Announcement.Status.PUBLISHED &&
-                saved.getStatus() == Announcement.Status.PUBLISHED &&
-                Boolean.TRUE.equals(saved.getSendNotification())) {
+        // ✅ FIX: เช็คจาก newStatus แทน saved.getStatus() เพื่อความแน่นอน
+        boolean justPublished = oldStatus != Announcement.Status.PUBLISHED
+                && newStatus == Announcement.Status.PUBLISHED;
 
+        if (justPublished && Boolean.TRUE.equals(saved.getSendNotification())) {
             sendAnnouncementNotification(saved);
         }
 

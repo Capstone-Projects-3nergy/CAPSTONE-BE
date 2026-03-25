@@ -6,6 +6,7 @@ import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.repositories.NotificationRepository;
 import com.nw2.parcel.repositories.ParcelsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,6 +19,10 @@ public class OverdueService {
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
     private final ParcelsRepository parcelsRepository;
+//    @Value("${app.parcel.overdue-hours:72}")
+//    private long overdueHours;
+    @Value("${app.parcel.overdue-minutes:4320}")
+    private long overdueMinutes;
 
     public void remindByParcelId(Integer parcelId) {
 
@@ -43,7 +48,8 @@ public class OverdueService {
         LocalDateTime now = LocalDateTime.now();
 
         // ยังไม่ครบ 3 วัน → ไม่ส่ง
-        LocalDateTime overdueTime = parcel.getReceivedAt().plusDays(3);
+//        LocalDateTime overdueTime = parcel.getReceivedAt().plusDays(3);
+        LocalDateTime overdueTime = parcel.getReceivedAt().plusMinutes(overdueMinutes);
         if (now.isBefore(overdueTime)) {
             return;
         }
@@ -63,9 +69,8 @@ public class OverdueService {
         if (!history.isEmpty()) {
             Notification last = history.get(0);
 
-            // ยังไม่ครบ 3 วันจากครั้งล่าสุด → ไม่ส่ง
-            if (last.getCreatedAt() != null &&
-                    last.getCreatedAt().plusDays(3).isAfter(now)) {
+            // ยังไม่ครบ 3 วันจากครั้งล่าสุด → ไม่ส่ง last.getCreatedAt().plusDays(3).isAfter(now) .plusHours(overdueHours).isAfter(now)
+            if (last.getCreatedAt() != null && last.getCreatedAt().plusMinutes(overdueMinutes).isAfter(now)) {
                 return;
             }
         }
