@@ -309,6 +309,7 @@ public class AnnouncementService {
                 .publishAt(a.getPublishAt())
                 .viewCount(a.getViewCount())
                 .status(a.getStatus().name())
+                .sendNotification(a.getSendNotification())
                 .build();
     }
 

@@ -19,4 +19,6 @@ public class AnnouncementDto {
     private LocalDateTime publishAt;
     private Integer viewCount;
     private String status;
+    private Boolean sendNotification;
+
 }
