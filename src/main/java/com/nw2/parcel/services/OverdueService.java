@@ -19,10 +19,10 @@ public class OverdueService {
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
     private final ParcelsRepository parcelsRepository;
-//    @Value("${app.parcel.overdue-hours:72}")
-//    private long overdueHours;
-    @Value("${app.parcel.overdue-minutes:4320}")
-    private long overdueMinutes;
+    @Value("${app.parcel.overdue-hours:72}")
+    private long overdueHours;
+//    @Value("${app.parcel.overdue-minutes:4320}")
+//    private long overdueMinutes;
 
     public void remindByParcelId(Integer parcelId) {
 
@@ -49,7 +49,7 @@ public class OverdueService {
 
         // ยังไม่ครบ 3 วัน → ไม่ส่ง
 //        LocalDateTime overdueTime = parcel.getReceivedAt().plusDays(3);
-        LocalDateTime overdueTime = parcel.getReceivedAt().plusMinutes(overdueMinutes);
+        LocalDateTime overdueTime = parcel.getReceivedAt().plusHours(overdueHours);
         if (now.isBefore(overdueTime)) {
             return;
         }
@@ -70,7 +70,7 @@ public class OverdueService {
             Notification last = history.get(0);
 
             // ยังไม่ครบ 3 วันจากครั้งล่าสุด → ไม่ส่ง last.getCreatedAt().plusDays(3).isAfter(now) .plusHours(overdueHours).isAfter(now)
-            if (last.getCreatedAt() != null && last.getCreatedAt().plusMinutes(overdueMinutes).isAfter(now)) {
+            if (last.getCreatedAt() != null && last.getCreatedAt().plusHours(overdueHours).isAfter(now)) {
                 return;
             }
         }

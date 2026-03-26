@@ -228,7 +228,7 @@ public class LineService {
                                         "size", "sm",
                                         "wrap", true,
                                         "margin", "md",
-                                        "color", "#555555"
+                                        "color", "#D32F2F"
                                 )
                         }
                 )

@@ -348,88 +348,50 @@ public class NotificationService {
 
         notificationRepository.save(systemNoti);
 
-//        // ---------------- LINE ----------------
-//        if (user.getLineUserId() != null) {
-//
-//            Notification lineNoti = new Notification();
-//            lineNoti.setNotiTitle("Parcel Overdue");
-//            lineNoti.setNotiMessage(message);
-//            lineNoti.setStatus(Notification.Status.SENT);
-//            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
-//            lineNoti.setParcel(parcel);
-//            lineNoti.setUser(user);
-//
-//            notificationRepository.save(lineNoti);
-//
-//            long days = Math.max(0,
-//                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
-//            );
-//
-//            // ยังไม่ถึง 3 วัน → ไม่ต้องส่ง
-//            if (days < 3) return;
-//
-//            // กันยิงซ้ำ
-//            boolean alreadySent = notificationRepository
-//                    .existsByParcelParcelIdAndNotificationType(
-//                            parcel.getParcelId(),
-//                            Notification.Type.OVERDUE_LINE
-//                    );
-//
-//            if (alreadySent) return;
-//
-//            String viewUrl =
-//                    "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
-//
-//            var flex = lineService.buildOverdueFlex(
-//                    parcel.getTrackingNumber(),
-//                    String.valueOf(days),
-//                    viewUrl
-//            );
-//
-//            var msg = lineService.buildFlexMessage(flex);
-//
-//            sendLineAndUpdateStatus(lineNoti, user, msg);
         // ---------------- LINE ----------------
-        if (user.getLineUserId() == null) return; // ✅ ไม่มี LINE → จบแค่นี้
+        if (user.getLineUserId() != null) {
 
-        // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
-        boolean alreadySent = notificationRepository
-                .existsByParcelParcelIdAndNotificationType(
-                        parcel.getParcelId(),
-                        Notification.Type.OVERDUE_LINE
-                );
+            Notification lineNoti = new Notification();
+            lineNoti.setNotiTitle("Parcel Overdue");
+            lineNoti.setNotiMessage(message);
+            lineNoti.setStatus(Notification.Status.PENDING);
+            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
+            lineNoti.setParcel(parcel);
+            lineNoti.setUser(user);
 
-        if (alreadySent) return;
+            notificationRepository.save(lineNoti);
 
-        // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
-        long days = Math.max(0,
-                Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
-        );
+            long days = Math.max(0,
+                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+            );
 
-        Notification lineNoti = new Notification();
-        lineNoti.setNotiTitle("Parcel Overdue");
-        lineNoti.setNotiMessage(message);
-        lineNoti.setStatus(Notification.Status.PENDING);
-        lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
-        lineNoti.setParcel(parcel);
-        lineNoti.setUser(user);
-        lineNoti.setCreatedAt(LocalDateTime.now());
-        lineNoti.setUpdatedAt(LocalDateTime.now());
+            // ยังไม่ถึง 3 วัน → ไม่ต้องส่ง
+            if (days < 3) return;
 
-        notificationRepository.save(lineNoti);
+            // กันยิงซ้ำ
+            boolean alreadySent = notificationRepository
+                    .existsByParcelParcelIdAndNotificationType(
+                            parcel.getParcelId(),
+                            Notification.Type.OVERDUE_LINE
+                    );
 
-        String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+            if (alreadySent) return;
 
-        var flex = lineService.buildOverdueFlex(
-                parcel.getTrackingNumber(),
-                String.valueOf(days),
-                viewUrl
-        );
+            String viewUrl =
+                    "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
 
-        var msg = lineService.buildFlexMessage(flex);
+            var flex = lineService.buildOverdueFlex(
+                    parcel.getTrackingNumber(),
+                    String.valueOf(days),
+                    viewUrl
+            );
 
-        sendLineAndUpdateStatus(lineNoti, user, msg);
+            var msg = lineService.buildFlexMessage(flex);
+
+            sendLineAndUpdateStatus(lineNoti, user, msg);
+
         }
+    }
 
     //dev day < 3
     //public void notifyParcelOverdue(Parcels parcel, Users user) {
