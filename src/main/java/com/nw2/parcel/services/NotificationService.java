@@ -12,7 +12,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -127,9 +129,12 @@ public class NotificationService {
     public List<NotificationDto> getNotificationsByUser(Integer userId) {
 
         return notificationRepository
-                .findByUserUserIdAndNotificationTypeOrderByCreatedAtDesc(
+                .findByUserUserIdAndNotificationTypeInOrderByCreatedAtDesc(
                         userId,
-                        Notification.Type.SYSTEM
+                        List.of(
+                                Notification.Type.SYSTEM,
+                                Notification.Type.OVERDUE_SYSTEM
+                        )
                 )
                 .stream()
                 .map(n -> new NotificationDto(
@@ -320,9 +325,133 @@ public class NotificationService {
 
             notificationRepository.save(lineNoti);
 
-            var text = lineService.buildTextMessage("📢 " + title + "\n" + message);
+            var bubble = lineService.buildAnnouncementFlex(title, message);
+            var flex = lineService.buildFlexMessage(bubble);
 
-            sendLineAndUpdateStatus(lineNoti, user, text);
+            sendLineAndUpdateStatus(lineNoti, user, flex);
         }
     }
+
+    public void notifyParcelOverdue(Parcels parcel, Users user) {
+
+        String message = "⏰ Parcel " + parcel.getTrackingNumber()
+                + " is overdue for pickup (more than 3 days).";
+
+        // ---------------- SYSTEM ----------------
+        Notification systemNoti = new Notification();
+        systemNoti.setNotiTitle("Parcel Overdue");
+        systemNoti.setNotiMessage(message);
+        systemNoti.setStatus(Notification.Status.SENT);
+        systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
+        systemNoti.setParcel(parcel);
+        systemNoti.setUser(user);
+
+        notificationRepository.save(systemNoti);
+
+        // ---------------- LINE ----------------
+        if (user.getLineUserId() != null) {
+
+            Notification lineNoti = new Notification();
+            lineNoti.setNotiTitle("Parcel Overdue");
+            lineNoti.setNotiMessage(message);
+            lineNoti.setStatus(Notification.Status.PENDING);
+            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
+            lineNoti.setParcel(parcel);
+            lineNoti.setUser(user);
+
+            notificationRepository.save(lineNoti);
+
+            long days = Math.max(0,
+                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+            );
+
+            // ยังไม่ถึง 3 วัน → ไม่ต้องส่ง
+            if (days < 3) return;
+
+            // กันยิงซ้ำ
+            boolean alreadySent = notificationRepository
+                    .existsByParcelParcelIdAndNotificationType(
+                            parcel.getParcelId(),
+                            Notification.Type.OVERDUE_LINE
+                    );
+
+            if (alreadySent) return;
+
+            String viewUrl =
+                    "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+
+            var flex = lineService.buildOverdueFlex(
+                    parcel.getTrackingNumber(),
+                    String.valueOf(days),
+                    viewUrl
+            );
+
+            var msg = lineService.buildFlexMessage(flex);
+
+            sendLineAndUpdateStatus(lineNoti, user, msg);
+
+        }
+    }
+
+    //dev day < 3
+    //public void notifyParcelOverdue(Parcels parcel, Users user) {
+    //
+    //    String message = "⏰ Parcel " + parcel.getTrackingNumber()
+    //            + " is overdue for pickup (more than 3 days).";
+    //
+    //    // ---------------- SYSTEM ----------------
+    //    Notification systemNoti = new Notification();
+    //    systemNoti.setNotiTitle("Parcel Overdue");
+    //    systemNoti.setNotiMessage(message);
+    //    systemNoti.setStatus(Notification.Status.SENT);
+    //    systemNoti.setNotificationType(Notification.Type.OVERDUE_SYSTEM);
+    //    systemNoti.setParcel(parcel);
+    //    systemNoti.setUser(user);
+    //    systemNoti.setCreatedAt(LocalDateTime.now());
+    //    systemNoti.setUpdatedAt(LocalDateTime.now());
+    //    systemNoti.setSentAt(LocalDateTime.now());
+    //
+    //    notificationRepository.save(systemNoti);
+    //
+    //    // ---------------- LINE ----------------
+    //    if (user.getLineUserId() == null) return; // ✅ ไม่มี LINE → จบแค่นี้
+    //
+    //    // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
+    //    boolean alreadySent = notificationRepository
+    //            .existsByParcelParcelIdAndNotificationType(
+    //                    parcel.getParcelId(),
+    //                    Notification.Type.OVERDUE_LINE
+    //            );
+    //
+    //    if (alreadySent) return;
+    //
+    //    // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
+    //    long days = Math.max(0,
+    //            Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+    //    );
+    //
+    //    Notification lineNoti = new Notification();
+    //    lineNoti.setNotiTitle("Parcel Overdue");
+    //    lineNoti.setNotiMessage(message);
+    //    lineNoti.setStatus(Notification.Status.PENDING);
+    //    lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
+    //    lineNoti.setParcel(parcel);
+    //    lineNoti.setUser(user);
+    //    lineNoti.setCreatedAt(LocalDateTime.now());
+    //    lineNoti.setUpdatedAt(LocalDateTime.now());
+    //
+    //    notificationRepository.save(lineNoti);
+    //
+    //    String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+    //
+    //    var flex = lineService.buildOverdueFlex(
+    //            parcel.getTrackingNumber(),
+    //            String.valueOf(days),
+    //            viewUrl
+    //    );
+    //
+    //    var msg = lineService.buildFlexMessage(flex);
+    //
+    //    sendLineAndUpdateStatus(lineNoti, user, msg);
+    //}
 }

@@ -54,7 +54,8 @@ line:
 
 app:
   frontend-url: https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2
-
+  parcel:
+    overdue-hours: 72
 # =========================================================
 # 🔹 DEV PROFILE (ใช้เวลา run ใน IntelliJ / Local)
 # =========================================================
@@ -85,6 +86,9 @@ line:
 
 app:
   frontend-url: http://localhost:5173
+  parcel:
+    overdue-hours: 72
+#    overdue-minutes: 1
 # =========================================================
 # 🔹 CONTAINER PROFILE (ใช้ตอนรันใน Docker / VM)
 # =========================================================

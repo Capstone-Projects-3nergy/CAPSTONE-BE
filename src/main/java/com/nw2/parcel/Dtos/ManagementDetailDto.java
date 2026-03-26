@@ -13,6 +13,7 @@ public class ManagementDetailDto {
     private String lineId;
     private String profileImageUrl;
     private String role;
+    private String status;
     private Integer dormId;
     private String dormName;
 }

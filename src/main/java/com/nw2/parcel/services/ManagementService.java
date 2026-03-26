@@ -80,6 +80,7 @@ public class ManagementService {
         dto.setLineId(user.getLineId());
         dto.setProfileImageUrl(user.getProfileImageUrl());
         dto.setRole(user.getRole().name());
+        dto.setStatus(user.getStatus().name());
 
         if (user.getDorm() != null) {
             dto.setDormId(user.getDorm().getDormId());
@@ -168,6 +169,7 @@ public class ManagementService {
         dto.setLineId(savedUser.getLineId());
         dto.setProfileImageUrl(savedUser.getProfileImageUrl());
         dto.setRole(savedUser.getRole().name());
+        dto.setStatus(user.getStatus().name());
 
         if (savedUser.getDorm() != null) {
             dto.setDormId(savedUser.getDorm().getDormId());
@@ -215,6 +217,7 @@ public class ManagementService {
         dto.setLineId(savedUser.getLineId());
         dto.setProfileImageUrl(savedUser.getProfileImageUrl());
         dto.setRole(savedUser.getRole().name());
+        dto.setStatus(user.getStatus().name());
 
         if (savedUser.getDorm() != null) {
             dto.setDormId(savedUser.getDorm().getDormId());
@@ -258,5 +261,46 @@ public class ManagementService {
         trash.setDeletedAt(LocalDateTime.now());
         trash.setDeletedBy(staff);
         trashRepository.save(trash);
+    }
+
+    // ─── Resend Verification Email ───────────────────────────────────────────────
+
+    public void resendVerificationEmail(Integer userId) {
+
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getStatus() != Users.Status.PENDING) {
+            throw new ConflictException(
+                    "Can only resend verification to PENDING users (current status: " + user.getStatus() + ")"
+            );
+        }
+
+        try {
+            String resetLink = FirebaseAuth.getInstance()
+                    .generatePasswordResetLink(user.getEmail());
+
+            String verifyLink = FirebaseAuth.getInstance()
+                    .generateEmailVerificationLink(user.getEmail());
+
+            emailService.send(
+                    user.getEmail(),
+                    "Reminder: Activate your account",
+                    """
+                    This is a reminder to activate your account.
+        
+                    1) Verify your email:
+                    %s
+        
+                    2) Set your password:
+                    %s
+        
+                    If you have already completed these steps, please ignore this email.
+                    """.formatted(verifyLink, resetLink)
+            );
+
+        } catch (FirebaseAuthException e) {
+            throw new ExternalServiceException("Failed to generate activation links", e);
+        }
     }
 }

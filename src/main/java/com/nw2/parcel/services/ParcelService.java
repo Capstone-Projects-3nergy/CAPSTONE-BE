@@ -13,12 +13,12 @@ import com.nw2.parcel.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class ParcelService {
 
     private static final Logger log = LoggerFactory.getLogger(ParcelService.class);
+    private static final long OVERDUE_THRESHOLD_DAYS = 3;
 
     private final ParcelsRepository parcelsRepository;
     private final CompanyRepository companyRepository;
@@ -35,6 +36,24 @@ public class ParcelService {
     private final TrashRepository trashRepository;
     private final ParcelVerificationRepository verificationRepository;
     private final NotificationService notificationService;
+
+    // ─── Overdue Helpers ────────────────────────────────────────────────────────
+
+    private boolean isOverdue(Parcels p) {
+        return p.getStatus() == Parcels.Status.RECEIVED
+                && p.getReceivedAt() != null
+                && p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS).isBefore(LocalDateTime.now());
+    }
+
+    private long calcOverdueDays(Parcels p) {
+        if (!isOverdue(p)) return 0L;
+        return ChronoUnit.DAYS.between(
+                p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS),
+                LocalDateTime.now()
+        );
+    }
+
+    // ─── Create ─────────────────────────────────────────────────────────────────
 
     public Parcels createParcel(CreateParcelDto req) {
 
@@ -56,7 +75,7 @@ public class ParcelService {
 
         Users matchedResident = autoAssignResidentIfMatched(parcel);
 
-        Parcels savedParcel = parcelsRepository.save(parcel); // 🔥 save ก่อน
+        Parcels savedParcel = parcelsRepository.save(parcel);
 
         if (matchedResident != null) {
             notificationService.notifyParcelMultiChannel(savedParcel, matchedResident);
@@ -65,16 +84,14 @@ public class ParcelService {
         return savedParcel;
     }
 
+    // ─── Staff: List ─────────────────────────────────────────────────────────────
 
-    // view
     public List<ParcelListItemDto> getAllParcelsForStaff() {
         List<Parcels> parcels = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
-//        List<Parcels> parcels = parcelsRepository.findAllByOrderByReceivedAtDesc();
-//        List<Parcels> parcelsDelete = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
 
         return parcels.stream()
                 .map(p -> {
-                    String ownerName = null;
+                    String ownerName;
                     String roomNumber = null;
                     String contactEmail = null;
 
@@ -95,19 +112,21 @@ public class ParcelService {
                             contactEmail,
                             p.getStatus(),
                             p.getReceivedAt(),
-                            p.getUpdatedAt()
+                            p.getUpdatedAt(),
+                            isOverdue(p),
+                            calcOverdueDays(p)
                     );
                 })
                 .collect(Collectors.toList());
     }
 
-    // details
+    // ─── Staff: Detail ───────────────────────────────────────────────────────────
+
     public ParcelDetailDto getParcelDetail(Integer parcelId) {
 
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        // company info
         Integer companyId = null;
         String companyName = null;
         if (p.getCompany() != null) {
@@ -115,18 +134,14 @@ public class ParcelService {
             companyName = p.getCompany().getCompanyName();
         }
 
-        // resident/user info
         Integer residentId = null;
         String residentName = null;
         String roomNumber = null;
         String email = null;
         if (p.getUser() != null) {
             residentId = p.getUser().getUserId();
-            String firstName = p.getUser().getFirstName();
-            String lastName = p.getUser().getLastName();
-            residentName =
-                    (firstName != null ? firstName : "") +
-                            (lastName != null ? " " + lastName : "");
+            residentName = (p.getUser().getFirstName() != null ? p.getUser().getFirstName() : "")
+                    + (p.getUser().getLastName() != null ? " " + p.getUser().getLastName() : "");
             roomNumber = p.getUser().getRoomNumber();
             email = p.getUser().getEmail();
         }
@@ -147,45 +162,30 @@ public class ParcelService {
                 residentId,
                 residentName,
                 roomNumber,
-                email
+                email,
+                isOverdue(p),
+                calcOverdueDays(p)
         );
     }
 
-    //edit parcel + status สำหรับ STAFF
+    // ─── Staff: Update Parcel ────────────────────────────────────────────────────
+
     public ParcelDetailDto updateParcelForStaff(Integer parcelId, UpdateParcelDto req) {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
         boolean assignedNewResident = false;
 
-        if (req.getTrackingNumber() != null) {
-            p.setTrackingNumber(req.getTrackingNumber());
-        }
-
-        if (req.getRecipientName() != null) {
-            p.setRecipientName(req.getRecipientName());
-        }
-
-        if (req.getParcelType() != null) {
-            p.setParcelType(req.getParcelType());
-        }
-
-        if (req.getSenderName() != null) {
-            p.setSenderName(req.getSenderName());
-        }
-
-        if (req.getImageUrl() != null) {
-            p.setImageUrl(req.getImageUrl());
-        }
+        if (req.getTrackingNumber() != null) p.setTrackingNumber(req.getTrackingNumber());
+        if (req.getRecipientName() != null) p.setRecipientName(req.getRecipientName());
+        if (req.getParcelType() != null) p.setParcelType(req.getParcelType());
+        if (req.getSenderName() != null) p.setSenderName(req.getSenderName());
+        if (req.getImageUrl() != null) p.setImageUrl(req.getImageUrl());
 
         if (req.getCompanyId() != null
-                && (p.getCompany() == null
-                || !req.getCompanyId().equals(p.getCompany().getCompanyId()))) {
-
+                && (p.getCompany() == null || !req.getCompanyId().equals(p.getCompany().getCompanyId()))) {
             Company company = companyRepository.findById(req.getCompanyId())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException("Company not found: " + req.getCompanyId())
-                    );
+                    .orElseThrow(() -> new ResourceNotFoundException("Company not found: " + req.getCompanyId()));
             p.setCompany(company);
         }
 
@@ -193,9 +193,7 @@ public class ParcelService {
             if (p.getUser() == null || !p.getUser().getUserId().equals(req.getUserId())) {
                 Users resident = usersRepository
                         .findByUserIdAndRole(req.getUserId(), Users.Role.RESIDENT)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException("Resident not found with id: " + req.getUserId())
-                        );
+                        .orElseThrow(() -> new IllegalArgumentException("Resident not found with id: " + req.getUserId()));
                 p.setUser(resident);
                 assignedNewResident = true;
             }
@@ -209,11 +207,8 @@ public class ParcelService {
 
         if (newStatus != null) {
             p.setStatus(newStatus);
-
             if (newStatus == Parcels.Status.PICKED_UP) {
-                if (p.getPickedUpAt() == null) {
-                    p.setPickedUpAt(LocalDateTime.now());
-                }
+                if (p.getPickedUpAt() == null) p.setPickedUpAt(LocalDateTime.now());
             } else {
                 p.setPickedUpAt(null);
             }
@@ -234,11 +229,8 @@ public class ParcelService {
         String email = null;
         if (updated.getUser() != null) {
             residentId = updated.getUser().getUserId();
-            String firstName = updated.getUser().getFirstName();
-            String lastName = updated.getUser().getLastName();
-            residentName =
-                    (firstName != null ? firstName : "") +
-                            (lastName != null ? " " + lastName : "");
+            residentName = (updated.getUser().getFirstName() != null ? updated.getUser().getFirstName() : "")
+                    + (updated.getUser().getLastName() != null ? " " + updated.getUser().getLastName() : "");
             roomNumber = updated.getUser().getRoomNumber();
             email = updated.getUser().getEmail();
         }
@@ -259,10 +251,13 @@ public class ParcelService {
                 residentId,
                 residentName,
                 roomNumber,
-                email
+                email,
+                isOverdue(updated),
+                calcOverdueDays(updated)
         );
     }
 
+    // ─── Admin: Force Update Status ──────────────────────────────────────────────
 
     public ParcelDetailDto forceUpdateParcelStatus(Integer parcelId, ForceUpdateParcelStatusDto req) {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
@@ -278,24 +273,16 @@ public class ParcelService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String adminIdentifier = auth != null ? auth.getName() : "UNKNOWN_ADMIN";
 
-        // log ก่อนเปลี่ยน
         log.info(
                 "ADMIN {} forces parcel {} status from {} to {}. Note: {}",
-                adminIdentifier,
-                parcelId,
-                oldStatus,
-                newStatus,
-                req.getNote()
+                adminIdentifier, parcelId, oldStatus, newStatus, req.getNote()
         );
 
         p.setStatus(newStatus);
 
         if (newStatus == Parcels.Status.PICKED_UP) {
-            if (p.getPickedUpAt() == null) {
-                p.setPickedUpAt(java.time.LocalDateTime.now());
-            }
+            if (p.getPickedUpAt() == null) p.setPickedUpAt(LocalDateTime.now());
         } else {
-            // RECEIVED
             p.setPickedUpAt(null);
         }
 
@@ -314,11 +301,8 @@ public class ParcelService {
         String email = null;
         if (updated.getUser() != null) {
             residentId = updated.getUser().getUserId();
-            String firstName = updated.getUser().getFirstName();
-            String lastName = updated.getUser().getLastName();
-            residentName =
-                    (firstName != null ? firstName : "") +
-                            (lastName != null ? " " + lastName : "");
+            residentName = (updated.getUser().getFirstName() != null ? updated.getUser().getFirstName() : "")
+                    + (updated.getUser().getLastName() != null ? " " + updated.getUser().getLastName() : "");
             roomNumber = updated.getUser().getRoomNumber();
             email = updated.getUser().getEmail();
         }
@@ -339,9 +323,13 @@ public class ParcelService {
                 residentId,
                 residentName,
                 roomNumber,
-                email
+                email,
+                isOverdue(updated),
+                calcOverdueDays(updated)
         );
     }
+
+    // ─── Resident: Auth Helper ───────────────────────────────────────────────────
 
     private Users getCurrentResident() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -365,28 +353,23 @@ public class ParcelService {
         return u;
     }
 
-    // resident list ของตัวเอง
+    // ─── Resident: List ──────────────────────────────────────────────────────────
+
     public List<ParcelListItemDto> getParcelsForCurrentResident() {
         Users currentResident = getCurrentResident();
 
-        List<Parcels> parcels =
-                parcelsRepository
-                        .findByUserUserIdAndIsDeletedFalseOrderByReceivedAtDesc(
-                                currentResident.getUserId()
-                        );
+        List<Parcels> parcels = parcelsRepository
+                .findByUserUserIdAndIsDeletedFalseOrderByReceivedAtDesc(currentResident.getUserId());
 
         return parcels.stream()
                 .map(p -> {
-                    String ownerName = null;
+                    String ownerName;
                     String roomNumber = null;
                     String contactEmail = null;
 
                     if (p.getUser() != null) {
-                        String firstName = p.getUser().getFirstName();
-                        String lastName = p.getUser().getLastName();
-                        ownerName =
-                                (firstName != null ? firstName : "") +
-                                        (lastName != null ? " " + lastName : "");
+                        ownerName = (p.getUser().getFirstName() != null ? p.getUser().getFirstName() : "")
+                                + (p.getUser().getLastName() != null ? " " + p.getUser().getLastName() : "");
                         roomNumber = p.getUser().getRoomNumber();
                         contactEmail = p.getUser().getEmail();
                     } else {
@@ -401,13 +384,16 @@ public class ParcelService {
                             contactEmail,
                             p.getStatus(),
                             p.getReceivedAt(),
-                            p.getUpdatedAt()
+                            p.getUpdatedAt(),
+                            isOverdue(p),
+                            calcOverdueDays(p)
                     );
                 })
                 .toList();
     }
 
-    // VIEW-PARCEL-DETAIL (เฉพาะของตัวเองเท่านั้น)
+    // ─── Resident: Detail ────────────────────────────────────────────────────────
+
     public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
 
@@ -428,11 +414,8 @@ public class ParcelService {
         String email = null;
         if (p.getUser() != null) {
             residentId = p.getUser().getUserId();
-            String firstName = p.getUser().getFirstName();
-            String lastName = p.getUser().getLastName();
-            residentName =
-                    (firstName != null ? firstName : "") +
-                            (lastName != null ? " " + lastName : "");
+            residentName = (p.getUser().getFirstName() != null ? p.getUser().getFirstName() : "")
+                    + (p.getUser().getLastName() != null ? " " + p.getUser().getLastName() : "");
             roomNumber = p.getUser().getRoomNumber();
             email = p.getUser().getEmail();
         }
@@ -453,9 +436,13 @@ public class ParcelService {
                 residentId,
                 residentName,
                 roomNumber,
-                email
+                email,
+                isOverdue(p),
+                calcOverdueDays(p)
         );
     }
+
+    // ─── Resident: Confirm Picked Up ─────────────────────────────────────────────
 
     public ParcelDetailDto confirmParcelReceivedByResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
@@ -470,13 +457,8 @@ public class ParcelService {
             );
         }
 
-        Parcels.Status oldStatus = p.getStatus();
-
         p.setStatus(Parcels.Status.PICKED_UP);
-
-        if (p.getPickedUpAt() == null) {
-            p.setPickedUpAt(LocalDateTime.now());
-        }
+        if (p.getPickedUpAt() == null) p.setPickedUpAt(LocalDateTime.now());
 
         Parcels updated = parcelsRepository.save(p);
 
@@ -493,11 +475,8 @@ public class ParcelService {
         String email = null;
         if (updated.getUser() != null) {
             residentId = updated.getUser().getUserId();
-            String firstName = updated.getUser().getFirstName();
-            String lastName = updated.getUser().getLastName();
-            residentName =
-                    (firstName != null ? firstName : "") +
-                            (lastName != null ? " " + lastName : "");
+            residentName = (updated.getUser().getFirstName() != null ? updated.getUser().getFirstName() : "")
+                    + (updated.getUser().getLastName() != null ? " " + updated.getUser().getLastName() : "");
             roomNumber = updated.getUser().getRoomNumber();
             email = updated.getUser().getEmail();
         }
@@ -518,9 +497,13 @@ public class ParcelService {
                 residentId,
                 residentName,
                 roomNumber,
-                email
+                email,
+                isOverdue(updated),
+                calcOverdueDays(updated)
         );
     }
+
+    // ─── Misc ────────────────────────────────────────────────────────────────────
 
     public List<String> getParcelTypes() {
         return Arrays.stream(Parcels.Parceltype.values())
@@ -530,9 +513,7 @@ public class ParcelService {
 
     public Parcels createParcelFromPublicForm(SenderCreateParcelDto req) {
         Company company = companyRepository.findById(req.getCompanyId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Company not found: " + req.getCompanyId())
-                );
+                .orElseThrow(() -> new IllegalArgumentException("Company not found: " + req.getCompanyId()));
 
         Parcels parcel = new Parcels();
         parcel.setTrackingNumber(req.getTrackingNumber());
@@ -554,8 +535,9 @@ public class ParcelService {
         return saved;
     }
 
-    public void moveParcelToTrash(Integer parcelId) {
+    // ─── Trash ───────────────────────────────────────────────────────────────────
 
+    public void moveParcelToTrash(Integer parcelId) {
         Parcels parcel = parcelsRepository
                 .findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
@@ -594,17 +576,17 @@ public class ParcelService {
                         null,
                         p.getStatus(),
                         p.getReceivedAt(),
-                        p.getDeletedAt()
+                        p.getDeletedAt(),
+                        false,
+                        0L
                 ))
                 .toList();
     }
 
+    // ─── Auto Assign ─────────────────────────────────────────────────────────────
+
     private Users autoAssignResidentIfMatched(Parcels parcel) {
-
-        String normalizedTracking = parcel.getTrackingNumber()
-                .trim()
-                .toUpperCase();
-
+        String normalizedTracking = parcel.getTrackingNumber().trim().toUpperCase();
         parcel.setTrackingNumber(normalizedTracking);
 
         return verificationRepository
@@ -619,4 +601,13 @@ public class ParcelService {
                 .orElse(null);
     }
 
+    // ─── Overdue Query ───────────────────────────────────────────────────────────
+
+    public List<Parcels> getOverdueParcels() {
+        List<Parcels> parcels = parcelsRepository.findByStatusAndIsDeletedFalse(Parcels.Status.RECEIVED);
+        LocalDateTime now = LocalDateTime.now();
+        return parcels.stream()
+                .filter(p -> p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS).isBefore(now))
+                .toList();
+    }
 }

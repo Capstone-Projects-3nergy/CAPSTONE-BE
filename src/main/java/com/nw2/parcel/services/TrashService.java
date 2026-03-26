@@ -1,11 +1,14 @@
 package com.nw2.parcel.services;
 
+import com.nw2.parcel.Dtos.TrashAnnouncementDto;
 import com.nw2.parcel.Dtos.TrashListItemDto;
 import com.nw2.parcel.Dtos.TrashResidentDto;
+import com.nw2.parcel.entity.Announcement;
 import com.nw2.parcel.entity.Parcels;
 import com.nw2.parcel.entity.Trash;
 import com.nw2.parcel.entity.Users;
 import com.nw2.parcel.exception.ResourceNotFoundException;
+import com.nw2.parcel.repositories.AnnouncementRepository;
 import com.nw2.parcel.repositories.ParcelsRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.UsersRepository;
@@ -24,8 +27,14 @@ public class TrashService {
     private final ParcelsRepository parcelsRepository;
     private final TrashRepository trashRepository;
     private final UsersRepository usersRepository;
+    private final AnnouncementRepository announcementRepository;
 
     private static final Logger log = LoggerFactory.getLogger(TrashService.class);
+
+
+    // =========================
+    // PARCEL TRASH
+    // =========================
 
     @Transactional(readOnly = true)
     public List<TrashListItemDto> getTrashParcels() {
@@ -89,8 +98,6 @@ public class TrashService {
         log.info("Parcel {} restored from trash", parcelId);
     }
 
-
-    // DELETE PERMANENTLY
     @Transactional
     public void deletePermanently(Integer parcelId) {
 
@@ -103,6 +110,11 @@ public class TrashService {
 
         log.info("Parcel {} permanently deleted", parcelId);
     }
+
+
+    // =========================
+    // RESIDENT TRASH
+    // =========================
 
     @Transactional(readOnly = true)
     public List<TrashResidentDto> getTrashResidents() {
@@ -129,7 +141,7 @@ public class TrashService {
                             u.getPhoneNumber(),
                             u.getLineId(),
                             u.getRoomNumber(),
-                            null, // position
+                            null,
                             u.getProfileImageUrl(),
                             u.getRole().name(),
                             u.getStatus().name(),
@@ -170,6 +182,72 @@ public class TrashService {
         trashRepository.delete(trash);
 
         log.info("Resident {} permanently deleted", residentId);
+    }
+
+
+    // =========================
+    // ANNOUNCEMENT TRASH
+    // =========================
+
+    @Transactional(readOnly = true)
+    public List<TrashAnnouncementDto> getTrashAnnouncements() {
+
+        return trashRepository
+                .findAllByTargetTypeOrderByDeletedAtDesc(Trash.TargetType.ANNOUNCEMENT)
+                .stream()
+                .map(trash -> {
+
+                    Announcement ann = announcementRepository
+                            .findById(trash.getTargetId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+
+                    String deletedByName =
+                            trash.getDeletedBy().getFirstName() + " " +
+                                    trash.getDeletedBy().getLastName();
+
+                    return new TrashAnnouncementDto(
+                            ann.getAnnouncementId(),
+                            ann.getTitle(),
+                            ann.getSubtitle(),
+                            ann.getCategory() != null ? ann.getCategory().getCategoryName() : null,
+                            ann.getPublishAt(),
+                            trash.getDeletedAt(),
+                            deletedByName
+                    );
+                })
+                .toList();
+    }
+
+    @Transactional
+    public void restoreAnnouncement(Integer announcementId) {
+
+        Trash trash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.ANNOUNCEMENT, announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found in trash"));
+
+        Announcement ann = announcementRepository
+                .findById(announcementId)
+                .orElseThrow();
+
+        ann.setDeletedAt(null);
+
+        announcementRepository.save(ann);
+        trashRepository.delete(trash);
+
+        log.info("Announcement {} restored from trash", announcementId);
+    }
+
+    @Transactional
+    public void deleteAnnouncementPermanently(Integer announcementId) {
+
+        Trash trash = trashRepository
+                .findByTargetTypeAndTargetId(Trash.TargetType.ANNOUNCEMENT, announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found in trash"));
+
+        announcementRepository.deleteById(announcementId);
+        trashRepository.delete(trash);
+
+        log.info("Announcement {} permanently deleted", announcementId);
     }
 
 }

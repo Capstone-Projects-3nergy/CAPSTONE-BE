@@ -67,4 +67,10 @@ public class ManagementController {
         staffResidentService.softDeleteResident(id);
     }
 
+    // POST /api/staff/users/{id}/resend-verification
+    @PostMapping("/{id}/resend-verification")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resendVerification(@PathVariable Integer id) {
+        managementService.resendVerificationEmail(id);
+    }
 }

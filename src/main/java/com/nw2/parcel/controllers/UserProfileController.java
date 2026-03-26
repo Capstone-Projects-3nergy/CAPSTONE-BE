@@ -41,4 +41,18 @@ public class UserProfileController {
         return userProfileService.updateProfile(firebaseUid, request, profileImage);
     }
 
+    @PostMapping("/connect-line")
+    public void connectLine(
+            @RequestParam String lineUserId,
+            Authentication authentication
+    ) {
+        String firebaseUid = authentication.getName();
+        userProfileService.connectLine(firebaseUid, lineUserId);
+    }
+
+    @PostMapping("/disconnect-line")
+    public void disconnectLine(Authentication authentication) {
+        String firebaseUid = authentication.getName();
+        userProfileService.disconnectLine(firebaseUid);
+    }
 }
