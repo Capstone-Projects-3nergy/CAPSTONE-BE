@@ -89,7 +89,6 @@ public class UserProfileService {
         Users currentUser = usersRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-        // 🔒 เช็คว่ามีคนใช้ line นี้แล้วมั้ย
         usersRepository.findByLineUserId(lineUserId).ifPresent(existing -> {
             if (!existing.getUserId().equals(currentUser.getUserId())) {
                 throw new IllegalStateException("This LINE account is already linked to another user");

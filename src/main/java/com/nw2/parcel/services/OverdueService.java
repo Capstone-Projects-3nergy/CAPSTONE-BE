@@ -19,7 +19,7 @@ public class OverdueService {
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
     private final ParcelsRepository parcelsRepository;
-    @Value("${app.parcel.overdue-hours:72}")
+    @Value("${app.parcel.overdue-hours:24}")
     private long overdueHours;
 //    @Value("${app.parcel.overdue-minutes:4320}")
 //    private long overdueMinutes;
@@ -47,8 +47,6 @@ public class OverdueService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ยังไม่ครบ 3 วัน → ไม่ส่ง
-//        LocalDateTime overdueTime = parcel.getReceivedAt().plusDays(3);
         LocalDateTime overdueTime = parcel.getReceivedAt().plusHours(overdueHours);
         if (now.isBefore(overdueTime)) {
             return;

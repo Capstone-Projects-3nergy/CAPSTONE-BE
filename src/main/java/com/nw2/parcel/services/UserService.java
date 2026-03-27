@@ -82,7 +82,6 @@ public class UserService {
         try {
             usersRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            // กัน race condition ที่หลุด unique constraint DB
             throw new EmailAlreadyExistsException("Email is already in use.");
         }
 

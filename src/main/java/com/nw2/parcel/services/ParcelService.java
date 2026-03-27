@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class ParcelService {
 
     private static final Logger log = LoggerFactory.getLogger(ParcelService.class);
-    private static final long OVERDUE_THRESHOLD_DAYS = 3;
+    private static final long OVERDUE_THRESHOLD_DAYS = 1;
 
     private final ParcelsRepository parcelsRepository;
     private final CompanyRepository companyRepository;
@@ -37,7 +37,7 @@ public class ParcelService {
     private final ParcelVerificationRepository verificationRepository;
     private final NotificationService notificationService;
 
-    // ─── Overdue Helpers ────────────────────────────────────────────────────────
+    //Overdue Helpers
 
     private boolean isOverdue(Parcels p) {
         return p.getStatus() == Parcels.Status.RECEIVED
@@ -53,8 +53,7 @@ public class ParcelService {
         );
     }
 
-    // ─── Create ─────────────────────────────────────────────────────────────────
-
+    //Create
     public Parcels createParcel(CreateParcelDto req) {
 
         Company company = companyRepository.findById(req.getCompanyId())
@@ -83,8 +82,6 @@ public class ParcelService {
 
         return savedParcel;
     }
-
-    // ─── Staff: List ─────────────────────────────────────────────────────────────
 
     public List<ParcelListItemDto> getAllParcelsForStaff() {
         List<Parcels> parcels = parcelsRepository.findAllByIsDeletedFalseOrderByReceivedAtDesc();
@@ -119,8 +116,6 @@ public class ParcelService {
                 })
                 .collect(Collectors.toList());
     }
-
-    // ─── Staff: Detail ───────────────────────────────────────────────────────────
 
     public ParcelDetailDto getParcelDetail(Integer parcelId) {
 
@@ -167,8 +162,6 @@ public class ParcelService {
                 calcOverdueDays(p)
         );
     }
-
-    // ─── Staff: Update Parcel ────────────────────────────────────────────────────
 
     public ParcelDetailDto updateParcelForStaff(Integer parcelId, UpdateParcelDto req) {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
@@ -257,8 +250,6 @@ public class ParcelService {
         );
     }
 
-    // ─── Admin: Force Update Status ──────────────────────────────────────────────
-
     public ParcelDetailDto forceUpdateParcelStatus(Integer parcelId, ForceUpdateParcelStatusDto req) {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
@@ -329,8 +320,6 @@ public class ParcelService {
         );
     }
 
-    // ─── Resident: Auth Helper ───────────────────────────────────────────────────
-
     private Users getCurrentResident() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -352,8 +341,6 @@ public class ParcelService {
 
         return u;
     }
-
-    // ─── Resident: List ──────────────────────────────────────────────────────────
 
     public List<ParcelListItemDto> getParcelsForCurrentResident() {
         Users currentResident = getCurrentResident();
@@ -391,8 +378,6 @@ public class ParcelService {
                 })
                 .toList();
     }
-
-    // ─── Resident: Detail ────────────────────────────────────────────────────────
 
     public ParcelDetailDto getParcelDetailForResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
@@ -442,8 +427,7 @@ public class ParcelService {
         );
     }
 
-    // ─── Resident: Confirm Picked Up ─────────────────────────────────────────────
-
+    //resident confirm pickup
     public ParcelDetailDto confirmParcelReceivedByResident(Integer parcelId) {
         Users currentResident = getCurrentResident();
 
@@ -503,8 +487,6 @@ public class ParcelService {
         );
     }
 
-    // ─── Misc ────────────────────────────────────────────────────────────────────
-
     public List<String> getParcelTypes() {
         return Arrays.stream(Parcels.Parceltype.values())
                 .map(Enum::name)
@@ -534,8 +516,6 @@ public class ParcelService {
 
         return saved;
     }
-
-    // ─── Trash ───────────────────────────────────────────────────────────────────
 
     public void moveParcelToTrash(Integer parcelId) {
         Parcels parcel = parcelsRepository
@@ -583,8 +563,6 @@ public class ParcelService {
                 .toList();
     }
 
-    // ─── Auto Assign ─────────────────────────────────────────────────────────────
-
     private Users autoAssignResidentIfMatched(Parcels parcel) {
         String normalizedTracking = parcel.getTrackingNumber().trim().toUpperCase();
         parcel.setTrackingNumber(normalizedTracking);
@@ -601,8 +579,7 @@ public class ParcelService {
                 .orElse(null);
     }
 
-    // ─── Overdue Query ───────────────────────────────────────────────────────────
-
+    //Overdue
     public List<Parcels> getOverdueParcels() {
         List<Parcels> parcels = parcelsRepository.findByStatusAndIsDeletedFalse(Parcels.Status.RECEIVED);
         LocalDateTime now = LocalDateTime.now();

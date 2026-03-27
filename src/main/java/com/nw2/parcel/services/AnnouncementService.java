@@ -28,7 +28,7 @@ public class AnnouncementService {
 
     private static final int MAX_PINNED = 3;
 
-    // ========================= PIN LOGIC =========================
+    //PIN
     private void handlePinLogic(Announcement ann, Boolean requestPin) {
 
         if (requestPin == null) return;
@@ -64,7 +64,7 @@ public class AnnouncementService {
         }
     }
 
-    // ========================= NOTIFICATION HELPER =========================
+    //NOTIFICATION HELPER
     private void sendAnnouncementNotification(Announcement ann) {
 
         List<Users> residents =
@@ -79,7 +79,7 @@ public class AnnouncementService {
         }
     }
 
-    // ========================= LIST =========================
+    // LIST
     public List<AnnouncementDto> getAllPublished() {
 
         return announcementRepository
@@ -91,7 +91,6 @@ public class AnnouncementService {
                 .toList();
     }
 
-    // ========================= GET =========================
     public AnnouncementDto getById(Integer id) {
 
         Announcement ann = announcementRepository
@@ -106,7 +105,6 @@ public class AnnouncementService {
         return map(ann);
     }
 
-    // ========================= CREATE =========================
     public AnnouncementDto createAnnouncement(
             CreateAnnouncementDto req,
             Users staff,
@@ -158,7 +156,6 @@ public class AnnouncementService {
 
         Announcement saved = announcementRepository.save(announcement);
 
-        // ✅ ยิงตอน create (publish ทันที)
         if (status == Announcement.Status.PUBLISHED &&
                 Boolean.TRUE.equals(saved.getSendNotification())) {
 
@@ -168,7 +165,6 @@ public class AnnouncementService {
         return map(saved);
     }
 
-    // ========================= UPDATE =========================
     public AnnouncementDto updateAnnouncement(
             Integer id,
             UpdateAnnouncementDto req,
@@ -178,7 +174,6 @@ public class AnnouncementService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
 
-        // ✅ เก็บ status เดิมไว้ก่อน
         Announcement.Status oldStatus = ann.getStatus();
 
         if (req.getTitle() != null)
@@ -193,14 +188,12 @@ public class AnnouncementService {
             ann.setCategory(category);
         }
 
-        // ✅ อัปเดต sendNotification ถ้า request ส่งมา
         if (req.getSendNotification() != null) {
             ann.setSendNotification(req.getSendNotification());
         }
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ✅ กำหนด status ใหม่ให้ชัดเจน
         Announcement.Status newStatus;
 
         if (Boolean.TRUE.equals(req.getPublishNow())) {
@@ -214,7 +207,6 @@ public class AnnouncementService {
             ann.setPublishAt(req.getPublishAt());
 
         } else {
-            // ✅ FIX: ถ้าไม่ได้ระบุ publishNow หรือ publishAt → คงสถานะเดิมไว้
             newStatus = ann.getStatus();
         }
 
@@ -232,7 +224,6 @@ public class AnnouncementService {
 
         Announcement saved = announcementRepository.save(ann);
 
-        // ✅ FIX: เช็คจาก newStatus แทน saved.getStatus() เพื่อความแน่นอน
         boolean justPublished = oldStatus != Announcement.Status.PUBLISHED
                 && newStatus == Announcement.Status.PUBLISHED;
 
@@ -243,7 +234,6 @@ public class AnnouncementService {
         return map(saved);
     }
 
-    // ========================= DELETE =========================
     public void moveToTrash(Integer id, Users deletedBy) {
 
         Announcement ann = announcementRepository
@@ -263,7 +253,6 @@ public class AnnouncementService {
         trashRepository.save(trash);
     }
 
-    // ========================= VIEW =========================
     public void recordView(Integer announcementId, Users user) {
 
         Announcement ann = announcementRepository
@@ -290,7 +279,6 @@ public class AnnouncementService {
         }
     }
 
-    // ========================= MAP =========================
     private AnnouncementDto map(Announcement a) {
 
         return AnnouncementDto.builder()
@@ -313,7 +301,6 @@ public class AnnouncementService {
                 .build();
     }
 
-    // ========================= CATEGORY =========================
     public List<AnnouncementCategoryDto> getAllCategories() {
 
         return categoryRepository
@@ -326,7 +313,6 @@ public class AnnouncementService {
                 .toList();
     }
 
-    // ========================= STAFF =========================
     public List<AnnouncementDto> getAllForStaff() {
 
         return announcementRepository
