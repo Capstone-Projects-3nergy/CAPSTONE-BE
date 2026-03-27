@@ -31,11 +31,7 @@ public class TrashService {
 
     private static final Logger log = LoggerFactory.getLogger(TrashService.class);
 
-
-    // =========================
     // PARCEL TRASH
-    // =========================
-
     @Transactional(readOnly = true)
     public List<TrashListItemDto> getTrashParcels() {
 
@@ -111,11 +107,7 @@ public class TrashService {
         log.info("Parcel {} permanently deleted", parcelId);
     }
 
-
-    // =========================
     // RESIDENT TRASH
-    // =========================
-
     @Transactional(readOnly = true)
     public List<TrashResidentDto> getTrashResidents() {
 
@@ -184,11 +176,7 @@ public class TrashService {
         log.info("Resident {} permanently deleted", residentId);
     }
 
-
-    // =========================
     // ANNOUNCEMENT TRASH
-    // =========================
-
     @Transactional(readOnly = true)
     public List<TrashAnnouncementDto> getTrashAnnouncements() {
 

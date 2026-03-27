@@ -8,6 +8,7 @@ import com.nw2.parcel.exception.ResourceNotFoundException;
 import com.nw2.parcel.exception.UnauthorizedException;
 import com.nw2.parcel.repositories.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +27,9 @@ public class NotificationService {
     private final LineService lineService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // Parcel Notification
+    @Value("${app.parcel.overdue-days}")
+    private long overdueDays;
+
     public void notifyResidentParcelMatched(Parcels parcel, Users resident) {
 
         Notification noti = new Notification();
@@ -69,7 +72,6 @@ public class NotificationService {
         );
     }
 
-    // Generic System Notification
     public void createSystemNotification(
             Users user,
             String title,
@@ -125,7 +127,6 @@ public class NotificationService {
         sendEmailAndUpdateStatus(emailNoti, user.getEmail());
     }
 
-    // Get User Notifications
     public List<NotificationDto> getNotificationsByUser(Integer userId) {
 
         return notificationRepository
@@ -153,7 +154,6 @@ public class NotificationService {
                 .toList();
     }
 
-    // Mark As Read
     public void markAsRead(Integer notificationId, Integer userId) {
 
         Notification noti = notificationRepository.findById(notificationId)
@@ -177,7 +177,7 @@ public class NotificationService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ---------------- SYSTEM ----------------
+        //SYSTEM
         Notification systemNoti = new Notification();
         systemNoti.setNotiTitle("New Parcel Arrived");
         systemNoti.setNotiMessage(
@@ -215,7 +215,7 @@ public class NotificationService {
                 dto
         );
 
-        // ---------------- EMAIL ----------------
+        //EMAIL
         Notification emailNoti = new Notification();
         emailNoti.setNotiTitle("Parcel Arrival Notification");
         emailNoti.setNotiMessage(
@@ -234,7 +234,7 @@ public class NotificationService {
 
         sendEmailAndUpdateStatus(emailNoti, resident.getEmail());
 
-        // ---------------- LINE ----------------
+        //LINE
         Notification lineNoti = new Notification();
         lineNoti.setNotiTitle("New Parcel Arrived");
         lineNoti.setNotiMessage("Parcel arrived.");
@@ -335,9 +335,9 @@ public class NotificationService {
     public void notifyParcelOverdue(Parcels parcel, Users user) {
 
         String message = "⏰ Parcel " + parcel.getTrackingNumber()
-                + " is overdue for pickup (more than 3 days).";
+                + " is overdue for pickup (more than " + overdueDays + " day).";
 
-        // ---------------- SYSTEM ----------------
+        //SYSTEM
         Notification systemNoti = new Notification();
         systemNoti.setNotiTitle("Parcel Overdue");
         systemNoti.setNotiMessage(message);
@@ -348,49 +348,47 @@ public class NotificationService {
 
         notificationRepository.save(systemNoti);
 
-        // ---------------- LINE ----------------
-        if (user.getLineUserId() != null) {
+        //LINE
+        if (user.getLineUserId() == null) return;
 
-            Notification lineNoti = new Notification();
-            lineNoti.setNotiTitle("Parcel Overdue");
-            lineNoti.setNotiMessage(message);
-            lineNoti.setStatus(Notification.Status.PENDING);
-            lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
-            lineNoti.setParcel(parcel);
-            lineNoti.setUser(user);
 
-            notificationRepository.save(lineNoti);
+        //check duplicate
+//        boolean alreadySent = notificationRepository
+//                .existsByParcelParcelIdAndNotificationType(
+//                        parcel.getParcelId(),
+//                        Notification.Type.OVERDUE_LINE
+//                );
 
-            long days = Math.max(0,
-                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
-            );
+//        if (alreadySent) return;
 
-            // ยังไม่ถึง 3 วัน → ไม่ต้องส่ง
-            if (days < 3) return;
+        long days = Math.max(0,
+                Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+        );
 
-            // กันยิงซ้ำ
-            boolean alreadySent = notificationRepository
-                    .existsByParcelParcelIdAndNotificationType(
-                            parcel.getParcelId(),
-                            Notification.Type.OVERDUE_LINE
-                    );
+        Notification lineNoti = new Notification();
+        lineNoti.setNotiTitle("Parcel Overdue");
+        lineNoti.setNotiMessage(message);
+        lineNoti.setStatus(Notification.Status.PENDING);
+        lineNoti.setNotificationType(Notification.Type.OVERDUE_LINE);
+        lineNoti.setParcel(parcel);
+        lineNoti.setUser(user);
+        lineNoti.setCreatedAt(LocalDateTime.now());
+        lineNoti.setUpdatedAt(LocalDateTime.now());
 
-            if (alreadySent) return;
+        notificationRepository.save(lineNoti);
 
-            String viewUrl =
-                    "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+        String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
 
-            var flex = lineService.buildOverdueFlex(
-                    parcel.getTrackingNumber(),
-                    String.valueOf(days),
-                    viewUrl
-            );
+        var flex = lineService.buildOverdueFlex(
+                parcel.getTrackingNumber(),
+                String.valueOf(days),
+                viewUrl
+        );
 
-            var msg = lineService.buildFlexMessage(flex);
+        var msg = lineService.buildFlexMessage(flex);
 
-            sendLineAndUpdateStatus(lineNoti, user, msg);
+        sendLineAndUpdateStatus(lineNoti, user, msg);
 
-        }
     }
 
     //dev day < 3

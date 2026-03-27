@@ -33,7 +33,7 @@ public class AnnouncementScheduler {
         for (Announcement ann : announcements) {
 
             try {
-                // 🔥 กันยิงซ้ำระดับ DB (สำคัญ)
+
                 if (ann.getStatus() != Announcement.Status.DRAFT) continue;
 
                 ann.setStatus(Announcement.Status.PUBLISHED);
@@ -54,7 +54,6 @@ public class AnnouncementScheduler {
                 }
 
             } catch (Exception e) {
-                // ❗ log error ไว้ debug
                 System.err.println("Failed to publish announcement ID: " + ann.getAnnouncementId());
                 e.printStackTrace();
             }

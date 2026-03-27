@@ -11,10 +11,7 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
     Optional<Users> findByEmail(String email);
     boolean existsByEmail(String email);
     Optional<Users> findByUserIdAndRole(Integer userId, Users.Role role);
-    Optional<Users> findByRoomNumberAndRole(String roomNumber, Users.Role role);
     List<Users> findByRole(Users.Role role);
-    List<Users> findByRoleAndStatus(Users.Role role, Users.Status status);
-    List<Users> findByStatusNot(Users.Status status);
     List<Users> findByRoleInAndStatusNot(List<Users.Role> roles, Users.Status status);
     Optional<Users> findByLineUserId(String lineUserId);
 }

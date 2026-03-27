@@ -65,7 +65,6 @@ public class ManagementService {
                 .toList();
     }
 
-    //detail
     public ManagementDetailDto getResidentDetail(Integer id) {
         Users user = usersRepository.findByUserIdAndRole(id, Users.Role.RESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("Resident not found"));
@@ -90,7 +89,6 @@ public class ManagementService {
         return dto;
     }
 
-    //add
     @Transactional
     public ManagementDetailDto addResident(ManagementAddDto req, MultipartFile profileImage) {
 
@@ -98,7 +96,6 @@ public class ManagementService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        //สร้าง Firebase user
         UserRecord firebaseUser;
         try {
             firebaseUser = firebaseAuthService.createUser(req.getEmail());
@@ -127,7 +124,6 @@ public class ManagementService {
             throw new ExternalServiceException("Cannot create Firebase user", e);
         }
 
-        //สร้าง user ใน DB
         Users user = new Users();
         user.setFirebaseUid(firebaseUser.getUid());
         user.setFirstName(req.getFirstName());
@@ -148,7 +144,6 @@ public class ManagementService {
 
         Users savedUser = usersRepository.save(user);
 
-        // รูป
         if (profileImage != null && !profileImage.isEmpty()) {
             String imageUrl = fileStorageService.uploadProfileImage(
                     profileImage,
@@ -179,7 +174,6 @@ public class ManagementService {
         return dto;
     }
 
-    //update
     @Transactional
     public ManagementDetailDto updateResident(Integer id, ManagementUpdateDto req, MultipartFile profileImage) {
         Users user = usersRepository.findById(id)
@@ -227,7 +221,6 @@ public class ManagementService {
         return dto;
     }
 
-    //move to trash
     @Transactional
     public void softDeleteResident(Integer userId) {
 
@@ -263,7 +256,7 @@ public class ManagementService {
         trashRepository.save(trash);
     }
 
-    // ─── Resend Verification Email ───────────────────────────────────────────────
+    //Resend Verification Email
 
     public void resendVerificationEmail(Integer userId) {
 
