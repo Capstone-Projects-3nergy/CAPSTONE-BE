@@ -27,7 +27,7 @@ public class NotificationService {
     private final LineService lineService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    @Value("${app.parcel.overdue-days}")
+    @Value("${app.parcel.overdue-days:1}")
     private long overdueDays;
 
     public void notifyResidentParcelMatched(Parcels parcel, Users resident) {
