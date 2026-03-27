@@ -87,7 +87,7 @@ line:
 app:
   frontend-url: http://localhost:5173
   parcel:
-    overdue-hours: 72
+    overdue-hours: 1
 #    overdue-minutes: 1
 # =========================================================
 # 🔹 CONTAINER PROFILE (ใช้ตอนรันใน Docker / VM)
