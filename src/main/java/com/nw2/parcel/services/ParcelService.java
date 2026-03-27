@@ -359,7 +359,7 @@ public class ParcelService {
         Users currentResident = getCurrentResident();
 
         List<Parcels> parcels = parcelsRepository
-                .findByUserUserIdAndIsDeletedFalseOrderByReceivedAtDesc(currentResident.getUserId());
+                .findMatchedParcelsByUserId(currentResident.getUserId());
 
         return parcels.stream()
                 .map(p -> {
