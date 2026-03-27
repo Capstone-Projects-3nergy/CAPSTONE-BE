@@ -349,7 +349,21 @@ public class NotificationService {
         notificationRepository.save(systemNoti);
 
         // ---------------- LINE ----------------
-        if (user.getLineUserId() != null) {
+        if (user.getLineUserId() == null) return; // ✅ ไม่มี LINE → จบแค่นี้
+
+            // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
+            boolean alreadySent = notificationRepository
+                    .existsByParcelParcelIdAndNotificationType(
+                            parcel.getParcelId(),
+                            Notification.Type.OVERDUE_LINE
+                    );
+
+            if (alreadySent) return;
+
+            // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
+            long days = Math.max(0,
+                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
+            );
 
             Notification lineNoti = new Notification();
             lineNoti.setNotiTitle("Parcel Overdue");
@@ -361,24 +375,7 @@ public class NotificationService {
 
             notificationRepository.save(lineNoti);
 
-            long days = Math.max(0,
-                    Duration.between(parcel.getReceivedAt(), LocalDateTime.now()).toDays()
-            );
-
-            // ยังไม่ถึง 3 วัน → ไม่ต้องส่ง
-            if (days < 3) return;
-
-            // กันยิงซ้ำ
-            boolean alreadySent = notificationRepository
-                    .existsByParcelParcelIdAndNotificationType(
-                            parcel.getParcelId(),
-                            Notification.Type.OVERDUE_LINE
-                    );
-
-            if (alreadySent) return;
-
-            String viewUrl =
-                    "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
+            String viewUrl = "https://bscit.sit.kmutt.ac.th/capstone25/cp25nw2/parcel/";
 
             var flex = lineService.buildOverdueFlex(
                     parcel.getTrackingNumber(),
@@ -391,7 +388,6 @@ public class NotificationService {
             sendLineAndUpdateStatus(lineNoti, user, msg);
 
         }
-    }
 
     //dev day < 3
     //public void notifyParcelOverdue(Parcels parcel, Users user) {
