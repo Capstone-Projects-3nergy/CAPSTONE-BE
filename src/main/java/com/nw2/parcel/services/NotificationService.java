@@ -353,13 +353,13 @@ public class NotificationService {
 
 
         // ✅ FIX Bug 2: เช็ค duplicate ก่อน save เสมอ
-        boolean alreadySent = notificationRepository
-                .existsByParcelParcelIdAndNotificationType(
-                        parcel.getParcelId(),
-                        Notification.Type.OVERDUE_LINE
-                );
+//        boolean alreadySent = notificationRepository
+//                .existsByParcelParcelIdAndNotificationType(
+//                        parcel.getParcelId(),
+//                        Notification.Type.OVERDUE_LINE
+//                );
 
-        if (alreadySent) return;
+//        if (alreadySent) return;
 
         // ✅ FIX Bug 1: ลบ days < 3 ออก เพราะ OverdueService เช็คแล้ว
         long days = Math.max(0,
