@@ -11,7 +11,7 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Parcels {
 
-    public enum Status { WAITING_FOR_STAFF,RECEIVED, PICKED_UP }
+    public enum Status { WAITING_FOR_STAFF,WAITING, PICKED_UP }
     public enum Parceltype {BOX, DOCUMENT, ELECTRONIC}
 
     @Id
@@ -27,7 +27,7 @@ public class Parcels {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.RECEIVED;
+    private Status status = Status.WAITING;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "parcel_type")

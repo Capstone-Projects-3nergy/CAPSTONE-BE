@@ -40,7 +40,7 @@ public class ParcelService {
     //Overdue Helpers
 
     private boolean isOverdue(Parcels p) {
-        return p.getStatus() == Parcels.Status.RECEIVED
+        return p.getStatus() == Parcels.Status.WAITING
                 && p.getReceivedAt() != null
                 && p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS).isBefore(LocalDateTime.now());
     }
@@ -68,7 +68,7 @@ public class ParcelService {
         parcel.setRecipientName(req.getRecipientName());
         parcel.setParcelType(req.getParcelType());
         parcel.setSenderName(req.getSenderName());
-        parcel.setStatus(Parcels.Status.RECEIVED);
+        parcel.setStatus(Parcels.Status.WAITING);
         parcel.setCompany(company);
         parcel.setUser(resident);
 
@@ -195,7 +195,7 @@ public class ParcelService {
         Parcels.Status newStatus = req.getStatus();
 
         if (assignedNewResident && p.getStatus() == Parcels.Status.WAITING_FOR_STAFF) {
-            newStatus = Parcels.Status.RECEIVED;
+            newStatus = Parcels.Status.WAITING;
         }
 
         if (newStatus != null) {
@@ -435,7 +435,7 @@ public class ParcelService {
                 .findByParcelIdAndUserUserIdAndIsDeletedFalse(parcelId, currentResident.getUserId())
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        if (p.getStatus() != Parcels.Status.RECEIVED) {
+        if (p.getStatus() != Parcels.Status.WAITING) {
             throw new ConflictException(
                     "Parcel cannot be confirmed in current status: " + p.getStatus()
             );
@@ -581,7 +581,7 @@ public class ParcelService {
 
     //Overdue
     public List<Parcels> getOverdueParcels() {
-        List<Parcels> parcels = parcelsRepository.findByStatusAndIsDeletedFalse(Parcels.Status.RECEIVED);
+        List<Parcels> parcels = parcelsRepository.findByStatusAndIsDeletedFalse(Parcels.Status.WAITING);
         LocalDateTime now = LocalDateTime.now();
         return parcels.stream()
                 .filter(p -> p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS).isBefore(now))

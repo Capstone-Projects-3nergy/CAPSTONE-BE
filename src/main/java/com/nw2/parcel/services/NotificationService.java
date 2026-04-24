@@ -27,8 +27,8 @@ public class NotificationService {
     private final LineService lineService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    @Value("${app.parcel.overdue-days:1}")
-    private long overdueDays;
+    @Value("${app.parcel.overdue-hours:24}")
+    private long overdueHours;
 
     public void notifyResidentParcelMatched(Parcels parcel, Users resident) {
 
@@ -248,7 +248,7 @@ public class NotificationService {
         notificationRepository.save(lineNoti);
 
         String statusText = switch (parcel.getStatus()) {
-            case RECEIVED -> "Ready for Pickup";
+            case WAITING -> "Ready for Pickup";
             case PICKED_UP -> "Picked Up";
             default -> "Processing";
         };
@@ -335,7 +335,7 @@ public class NotificationService {
     public void notifyParcelOverdue(Parcels parcel, Users user) {
 
         String message = "⏰ Parcel " + parcel.getTrackingNumber()
-                + " is overdue for pickup (more than " + overdueDays + " day).";
+                + " is overdue for pickup (more than 1 day).";
 
         //SYSTEM
         Notification systemNoti = new Notification();

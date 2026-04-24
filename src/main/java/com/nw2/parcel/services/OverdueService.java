@@ -40,7 +40,7 @@ public class OverdueService {
         if (user == null) return;
 
         // parcel ไม่ใช่สถานะ RECEIVED → ไม่ต้องส่ง
-        if (parcel.getStatus() != Parcels.Status.RECEIVED) return;
+        if (parcel.getStatus() != Parcels.Status.WAITING) return;
 
         // receivedAt เป็น null → กันพัง
         if (parcel.getReceivedAt() == null) return;
