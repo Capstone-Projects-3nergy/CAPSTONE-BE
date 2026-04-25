@@ -12,7 +12,7 @@ import com.nw2.parcel.repositories.CompanyRepository;
 import com.nw2.parcel.repositories.UsersRepository;
 import com.nw2.parcel.repositories.TrashRepository;
 import com.nw2.parcel.repositories.ParcelVerificationRepository;
-import com.nw2.parcel.repositories.NotificationService;
+import com.nw2.parcel.services.NotificationService;
 import com.nw2.parcel.entity.ParcelStatusLog;
 import com.nw2.parcel.repositories.ParcelStatusLogRepository;
 import lombok.RequiredArgsConstructor;
