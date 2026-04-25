@@ -1,10 +1,7 @@
 package com.nw2.parcel.services;
 
 import com.nw2.parcel.Dtos.*;
-import com.nw2.parcel.entity.Company;
-import com.nw2.parcel.entity.Parcels;
-import com.nw2.parcel.entity.Trash;
-import com.nw2.parcel.entity.Users;
+import com.nw2.parcel.entity.*;
 import com.nw2.parcel.exception.ConflictException;
 import com.nw2.parcel.exception.ParcelNotFoundException;
 import com.nw2.parcel.exception.ResourceNotFoundException;
@@ -36,11 +33,11 @@ public class ParcelService {
     private final TrashRepository trashRepository;
     private final ParcelVerificationRepository verificationRepository;
     private final NotificationService notificationService;
+    private final ParcelStatusLogRepository statusLogRepository; // ✅ เพิ่มใหม่
 
     // ─── Overdue Helpers ────────────────────────────────────────────────────────
 
     private boolean isOverdue(Parcels p) {
-        // รองรับทั้ง WAITING และ OVERDUE
         return (p.getStatus() == Parcels.Status.WAITING || p.getStatus() == Parcels.Status.OVERDUE)
                 && p.getReceivedAt() != null
                 && p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS).isBefore(LocalDateTime.now());
@@ -52,6 +49,44 @@ public class ParcelService {
                 p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS),
                 LocalDateTime.now()
         );
+    }
+
+    // ─── Status Log Helper ───────────────────────────────────────────────────────
+
+    /**
+     * บันทึก log ทุกครั้งที่ status เปลี่ยน
+     * changedBy = null หมายถึง system/scheduler เป็นคนเปลี่ยน
+     */
+    private void logStatusChange(Parcels parcel,
+                                  Parcels.Status oldStatus,
+                                  Parcels.Status newStatus,
+                                  Users changedBy,
+                                  String note) {
+        if (oldStatus == newStatus) return; // ไม่มีการเปลี่ยนจริง ไม่ต้อง log
+
+        ParcelStatusLog entry = new ParcelStatusLog();
+        entry.setParcel(parcel);
+        entry.setOldStatus(oldStatus);   // null = สร้างใหม่ครั้งแรก
+        entry.setNewStatus(newStatus);
+        entry.setChangedBy(changedBy);   // null = system
+        entry.setNote(note);
+        entry.setChangedAt(LocalDateTime.now());
+        statusLogRepository.save(entry);
+    }
+
+    /**
+     * Helper: ดึง Users entity ของ user ที่ล็อกอินอยู่ (ไม่ throw ถ้าไม่เจอ → คืน null)
+     * ใช้สำหรับบันทึก changedBy ใน log
+     */
+    private Users getCurrentUserEntityOrNull() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) return null;
+            String firebaseUid = auth.getName();
+            return usersRepository.findByFirebaseUid(firebaseUid).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ─── Create ─────────────────────────────────────────────────────────────────
@@ -77,6 +112,10 @@ public class ParcelService {
         Users matchedResident = autoAssignResidentIfMatched(parcel);
 
         Parcels savedParcel = parcelsRepository.save(parcel);
+
+        // ✅ Log: สร้างพัสดุใหม่ (oldStatus = null)
+        Users creator = getCurrentUserEntityOrNull();
+        logStatusChange(savedParcel, null, savedParcel.getStatus(), creator, "Parcel created by staff");
 
         if (matchedResident != null) {
             notificationService.notifyParcelMultiChannel(savedParcel, matchedResident);
@@ -133,6 +172,7 @@ public class ParcelService {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
+        Parcels.Status oldStatus = p.getStatus(); // ✅ เก็บ status เดิมก่อนแก้ไข
         boolean assignedNewResident = false;
 
         if (req.getTrackingNumber() != null) p.setTrackingNumber(req.getTrackingNumber());
@@ -174,6 +214,14 @@ public class ParcelService {
         }
 
         Parcels updated = parcelsRepository.save(p);
+
+        // ✅ Log: บันทึกการเปลี่ยน status (ถ้าเปลี่ยนจริง)
+        Parcels.Status finalStatus = updated.getStatus();
+        if (oldStatus != finalStatus) {
+            Users staff = getCurrentUserEntityOrNull();
+            logStatusChange(updated, oldStatus, finalStatus, staff, "Updated by staff");
+        }
+
         return toDetailDto(updated);
     }
 
@@ -183,7 +231,7 @@ public class ParcelService {
         Parcels p = parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
                 .orElseThrow(() -> new ParcelNotFoundException(parcelId));
 
-        Parcels.Status oldStatus = p.getStatus();
+        Parcels.Status oldStatus = p.getStatus(); // ✅ เก็บ status เดิม
         Parcels.Status newStatus = req.getStatus();
 
         if (newStatus == null) {
@@ -207,6 +255,12 @@ public class ParcelService {
         }
 
         Parcels updated = parcelsRepository.save(p);
+
+        // ✅ Log: Admin force update พร้อม note
+        Users admin = getCurrentUserEntityOrNull();
+        logStatusChange(updated, oldStatus, newStatus, admin,
+                req.getNote() != null ? "[ADMIN FORCE] " + req.getNote() : "[ADMIN FORCE]");
+
         return toDetailDto(updated);
     }
 
@@ -296,10 +350,16 @@ public class ParcelService {
             );
         }
 
+        Parcels.Status oldStatus = p.getStatus(); // ✅ เก็บ status เดิม
+
         p.setStatus(Parcels.Status.PICKED_UP);
         if (p.getPickedUpAt() == null) p.setPickedUpAt(LocalDateTime.now());
 
         Parcels updated = parcelsRepository.save(p);
+
+        // ✅ Log: Resident กด confirm รับพัสดุ
+        logStatusChange(updated, oldStatus, Parcels.Status.PICKED_UP, currentResident, "Confirmed by resident");
+
         return toDetailDto(updated);
     }
 
@@ -327,6 +387,9 @@ public class ParcelService {
         Users matchedResident = autoAssignResidentIfMatched(parcel);
 
         Parcels saved = parcelsRepository.save(parcel);
+
+        // ✅ Log: สร้างจาก public form (changedBy = null เพราะยังไม่รู้ว่าใคร)
+        logStatusChange(saved, null, saved.getStatus(), null, "Created via public sender form");
 
         if (matchedResident != null) {
             notificationService.notifyParcelMultiChannel(saved, matchedResident);
@@ -361,6 +424,9 @@ public class ParcelService {
 
         parcelsRepository.save(parcel);
         trashRepository.save(trash);
+
+        // ✅ Log: บันทึกว่าถูกย้ายไป trash (ไม่ใช่ status change แต่ note ไว้)
+        logStatusChange(parcel, parcel.getStatus(), parcel.getStatus(), staff, "Moved to trash");
     }
 
     public List<ParcelListItemDto> getTrashParcels() {
@@ -394,6 +460,33 @@ public class ParcelService {
         return parcels.stream()
                 .filter(p -> p.getReceivedAt().plusDays(OVERDUE_THRESHOLD_DAYS).isBefore(now))
                 .toList();
+    }
+
+    /**
+     * เรียกจาก Scheduler เมื่อ mark parcel เป็น OVERDUE
+     * แยก method ออกมาเพื่อให้ Scheduler ใช้แล้วได้ log ด้วย
+     */
+    public void markParcelAsOverdue(Parcels parcel) {
+        Parcels.Status oldStatus = parcel.getStatus();
+        if (oldStatus == Parcels.Status.OVERDUE) return; // mark ซ้ำ ไม่ต้องทำ
+
+        parcel.setStatus(Parcels.Status.OVERDUE);
+        Parcels saved = parcelsRepository.save(parcel);
+
+        // ✅ Log: system/scheduler เป็นคนเปลี่ยน (changedBy = null)
+        logStatusChange(saved, oldStatus, Parcels.Status.OVERDUE, null, "Auto-marked overdue by scheduler");
+    }
+
+    // ─── Parcel Status History (สำหรับ Detail Page / Dashboard) ─────────────────
+
+    /**
+     * ดึง status history ของพัสดุชิ้นหนึ่ง เรียงตามเวลา (เก่า → ใหม่)
+     */
+    public List<ParcelStatusLog> getParcelStatusHistory(Integer parcelId) {
+        // ตรวจสอบว่า parcel มีอยู่จริงก่อน
+        parcelsRepository.findByParcelIdAndIsDeletedFalse(parcelId)
+                .orElseThrow(() -> new ParcelNotFoundException(parcelId));
+        return statusLogRepository.findByParcelParcelIdOrderByChangedAtAsc(parcelId);
     }
 
     // ─── Private Helpers ─────────────────────────────────────────────────────────
