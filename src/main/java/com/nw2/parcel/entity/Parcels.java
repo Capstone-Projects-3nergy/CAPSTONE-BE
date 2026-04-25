@@ -11,7 +11,7 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Parcels {
 
-    public enum Status { WAITING_FOR_STAFF,WAITING, PICKED_UP }
+    public enum Status { WAITING_FOR_STAFF,WAITING, PICKED_UP, OVERDUE }
     public enum Parceltype {BOX, DOCUMENT, ELECTRONIC}
 
     @Id
