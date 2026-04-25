@@ -2,6 +2,7 @@ package com.nw2.parcel.services;
 
 import com.nw2.parcel.Dtos.*;
 import com.nw2.parcel.entity.*;
+import com.nw2.parcel.repositories.*;
 import com.nw2.parcel.exception.ConflictException;
 import com.nw2.parcel.exception.ParcelNotFoundException;
 import com.nw2.parcel.exception.ResourceNotFoundException;
