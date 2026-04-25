@@ -34,46 +34,46 @@ public class OverdueService {
 
     public void sendOverdueReminder(Parcels parcel) {
 
-        Users user = parcel.getUser();
+    Users user = parcel.getUser();
+    if (user == null) return;
 
-        // ไม่มี user → ไม่ต้องส่ง
-        if (user == null) return;
+    // รองรับทั้ง WAITING และ OVERDUE (กรณี scheduler วิ่งซ้ำ)
+    if (parcel.getStatus() != Parcels.Status.WAITING
+            && parcel.getStatus() != Parcels.Status.OVERDUE) return;
 
-        // parcel ไม่ใช่สถานะ RECEIVED → ไม่ต้องส่ง
-        if (parcel.getStatus() != Parcels.Status.WAITING) return;
+    if (parcel.getReceivedAt() == null) return;
 
-        // receivedAt เป็น null → กันพัง
-        if (parcel.getReceivedAt() == null) return;
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime overdueTime = parcel.getReceivedAt().plusHours(overdueHours);
 
-        LocalDateTime now = LocalDateTime.now();
+    if (now.isBefore(overdueTime)) return;
 
-        LocalDateTime overdueTime = parcel.getReceivedAt().plusHours(overdueHours);
-        if (now.isBefore(overdueTime)) {
+    // ✅ เปลี่ยน status WAITING → OVERDUE
+    if (parcel.getStatus() == Parcels.Status.WAITING) {
+        parcel.setStatus(Parcels.Status.OVERDUE);
+        parcelsRepository.save(parcel);
+    }
+
+    // เช็ค duplicate notification
+    List<Notification> history =
+            notificationRepository
+                    .findByUserUserIdAndParcelParcelIdAndNotificationTypeInOrderByCreatedAtDesc(
+                            user.getUserId(),
+                            parcel.getParcelId(),
+                            List.of(
+                                    Notification.Type.OVERDUE_SYSTEM,
+                                    Notification.Type.OVERDUE_LINE
+                            )
+                    );
+
+    if (!history.isEmpty()) {
+        Notification last = history.get(0);
+        if (last.getCreatedAt() != null
+                && last.getCreatedAt().plusHours(overdueHours).isAfter(now)) {
             return;
         }
-
-        // หา history ทั้ง SYSTEM + LINE
-        List<Notification> history =
-                notificationRepository
-                        .findByUserUserIdAndParcelParcelIdAndNotificationTypeInOrderByCreatedAtDesc(
-                                user.getUserId(),
-                                parcel.getParcelId(),
-                                List.of(
-                                        Notification.Type.OVERDUE_SYSTEM,
-                                        Notification.Type.OVERDUE_LINE
-                                )
-                        );
-
-        if (!history.isEmpty()) {
-            Notification last = history.get(0);
-
-            // ยังไม่ครบ 3 วันจากครั้งล่าสุด → ไม่ส่ง last.getCreatedAt().plusDays(3).isAfter(now) .plusHours(overdueHours).isAfter(now)
-            if (last.getCreatedAt() != null && last.getCreatedAt().plusHours(overdueHours).isAfter(now)) {
-                return;
-            }
-        }
-
-        // ส่ง notification
-        notificationService.notifyParcelOverdue(parcel, user);
     }
+
+    notificationService.notifyParcelOverdue(parcel, user);
+}
 }
