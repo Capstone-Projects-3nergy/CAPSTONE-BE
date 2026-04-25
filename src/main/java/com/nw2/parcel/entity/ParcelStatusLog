@@ -1,14 +1,16 @@
 package com.nw2.parcel.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "parcel_status_logs")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class ParcelStatusLog {
 
@@ -32,6 +34,7 @@ public class ParcelStatusLog {
     @JoinColumn(name = "changed_by")
     private Users changedBy;
 
+    @Column(name = "note")
     private String note;
 
     @Column(name = "changed_at", nullable = false, updatable = false)
