@@ -11,12 +11,23 @@ import java.util.Optional;
 
 @Repository
 public interface ParcelsRepository extends JpaRepository<Parcels, Integer> {
+
     Optional<Parcels> findByParcelIdAndIsDeletedFalse(Integer parcelId);
+
     List<Parcels> findAllByIsDeletedTrueOrderByDeletedAtDesc();
+
     List<Parcels> findAllByIsDeletedFalseOrderByReceivedAtDesc();
+
     Optional<Parcels> findByParcelIdAndUserUserIdAndIsDeletedFalse(Integer parcelId, Integer userId);
+
     Optional<Parcels> findByTrackingNumberIgnoreCase(String trackingNumber);
+
+    // เดิม — ยังใช้ได้อยู่ (ใช้ใน OverdueService ถ้ายัง query status เดียว)
     List<Parcels> findByStatusAndIsDeletedFalse(Parcels.Status status);
+
+    // เพิ่มใหม่ — รองรับ query หลาย status พร้อมกัน (WAITING + OVERDUE)
+    List<Parcels> findByStatusInAndIsDeletedFalse(List<Parcels.Status> statuses);
+
     @Query("""
         SELECT p FROM Parcels p
         WHERE p.user.userId = :userId
